@@ -17,8 +17,8 @@
   <!-- Material Symbols (icon font) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
 
-  <script type="module" crossorigin src="./assets/index-Sk033Ldl.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-Bm0XDO1U.css">
+  <script type="module" crossorigin src="./assets/index-BdnfdPHS.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-C0pmsRuF.css">
 </head>
 <body>
   <div id="app">
@@ -37,15 +37,10 @@
       <!-- PERSISTENT TOP APP BAR (hidden during race)                   -->
       <!-- ============================================================== -->
       <header class="top-app-bar" id="top-app-bar">
-        <div class="top-app-bar-actions">
-          <button class="icon-btn" id="btn-open-settings" aria-label="Menu">
-            <span class="material-symbols-outlined">menu</span>
-          </button>
-        </div>
         <span class="top-app-bar-brand">PIXEL PRIX</span>
         <div class="top-app-bar-actions">
-          <button class="icon-btn" aria-label="Settings" id="top-settings-icon">
-            <span class="material-symbols-outlined">settings</span>
+          <button class="icon-btn-circle" aria-label="Controls & info" id="top-settings-icon">
+            <span class="material-symbols-outlined">help</span>
           </button>
         </div>
       </header>
@@ -359,23 +354,30 @@
             <div class="best-lap-sub" id="go-best-lap">Best Lap: 00:22.100</div>
           </div>
 
-          <!-- Submit score form -->
-          <form id="score-form" class="score-form">
+          <!-- Submit score form (persistent username dialog) -->
+          <form id="score-form" class="score-form" novalidate>
             <label for="player-name-input">ENTER DRIVER NAME</label>
             <div class="input-group">
               <input
                 type="text"
                 id="player-name-input"
+                name="player-name"
                 maxlength="16"
                 placeholder="Racer X"
-                required
                 autocomplete="off"
+                autocorrect="off"
+                autocapitalize="characters"
+                spellcheck="false"
+                enterkeyhint="done"
+                inputmode="text"
               >
               <button type="submit" id="btn-submit-score" class="btn btn-primary">
-                SUBMIT
+                <span class="btn-label">SAVE</span>
+                <span class="btn-spinner" aria-hidden="true"></span>
               </button>
             </div>
-            <p id="submit-status" class="status-msg"></p>
+            <p id="submit-status" class="status-msg" role="status" aria-live="polite"></p>
+            <p id="submit-hint" class="status-hint">3–16 letters or numbers. Saved to the global leaderboard.</p>
           </form>
 
           <div class="gameover-actions">
@@ -387,6 +389,9 @@
             </button>
             <button id="btn-gameover-menu" class="btn btn-outline">
               MENU
+            </button>
+            <button id="btn-close-score" class="btn btn-ghost" type="button">
+              SKIP
             </button>
           </div>
         </div>
