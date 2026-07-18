@@ -203,68 +203,110 @@
       <!-- ============================================================== -->
       <div id="screen-hud" class="ui-screen hidden pointer-through">
 
-        <!-- Top HUD chips -->
-        <div class="hud-top">
-          <div class="hud-chip">
-            <span class="hud-label">LAP</span>
-            <span class="hud-value" id="hud-lap-text">1 / 2</span>
-          </div>
+        <!-- Top HUD: Back + Pause buttons (pointer-events re-enabled) -->
+        <div class="hud-action-btns">
+          <button id="btn-hud-back" class="hud-circle-btn" aria-label="Exit race">
+            <span class="material-symbols-outlined">arrow_back</span>
+          </button>
+          <button id="btn-touch-pause" class="hud-circle-btn" aria-label="Pause race">
+            <span class="material-symbols-outlined">pause</span>
+          </button>
+        </div>
 
-          <div class="hud-chip">
-            <span class="hud-label">TIME</span>
-            <span class="digital" id="hud-timer-text">00:00.000</span>
+        <!-- Connected Telemetry chip bar -->
+        <div class="hud-chip-bar">
+          <!-- LAP chip -->
+          <div class="hud-chip-cell hud-chip-lap">
+            <span class="hud-chip-label">LAP</span>
+            <span class="hud-chip-value" id="hud-lap-text">1<span class="hud-chip-sub">/2</span></span>
           </div>
-
-          <div class="hud-chip">
-            <span class="hud-label">SPEED</span>
-            <span class="hud-value" id="hud-speed-text">0 <small>KM/H</small></span>
+          <!-- SESSION TIME chip -->
+          <div class="hud-chip-cell hud-chip-time">
+            <span class="hud-chip-label">SESSION TIME</span>
+            <span class="hud-chip-value digital" id="hud-timer-text">00:00.000</span>
           </div>
-
-          <div class="hud-chip penalty-chip" id="hud-penalty-chip">
-            <span class="hud-label">PENALTY</span>
-            <span class="hud-value penalty-val" id="hud-penalty-text">+0.0s</span>
+          <!-- SPEED chip -->
+          <div class="hud-chip-cell hud-chip-speed">
+            <span class="hud-chip-label">KM/H</span>
+            <span class="hud-chip-value" id="hud-speed-text">0</span>
           </div>
         </div>
 
-        <!-- Center notification (countdown, warnings, etc.) -->
+        <!-- Warning / penalty bar (below chip bar) -->
+        <div class="hud-warning-bar" id="hud-penalty-chip">
+          <span class="hud-warning-left">
+            <span class="material-symbols-outlined hud-warning-icon">warning</span>
+            TRACK LIMITS
+          </span>
+          <span class="hud-warning-right" id="hud-penalty-text">+0.0s</span>
+        </div>
+
+        <!-- Center countdown / notification -->
         <div id="hud-notification" class="hud-notification hidden">
           GET READY: 3
         </div>
 
-        <!-- Bottom HUD: boost meter + mobile touch controls -->
+        <!-- Bottom HUD -->
         <div class="hud-bottom">
-          <!-- Boost energy bar -->
-          <div class="boost-meter-container">
-            <div class="boost-label">BOOST ENERGY</div>
-            <div class="boost-bar-bg">
-              <div class="boost-bar-fill" id="hud-boost-fill"></div>
-            </div>
+
+          <!-- LEFT: Steering buttons -->
+          <div class="hud-steer-group" id="hud-steer-left-group">
+            <button id="btn-touch-left" class="hud-ctrl-btn hud-ctrl-square" aria-label="Steer left">
+              <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <button id="btn-touch-right" class="hud-ctrl-btn hud-ctrl-square" aria-label="Steer right">
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
           </div>
 
-          <!-- Mobile touch controls -->
-          <div class="touch-controls-container">
-            <!-- Left thumb: steering -->
-            <div class="touch-group left-group">
-              <button id="btn-touch-left" class="touch-btn steer-btn" aria-label="Steer left">
-                <span>&#8592;</span>
-              </button>
-              <button id="btn-touch-right" class="touch-btn steer-btn" aria-label="Steer right">
-                <span>&#8594;</span>
-              </button>
+          <!-- RIGHT: KERS meter + BOOST/BRAKE/GAS -->
+          <div class="hud-drive-group" id="hud-drive-right-group">
+            <!-- KERS energy bar -->
+            <div class="hud-kers-meter">
+              <div class="hud-kers-bar-bg">
+                <div class="boost-bar-fill" id="hud-boost-fill"></div>
+              </div>
+              <span class="hud-kers-label">KERS ENERGY</span>
             </div>
 
-            <!-- Right thumb: reverse / gas / boost -->
-            <div class="touch-group right-group">
-              <button id="btn-touch-brake" class="touch-btn brake-btn" aria-label="Reverse">
-                <span>REVERSE</span>
-              </button>
-              <button id="btn-touch-accel" class="touch-btn accel-btn" aria-label="Accelerate">
-                <span>GAS</span>
-              </button>
-              <button id="btn-touch-boost" class="touch-btn boost-btn" aria-label="Boost">
-                <span>BOOST</span>
+            <!-- Controls row: BOOST+BRAKE stack | GAS -->
+            <div class="hud-drive-row">
+              <div class="hud-drive-stack">
+                <button id="btn-touch-boost" class="hud-ctrl-btn hud-ctrl-square" aria-label="Boost">
+                  <span class="material-symbols-outlined hud-icon-primary">bolt</span>
+                  <span class="hud-ctrl-label">BOOST</span>
+                </button>
+                <button id="btn-touch-brake" class="hud-ctrl-btn hud-ctrl-square hud-ctrl-brake" aria-label="Brake">
+                  <span class="material-symbols-outlined hud-icon-error">eject</span>
+                  <span class="hud-ctrl-label hud-ctrl-label-error">BRAKE</span>
+                </button>
+              </div>
+              <button id="btn-touch-accel" class="hud-ctrl-btn hud-ctrl-gas" aria-label="Accelerate">
+                <span class="material-symbols-outlined hud-icon-primary hud-icon-lg">speed</span>
+                <span class="hud-ctrl-label">GAS</span>
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- PAUSE MENU OVERLAY                                             -->
+      <!-- ============================================================== -->
+      <div id="screen-pause" class="ui-screen hidden">
+        <div class="pause-card">
+          <div class="pause-header">
+            <h2 class="pause-title">SESSION PAUSED</h2>
+          </div>
+          <div class="pause-actions">
+            <button id="btn-resume-race" class="btn btn-primary btn-full pause-btn">RESUME SESSION</button>
+            <button id="btn-restart-race" class="btn btn-outline btn-full pause-btn">RESTART RACE</button>
+            <div class="pause-danger-zone">
+              <button id="btn-exit-to-menu" class="btn btn-full pause-btn-danger">EXIT TO MAIN MENU</button>
+            </div>
+          </div>
+          <div class="pause-footer">
+            <span class="pause-version">Telemetry System v2.0.4</span>
           </div>
         </div>
       </div>
@@ -330,32 +372,51 @@
       <!-- GLOBAL LEADERBOARD SCREEN                                      -->
       <!-- ============================================================== -->
       <div id="screen-leaderboard" class="ui-screen hidden">
-        <div class="modal-card wide-card" style="height: 100%; max-height: calc(100dvh - 160px);">
 
-          <header class="modal-header">
-            <h2>GLOBAL LEADERBOARD</h2>
-            <button id="btn-close-leaderboard" class="icon-btn-circle" aria-label="Close leaderboard">
-              <span class="material-symbols-outlined">close</span>
+        <!-- Slimmer header -->
+        <div class="lb-header">
+          <div class="lb-header-left">
+            <button class="icon-btn" id="btn-close-leaderboard" aria-label="Close leaderboard">
+              <span class="material-symbols-outlined">menu</span>
             </button>
-          </header>
+            <div class="lb-header-brand">
+              <span class="lb-header-context">GLOBAL LEADERBOARD</span>
+              <span class="lb-header-season">SEASON 04</span>
+            </div>
+          </div>
+          <div class="lb-header-right">
+            <button class="icon-btn" aria-label="Search">
+              <span class="material-symbols-outlined">search</span>
+            </button>
+          </div>
+        </div>
 
-          <!-- Track tab pills -->
-          <div class="track-tabs scroll-hide" id="lb-track-tabs">
+        <div class="lb-body">
+          <!-- Underline-style track tabs -->
+          <div class="lb-tabs scroll-hide" id="lb-track-tabs">
             <!-- Dynamically populated by main.js -->
           </div>
 
-          <!-- Leaderboard entries (card-based, rendered by main.js) -->
-          <div class="table-container scroll-hide" id="lb-table-body">
-            <p class="loading-cell">Loading circuit times...</p>
+          <!-- Compact table-row leaderboard -->
+          <div class="lb-table-wrap">
+            <!-- Header row -->
+            <div class="lb-table-header">
+              <div class="lb-col-pos">POS</div>
+              <div class="lb-col-pilot">PILOT / CONSTRUCTOR</div>
+              <div class="lb-col-time">LAP TIME</div>
+            </div>
+            <!-- Entries (rendered by main.js) -->
+            <div class="lb-rows scroll-hide" id="lb-table-body">
+              <p class="loading-cell">Loading circuit times...</p>
+            </div>
           </div>
+        </div>
 
-          <div class="modal-footer">
-            <span class="leaderboard-hint">FASTEST TIMES</span>
-            <button id="btn-refresh-lb" class="btn btn-secondary btn-sm">
-              <span class="material-symbols-outlined" style="font-size:16px">refresh</span>
-              SYNC
-            </button>
-          </div>
+        <!-- Circular FAB refresh -->
+        <div class="lb-fab">
+          <button id="btn-refresh-lb" class="lb-fab-btn" aria-label="Sync leaderboard">
+            <span class="material-symbols-outlined">sync</span>
+          </button>
         </div>
       </div>
 

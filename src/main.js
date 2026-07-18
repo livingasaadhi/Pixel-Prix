@@ -39,7 +39,9 @@ function showScreen(screenId) {
     target.classList.remove('hidden');
   }
 
-  if (screenId !== 'screen-hud') setRaceMode(false);
+  // Nav chrome hidden during active race (HUD or Pause)
+  const isRaceActive = screenId === 'screen-hud' || screenId === 'screen-pause';
+  if (!isRaceActive) setRaceMode(false);
 }
 
 function setRaceMode(enabled) {
@@ -311,11 +313,14 @@ function setupGameEventListeners() {
   window.addEventListener('pixel-prix:hud', (e) => {
     const { speed, isReverse, lap, totalLaps, timeMs, penaltyMs, boostEnergy } = e.detail;
 
-    const unit = isReverse ? 'REV' : 'KM/H';
-    document.getElementById('hud-speed-text').innerHTML = `${speed} <small>${unit}</small>`;
-    document.getElementById('hud-lap-text').innerText = `${lap} / ${totalLaps}`;
+    // Speed: number only (KM/H is the label)
+    document.getElementById('hud-speed-text').innerText = `${speed}`;
+    // Lap: number + sub-text /N
+    document.getElementById('hud-lap-text').innerHTML = `${lap}<span class="hud-chip-sub">/${totalLaps}</span>`;
     document.getElementById('hud-timer-text').innerText = formatTime(timeMs);
-    document.getElementById('hud-penalty-text').innerText = `+${(penaltyMs / 1000).toFixed(1)}s`;
+    // Warning bar penalty
+    const penaltyVal = (penaltyMs / 1000).toFixed(1);
+    document.getElementById('hud-penalty-text').innerText = penaltyMs > 0 ? `+${penaltyVal}s PENALTY` : 'STEWARD INVESTIGATION';
     document.getElementById('hud-boost-fill').style.width = `${Math.max(0, Math.min(100, boostEnergy))}%`;
   });
 
@@ -353,33 +358,18 @@ async function loadLeaderboard(trackId) {
 
   container.innerHTML = scores.map((s, idx) => {
     const carName = CARS.find(c => c.id === s.car_id)?.name || s.car_id;
-    const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString() : 'Today';
-    const rankClass = idx === 0 ? 'rank-first' : 'rank-other';
+    const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'2-digit', year:'2-digit' }).replace(/\//g, '.') : 'Today';
+    const isFirst = idx === 0;
     return `
-      <div class="lb-entry glass-panel ${rankClass}">
-        <div class="lb-entry-col">
-          <div>
-            <p class="lb-field-label">POS</p>
-            <p class="lb-field-value">#${idx + 1}</p>
-          </div>
-          <div>
-            <p class="lb-field-label">PILOT</p>
-            <p class="lb-field-value">${escapeHtml(s.player_name)}</p>
-          </div>
+      <div class="lb-row${isFirst ? ' lb-row-first' : ''}">
+        <div class="lb-row-pos">#${String(idx + 1).padStart(2, '0')}</div>
+        <div class="lb-row-pilot">
+          <p class="lb-row-name">${escapeHtml(s.player_name)}</p>
+          <p class="lb-row-constructor">${escapeHtml(carName)}</p>
         </div>
-        <div class="lb-entry-col right">
-          <div>
-            <p class="lb-field-label">CONSTRUCTOR</p>
-            <p class="lb-field-value">${escapeHtml(carName)}</p>
-          </div>
-          <div>
-            <p class="lb-field-label">LAP TIME</p>
-            <p class="lb-field-mono">${formatTime(s.time_ms)}</p>
-          </div>
-        </div>
-        <div class="lb-entry-footer" style="grid-column: 1 / -1; display: flex; justify-content: space-between; width: 100%;">
-          <p class="lb-entry-date">${dateStr}</p>
-          <span class="material-symbols-outlined" style="color: rgba(255,255,255,0.2); font-size:18px;">chevron_right</span>
+        <div class="lb-row-time-col">
+          <p class="lb-row-time">${formatTime(s.time_ms)}</p>
+          <p class="lb-row-date">${dateStr}</p>
         </div>
       </div>
     `;
@@ -407,18 +397,20 @@ function escapeHtml(str) {
 
 function renderLeaderboardTabs(activeTrackId = TRACKS[selectedTrackIndex].id) {
   const container = document.getElementById('lb-track-tabs');
-  container.innerHTML = TRACKS.map((t, idx) => `
-    <button class="tab-btn ${t.id === activeTrackId ? 'active' : ''}" data-track-id="${t.id}">
-      ${t.name}
+  container.innerHTML = TRACKS.map((t) => `
+    <button class="lb-tab-btn ${t.id === activeTrackId ? 'active' : ''}" data-track-id="${t.id}">
+      <span class="lb-tab-label">${t.name}</span>
+      <span class="lb-tab-line"></span>
     </button>
   `).join('');
 
-  container.querySelectorAll('.tab-btn').forEach(btn => {
+  container.querySelectorAll('.lb-tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      watchLeaderboard(e.target.dataset.trackId);
-      loadLeaderboard(e.target.dataset.trackId);
+      const clickedBtn = e.currentTarget;
+      container.querySelectorAll('.lb-tab-btn').forEach(b => b.classList.remove('active'));
+      clickedBtn.classList.add('active');
+      watchLeaderboard(clickedBtn.dataset.trackId);
+      loadLeaderboard(clickedBtn.dataset.trackId);
     });
   });
 }
@@ -481,6 +473,38 @@ function initUI() {
   });
 
   document.getElementById('btn-select-back').addEventListener('click', () => {
+    showScreen('screen-menu');
+  });
+
+  // Pause menu
+  const showPause = () => {
+    showScreen('screen-pause');
+  };
+  const hidePause = () => {
+    showScreen('screen-hud');
+  };
+
+  const btnPause = document.getElementById('btn-touch-pause');
+  if (btnPause) btnPause.addEventListener('click', showPause);
+
+  const btnHudBack = document.getElementById('btn-hud-back');
+  if (btnHudBack) btnHudBack.addEventListener('click', () => {
+    if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
+      phaserGame.scene.stop('RaceScene');
+    }
+    showScreen('screen-menu');
+  });
+
+  document.getElementById('btn-resume-race').addEventListener('click', hidePause);
+
+  document.getElementById('btn-restart-race').addEventListener('click', () => {
+    launchSelectedRace();
+  });
+
+  document.getElementById('btn-exit-to-menu').addEventListener('click', () => {
+    if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
+      phaserGame.scene.stop('RaceScene');
+    }
     showScreen('screen-menu');
   });
 

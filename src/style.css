@@ -1628,3 +1628,641 @@ html, body {
   .modal-card  { padding: 14px; }
   .gameover-actions .btn { font-size: 0.72rem; }
 }
+
+/* ==========================================================================
+   REFINED HUD — Connected Chip Bar + New Controls
+   ========================================================================== */
+
+/* --- Action buttons (back + pause) top-left of HUD ---------------------- */
+.hud-action-btns {
+  position: absolute;
+  top: max(24px, env(safe-area-inset-top));
+  left: var(--margin);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.hud-circle-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-circle);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(8, 8, 10, 0.72);
+  backdrop-filter: blur(10px);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: 'Material Symbols Outlined';
+  font-size: 20px;
+  transition: background 0.12s ease, transform 0.08s ease;
+  touch-action: manipulation;
+}
+.hud-circle-btn:active { transform: scale(0.90); background: rgba(255,255,255,0.12); }
+
+/* --- Connected chip bar ------------------------------------------------- */
+.hud-chip-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  max-width: 560px;
+  margin: 0 auto;
+  background: rgba(8, 8, 10, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.hud-chip-cell {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px;
+  gap: 2px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hud-chip-cell:last-child { border-right: none; }
+
+.hud-chip-lap   { flex: 1; align-items: flex-start; }
+.hud-chip-time  { flex: 1.5; align-items: center; }
+.hud-chip-speed { flex: 1; align-items: flex-end; }
+
+.hud-chip-label {
+  font-family: var(--font-sans);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1;
+}
+
+.hud-chip-value {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.hud-chip-value.digital { font-family: var(--font-mono); }
+
+.hud-chip-sub {
+  font-size: 0.7rem;
+  color: var(--on-surface-variant);
+  font-family: var(--font-mono);
+}
+
+/* --- Warning / penalty bar ---------------------------------------------- */
+.hud-warning-bar {
+  position: absolute;
+  top: 48px; /* below chip bar */
+  left: 0;
+  right: 0;
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 16px;
+  background: rgba(255, 180, 171, 0.05);
+  border-bottom: 2px solid rgba(255, 180, 171, 0.35);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.hud-warning-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--error);
+}
+
+.hud-warning-icon {
+  font-size: 13px !important;
+  line-height: 1;
+}
+
+.hud-warning-right {
+  font-family: var(--font-sans);
+  font-size: 0.56rem;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.06em;
+  color: rgba(255, 180, 171, 0.75);
+}
+
+/* --- New HUD bottom layout ---------------------------------------------- */
+/* Override old hud-bottom to use absolute positioning */
+#screen-hud .hud-bottom {
+  display: contents; /* children position absolutely */
+}
+
+/* Left: steer group */
+.hud-steer-group {
+  position: absolute;
+  bottom: max(32px, env(safe-area-inset-bottom));
+  left: max(20px, env(safe-area-inset-left));
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+/* Right: drive group */
+.hud-drive-group {
+  position: absolute;
+  bottom: max(32px, env(safe-area-inset-bottom));
+  right: max(20px, env(safe-area-inset-right));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+/* KERS energy bar (right-aligned above controls) */
+.hud-kers-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+.hud-kers-bar-bg {
+  width: 160px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.hud-kers-label {
+  font-family: var(--font-sans);
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Drive row: stack + gas */
+.hud-drive-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.hud-drive-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Generic control button */
+.hud-ctrl-btn {
+  background: rgba(8, 8, 10, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  border-radius: var(--radius-lg);
+  transition: background 0.06s ease, transform 0.06s ease;
+  gap: 2px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  font-family: 'Material Symbols Outlined';
+}
+.hud-ctrl-btn:active { transform: scale(0.91); background: rgba(255,255,255,0.10); }
+
+/* Square buttons (steer, boost, brake) */
+.hud-ctrl-square {
+  width: clamp(64px, 18vw, 80px);
+  height: clamp(64px, 18vw, 80px);
+}
+
+/* Brake variant */
+.hud-ctrl-brake {
+  border-color: rgba(255, 180, 171, 0.25);
+}
+.hud-ctrl-brake:active { background: rgba(255,180,171,0.08); }
+
+/* Tall GAS button */
+.hud-ctrl-gas {
+  width: clamp(72px, 20vw, 96px);
+  height: clamp(120px, 35vw, 160px);
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.22);
+}
+.hud-ctrl-gas:active { background: rgba(255,255,255,0.18); }
+
+/* Icons inside control buttons */
+.hud-icon-primary   { color: var(--primary); font-size: 22px; }
+.hud-icon-error     { color: var(--error);   font-size: 22px; }
+.hud-icon-lg        { font-size: 36px !important; }
+
+.hud-ctrl-label {
+  font-family: var(--font-sans);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--primary);
+  line-height: 1;
+}
+.hud-ctrl-label-error { color: var(--error); }
+
+/* Notification (reposition for new chip bar height) */
+#screen-hud .hud-notification {
+  top: 100px; /* below chip bar (48) + warning bar (20) + buffer */
+}
+
+/* ==========================================================================
+   PAUSE MENU
+   ========================================================================== */
+#screen-pause {
+  background: rgba(8, 8, 10, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.pause-card {
+  width: 100%;
+  max-width: 320px;
+  background: rgba(20, 19, 19, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(16px);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.pause-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 16px;
+  text-align: center;
+}
+
+.pause-title {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.pause-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pause-btn {
+  padding: 14px 20px;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+}
+
+.pause-danger-zone {
+  margin-top: 6px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pause-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 20px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--error);
+  border: 1px solid rgba(255, 180, 171, 0.35);
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.pause-btn-danger:hover  { background: rgba(255, 180, 171, 0.06); }
+.pause-btn-danger:active { transform: scale(0.97); }
+
+.pause-footer {
+  display: flex;
+  justify-content: center;
+}
+
+.pause-version {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   REFINED LEADERBOARD — Compact Table-Row Style
+   ========================================================================== */
+#screen-leaderboard {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+/* Slim fixed header */
+.lb-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--margin);
+  background: rgba(28, 27, 27, 0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.lb-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lb-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.lb-header-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.lb-header-context {
+  font-family: var(--font-sans);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1;
+}
+
+.lb-header-season {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--primary);
+  line-height: 1;
+}
+
+/* Body scrollable area */
+.lb-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--margin);
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Underline tabs */
+.lb-tabs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.lb-tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  white-space: nowrap;
+  opacity: 0.42;
+  transition: opacity 0.15s ease;
+}
+.lb-tab-btn:hover { opacity: 0.8; }
+
+.lb-tab-btn.active {
+  opacity: 1;
+}
+
+.lb-tab-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.lb-tab-line {
+  height: 2px;
+  width: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+.lb-tab-btn:not(.active) .lb-tab-line { width: 0; background: rgba(255,255,255,0.4); }
+.lb-tab-btn:not(.active):hover .lb-tab-line { width: 100%; }
+
+/* Table wrap */
+.lb-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Column header row */
+.lb-table-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: rgba(53, 52, 52, 0.55);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.lb-col-pos   { width: 40px; }
+.lb-col-pilot { flex: 1; }
+.lb-col-time  { width: 96px; text-align: right; }
+
+.lb-table-header > div {
+  font-family: var(--font-sans);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* Scrollable rows */
+.lb-rows {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Individual table row */
+.lb-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(32, 31, 31, 0.35);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.lb-row:hover { background: rgba(255, 255, 255, 0.04); }
+
+/* Rank #1 featured */
+.lb-row.lb-row-first {
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 2px solid var(--primary);
+}
+.lb-row.lb-row-first:hover { background: rgba(255, 255, 255, 0.07); }
+
+.lb-row-pos {
+  width: 40px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  flex-shrink: 0;
+}
+.lb-row-first .lb-row-pos { color: var(--primary); }
+
+.lb-row-pilot { flex: 1; min-width: 0; }
+
+.lb-row-name {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  line-height: 1.2;
+}
+.lb-row-first .lb-row-name { color: var(--primary); }
+
+.lb-row-constructor {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1;
+  margin-top: 2px;
+}
+.lb-row-first .lb-row-constructor { color: rgba(255,255,255,0.45); }
+
+.lb-row-time-col {
+  width: 96px;
+  text-align: right;
+}
+
+.lb-row-time {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--on-surface);
+  line-height: 1.2;
+}
+.lb-row-first .lb-row-time { color: var(--primary); }
+
+.lb-row-date {
+  font-family: var(--font-sans);
+  font-size: 0.56rem;
+  color: rgba(255, 255, 255, 0.28);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+
+/* Circular FAB (refresh) */
+.lb-fab {
+  position: fixed;
+  bottom: max(96px, calc(72px + env(safe-area-inset-bottom)));
+  right: var(--margin);
+  z-index: 40;
+}
+
+.lb-fab-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-circle);
+  background: var(--bg-surface-high);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  font-family: 'Material Symbols Outlined';
+  font-size: 22px;
+}
+.lb-fab-btn:hover  { border-color: rgba(255,255,255,0.35); color: var(--primary); }
+.lb-fab-btn:active { transform: scale(0.90); }
+
+/* Mobile: smaller HUD controls on compact screens */
+@media (max-width: 480px) {
+  .hud-ctrl-square { width: 60px; height: 60px; }
+  .hud-ctrl-gas    { width: 68px; height: 110px; }
+  .hud-kers-bar-bg { width: 130px; }
+  .hud-steer-group { gap: 8px; }
+  .hud-drive-row   { gap: 8px; }
+  .hud-chip-value  { font-size: 1.05rem; }
+}
+
