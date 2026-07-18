@@ -59,6 +59,16 @@ export class RaceScene extends Phaser.Scene {
   }
 
   create() {
+    // Re-enable keyboard driving: finishRace() disables the per-scene
+    // KeyboardPlugin so the name-input field can receive keys. That disabled
+    // state can survive scene.stop -> scene.start, so restore it here BEFORE
+    // re-creating cursor/key objects.
+    if (this.input && this.input.keyboard) this.input.keyboard.enabled = true;
+
+    // Guard against any control 'active' state leaking across races.
+    this.isAccelerating = this.isBraking = this.isBoosting = false;
+    this.isSteeringLeft = this.isSteeringRight = false;
+
     // 1. World bounds
     this.physics.world.setBounds(0, 0, this.trackData.worldWidth, this.trackData.worldHeight);
 
@@ -262,7 +272,9 @@ export class RaceScene extends Phaser.Scene {
     }
 
     const boostActive = this.isBoostFiring && this.boostEnergy > 2;
-    const gasOn = this.isAccelerating || this.cursors.up.isDown || this.wasd.up.isDown || this._kb.up;
+    // Boost implies acceleration: tapping Boost alone accelerates the car.
+    const gasOn = this.isAccelerating || this.cursors.up.isDown || this.wasd.up.isDown ||
+                  this._kb.up || boostActive;
     const brakeOn = this.isBraking || this.cursors.down.isDown || this.wasd.down.isDown || this._kb.down;
 
     // Realistic speed-dependent steering:
@@ -327,7 +339,7 @@ export class RaceScene extends Phaser.Scene {
     let topSpeed = this.carData.topSpeed;
     let accel = this.carData.acceleration;
 
-    if (boostActive && gasOn) {
+    if (boostActive) {
       topSpeed *= this.carData.boostPower;
       accel *= 2.2;
       this.boostEnergy = Math.max(0, this.boostEnergy - 35 * dt);
