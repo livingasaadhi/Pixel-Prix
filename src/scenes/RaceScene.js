@@ -208,6 +208,18 @@ export class RaceScene extends Phaser.Scene {
 
     // Remove camera bounds so camera never stops at track edges
     cam.removeBounds();
+
+    // Align camera scroll immediately to player start position
+    this.centerCameraOnPlayer();
+  }
+
+  centerCameraOnPlayer() {
+    if (!this.player || !this.cameras.main) return;
+    const cam = this.cameras.main;
+    cam.rotation = 0;
+    const zoom = cam.zoom || this.baseZoom || 0.7;
+    cam.scrollX = this.player.x - (cam.width / 2) / zoom;
+    cam.scrollY = this.player.y - (cam.height / 2) / zoom;
   }
 
   startCountdown() {
@@ -240,29 +252,23 @@ export class RaceScene extends Phaser.Scene {
   }
 
   update(time, delta) {
-    if (!this.raceStarted || this.raceFinished) return;
-
     const dt = delta / 1000;
+    const cam = this.cameras.main;
+
+    // Permanent 0° rotation and camera scroll lock on player every frame
+    // (runs during countdown and active race so player is ALWAYS centered)
+    this.centerCameraOnPlayer();
+
+    if (!this.raceStarted || this.raceFinished) return;
 
     // Timer & HUD
     this.elapsedMs = this.time.now - this.startTime;
     this.emitHUDUpdate();
 
-    const cam = this.cameras.main;
-
-    // Camera rotation is fixed at 0° permanently
-    cam.rotation = 0;
-
     // Smooth high-speed zoom out (~8% zoom expansion at top speed)
     const speedRatio = Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275));
     const targetZoom = (this.baseZoom || 0.7) * (1.0 - speedRatio * 0.08);
     cam.zoom = Phaser.Math.Linear(cam.zoom, targetZoom, 2.5 * dt);
-
-    // Hard-lock camera scroll every frame so player sprite screen position is
-    // mathematically fixed at the exact visual center (cam.width / 2, cam.height / 2).
-    // Zero follow lerp lag and zero camera boundary collision.
-    cam.scrollX = this.player.x - (cam.width / 2) / cam.zoom;
-    cam.scrollY = this.player.y - (cam.height / 2) / cam.zoom;
 
     // Steering
     let steerDir = 0;
