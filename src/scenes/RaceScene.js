@@ -96,14 +96,8 @@ export class RaceScene extends Phaser.Scene {
     this.player.rotation = startPos.rotation || 0;
 
     // 4. Camera
-    // Bound the camera to the track's actual footprint (not the oversized world
-    // rectangle) so we never show large empty gridded margins around a small
-    // loop, then frame it dynamically on resize.
-    this.frameCamera();
-    // Tighter follow lerp keeps the car (and its immediate track area) centered
-    // with minimal lag; no follow offset so the car stays dead-centered.
     this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
-    this.cameras.main.setFollowOffset(0, 0);
+    this.frameCamera();
     this.scale.on('resize', this.frameCamera, this);
 
     // 5. Particles (smoke)
@@ -180,10 +174,8 @@ export class RaceScene extends Phaser.Scene {
     this.startCountdown();
   }
 
-  // Frame the camera around the track's real footprint. Using the spline
-  // bounding box (instead of the full world rectangle) removes the empty
-  // gridded margins, keeps the car centered, and zooms to show plenty of
-  // upcoming track without leaving dead space above or below.
+  // Frame the camera around the track's real footprint with player-locked
+  // vertical offset and HUD viewport isolation.
   frameCamera() {
     const cam = this.cameras.main;
     const pad = (this.roadWidth || 100) + 60;
@@ -199,18 +191,39 @@ export class RaceScene extends Phaser.Scene {
     const trackW = (maxX - minX) + pad * 2;
     const trackH = (maxY - minY) + pad * 2;
 
-    cam.setBounds(minX - pad, minY - pad, trackW, trackH);
-
     const vw = this.scale.width || window.innerWidth;
     const vh = this.scale.height || window.innerHeight;
 
-    // Cover the track footprint so it always fills the viewport (no empty
-    // gridded margins). Clamp the zoom so the car never becomes a tiny dot on
-    // large tracks nor too close on small ones; the follow camera keeps the
-    // car centered while showing its immediate track surroundings.
-    const cover = Math.max(vw / trackW, vh / trackH);
-    const zoom = Math.max(0.5, Math.min(cover, 0.8));
+    // Dynamically measure reserved bottom UI height (touch controls & KERS bar)
+    let bottomControlsHeight = 0;
+    const driveGroup = document.getElementById('hud-drive-right-group');
+    const steerGroup = document.getElementById('hud-steer-left-group');
+    if (driveGroup && driveGroup.getBoundingClientRect().height > 0) {
+      bottomControlsHeight = driveGroup.getBoundingClientRect().height + 24;
+    } else if (steerGroup && steerGroup.getBoundingClientRect().height > 0) {
+      bottomControlsHeight = steerGroup.getBoundingClientRect().height + 24;
+    } else {
+      bottomControlsHeight = 180;
+    }
+
+    // Physically isolate gameplay rendering to the viewport area ABOVE controls
+    const gameplayHeight = Math.max(200, vh - bottomControlsHeight);
+    cam.setViewport(0, 0, vw, gameplayHeight);
+
+    // Zoom level calculation for optimal track visibility
+    const cover = Math.max(vw / trackW, gameplayHeight / trackH);
+    const zoom = Math.max(0.55, Math.min(cover, 0.85));
     cam.setZoom(zoom);
+
+    // Lock car visually at 62% from top of gameplay viewport (giving maximum track visibility ahead)
+    const targetCarScreenY = gameplayHeight * 0.62;
+    const centerScreenY = gameplayHeight * 0.50;
+    const screenOffsetY = targetCarScreenY - centerScreenY;
+    const worldOffsetY = screenOffsetY / zoom;
+
+    // Fluid player-locked tracking with track rotation
+    cam.removeBounds();
+    cam.setFollowOffset(0, worldOffsetY);
   }
 
   startCountdown() {
@@ -250,6 +263,15 @@ export class RaceScene extends Phaser.Scene {
     // Timer & HUD
     this.elapsedMs = this.time.now - this.startTime;
     this.emitHUDUpdate();
+
+    // Smooth camera rotation so the world rotates around the player
+    // and forward driving is always oriented towards the top of the screen
+    const targetRotation = this.player.rotation + Math.PI / 2;
+    this.cameras.main.rotation = Phaser.Math.Angle.RotateTo(
+      this.cameras.main.rotation,
+      targetRotation,
+      4.5 * dt
+    );
 
     // Steering
     let steerDir = 0;

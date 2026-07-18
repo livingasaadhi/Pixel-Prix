@@ -259,7 +259,7 @@
             </button>
           </div>
 
-          <!-- RIGHT: KERS meter + BOOST/BRAKE/GAS -->
+          <!-- RIGHT: KERS meter + BOOST (Top) / BRAKE (Middle) / GAS (Bottom) -->
           <div class="hud-drive-group" id="hud-drive-right-group">
             <!-- KERS energy bar -->
             <div class="hud-kers-meter">
@@ -269,19 +269,17 @@
               <span class="hud-kers-label">KERS ENERGY</span>
             </div>
 
-            <!-- Controls row: BOOST+BRAKE stack | GAS -->
-            <div class="hud-drive-row">
-              <div class="hud-drive-stack">
-                <button id="btn-touch-boost" class="hud-ctrl-btn hud-ctrl-square" aria-label="Boost">
-                  <span class="material-symbols-outlined hud-icon-primary">bolt</span>
-                  <span class="hud-ctrl-label">BOOST</span>
-                </button>
-                <button id="btn-touch-brake" class="hud-ctrl-btn hud-ctrl-square hud-ctrl-brake" aria-label="Brake">
-                  <span class="material-symbols-outlined hud-icon-error">eject</span>
-                  <span class="hud-ctrl-label hud-ctrl-label-error">BRAKE</span>
-                </button>
-              </div>
-              <button id="btn-touch-accel" class="hud-ctrl-btn hud-ctrl-gas" aria-label="Accelerate">
+            <!-- 3-Tier Vertical Control Stack -->
+            <div class="hud-drive-vstack">
+              <button id="btn-touch-boost" class="hud-ctrl-btn hud-ctrl-tier-boost" aria-label="Boost">
+                <span class="material-symbols-outlined hud-icon-primary">bolt</span>
+                <span class="hud-ctrl-label">BOOST</span>
+              </button>
+              <button id="btn-touch-brake" class="hud-ctrl-btn hud-ctrl-tier-brake" aria-label="Brake">
+                <span class="material-symbols-outlined hud-icon-error">eject</span>
+                <span class="hud-ctrl-label hud-ctrl-label-error">BRAKE</span>
+              </button>
+              <button id="btn-touch-accel" class="hud-ctrl-btn hud-ctrl-tier-gas" aria-label="Accelerate">
                 <span class="material-symbols-outlined hud-icon-primary hud-icon-lg">speed</span>
                 <span class="hud-ctrl-label">GAS</span>
               </button>

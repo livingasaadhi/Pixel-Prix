@@ -1821,17 +1821,12 @@ html, body {
   color: rgba(255, 255, 255, 0.4);
 }
 
-/* Drive row: stack + gas */
-.hud-drive-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-}
-
-.hud-drive-stack {
+/* 3-Tier Vertical Stack: Top Boost, Middle Brake, Bottom Gas */
+.hud-drive-vstack {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: stretch;
+  gap: 6px;
 }
 
 /* Generic control button */
@@ -1855,26 +1850,34 @@ html, body {
 }
 .hud-ctrl-btn:active { transform: scale(0.91); background: rgba(255,255,255,0.10); }
 
-/* Square buttons (steer, boost, brake) */
+/* Steering Square buttons */
 .hud-ctrl-square {
   width: clamp(64px, 18vw, 80px);
   height: clamp(64px, 18vw, 80px);
 }
 
-/* Brake variant */
-.hud-ctrl-brake {
+/* Tier 1 (Top): Boost button */
+.hud-ctrl-tier-boost {
+  width: clamp(72px, 20vw, 96px);
+  height: clamp(48px, 12vw, 60px);
+}
+
+/* Tier 2 (Middle): Brake button */
+.hud-ctrl-tier-brake {
+  width: clamp(72px, 20vw, 96px);
+  height: clamp(48px, 12vw, 60px);
   border-color: rgba(255, 180, 171, 0.25);
 }
-.hud-ctrl-brake:active { background: rgba(255,180,171,0.08); }
+.hud-ctrl-tier-brake:active { background: rgba(255,180,171,0.08); }
 
-/* Tall GAS button */
-.hud-ctrl-gas {
+/* Tier 3 (Bottom): Gas button */
+.hud-ctrl-tier-gas {
   width: clamp(72px, 20vw, 96px);
-  height: clamp(120px, 35vw, 160px);
+  height: clamp(76px, 20vw, 100px);
   background: rgba(255,255,255,0.08);
   border-color: rgba(255,255,255,0.22);
 }
-.hud-ctrl-gas:active { background: rgba(255,255,255,0.18); }
+.hud-ctrl-tier-gas:active { background: rgba(255,255,255,0.18); }
 
 /* Icons inside control buttons */
 .hud-icon-primary   { color: var(--primary); font-size: 22px; }
