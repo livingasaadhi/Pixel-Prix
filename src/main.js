@@ -232,6 +232,18 @@ function updateCarSelection() {
   document.getElementById('stat-accel').style.width = `${(car.acceleration / 180) * 100}%`;
   document.getElementById('stat-handling').style.width = `${(car.handling / 5.2) * 100}%`;
   document.getElementById('stat-boost').style.width = `${(car.boostPower / 1.7) * 100}%`;
+
+  const speedVal = document.getElementById('stat-speed-val');
+  if (speedVal) speedVal.innerText = `${car.topSpeed} KM/H`;
+
+  const accelVal = document.getElementById('stat-accel-val');
+  if (accelVal) accelVal.innerText = `0-100: ${(350 / car.acceleration).toFixed(1)}S`;
+
+  const handlingVal = document.getElementById('stat-handling-val');
+  if (handlingVal) handlingVal.innerText = `GRIP ${(car.handling / 4).toFixed(2)}G`;
+
+  const boostVal = document.getElementById('stat-boost-val');
+  if (boostVal) boostVal.innerText = `ERS ${Math.round(car.boostPower * 100)}KW`;
 }
 
 function updateTrackSelection() {
