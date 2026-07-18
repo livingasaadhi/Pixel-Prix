@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#050505">
+  <meta name="description" content="Pixel Prix - Open-Wheel F1 2D top-down racing game built with Phaser 3 & Supabase leaderboards.">
+  <title>Pixel Prix | Open-Wheel F1 2D Racing</title>
+  
+  <!-- Google Fonts - Pure Modern Sans-Serif -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script type="module" crossorigin src="./assets/index-Bw8uGl94.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Cgr9gPkJ.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Phaser canvas mount point -->
+    <div id="game-container"></div>
+
+    <!-- UI Overlay for Menus, HUD & Touch Controls -->
+    <div id="ui-overlay" class="ui-container">
+      
+      <!-- MAIN MENU -->
+      <div id="screen-menu" class="ui-screen active">
+        <div class="brand-header">
+          <div class="logo-badge">FORMULA 2D</div>
+          <h1 class="logo-title">PIXEL PRIX</h1>
+          <p class="logo-subtitle">HIGH-OCTANE OPEN-WHEEL RACING</p>
+        </div>
+
+        <div class="menu-actions">
+          <button id="btn-start-game" class="btn btn-primary btn-large">
+            PLAY RACE
+          </button>
+          <button id="btn-open-leaderboard" class="btn btn-secondary">
+            LEADERBOARDS
+          </button>
+          <button id="btn-open-settings" class="btn btn-tertiary">
+            CONTROLS AND INFO
+          </button>
+        </div>
+
+        <div class="menu-footer">
+          <span>Responsive Mobile and Desktop</span>
+        </div>
+      </div>
+
+      <!-- CAR & TRACK SELECT SCREEN -->
+      <div id="screen-select" class="ui-screen hidden">
+        <header class="screen-header">
+          <button id="btn-select-back" class="btn-icon-only">&lt;</button>
+          <h2>SELECT CAR AND CIRCUIT</h2>
+          <div class="spacer"></div>
+        </header>
+
+        <div class="selection-grid">
+          <!-- Car Selection Section -->
+          <section class="select-card">
+            <h3>SELECT CAR</h3>
+            <div class="carousel-container">
+              <button id="car-prev" class="nav-arrow">&lt;</button>
+              <div class="car-preview-box" id="car-preview">
+                <canvas id="car-preview-canvas" width="96" height="56" style="margin-bottom: 8px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));"></canvas>
+                <div class="car-info">
+                  <h4 id="car-name">Apex Phantom</h4>
+                  <p id="car-desc" class="car-desc">Balanced speed and precision handling.</p>
+                </div>
+              </div>
+              <button id="car-next" class="nav-arrow">&gt;</button>
+            </div>
+            
+            <div class="stat-bars">
+              <div class="stat-row">
+                <span>Top Speed</span>
+                <div class="bar-bg"><div class="bar-fill" id="stat-speed"></div></div>
+              </div>
+              <div class="stat-row">
+                <span>Acceleration</span>
+                <div class="bar-bg"><div class="bar-fill" id="stat-accel"></div></div>
+              </div>
+              <div class="stat-row">
+                <span>Handling</span>
+                <div class="bar-bg"><div class="bar-fill" id="stat-handling"></div></div>
+              </div>
+              <div class="stat-row">
+                <span>Boost Power</span>
+                <div class="bar-bg"><div class="bar-fill" id="stat-boost"></div></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Track Selection Section -->
+          <section class="select-card">
+            <h3>SELECT CIRCUIT</h3>
+            <div class="carousel-container">
+              <button id="track-prev" class="nav-arrow">&lt;</button>
+              <div class="track-preview-box">
+                <canvas id="track-minimap" width="160" height="120"></canvas>
+                <div class="track-info">
+                  <h4 id="track-name">Monaco Oval</h4>
+                  <p id="track-desc">Smooth beginner oval track with wide turns.</p>
+                </div>
+              </div>
+              <button id="track-next" class="nav-arrow">&gt;</button>
+            </div>
+            
+            <div class="track-stats">
+              <div class="track-tag"><span id="track-difficulty">EASY</span></div>
+              <div class="track-tag"><span id="track-laps">2 LAPS</span></div>
+              <div class="track-tag"><span id="track-length">1.2 KM</span></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="selection-footer">
+          <button id="btn-launch-race" class="btn btn-primary btn-large glow-btn">
+            START RACE
+          </button>
+        </div>
+      </div>
+
+      <!-- RACE HUD (TOP / BOTTOM OVERLAYS) -->
+      <div id="screen-hud" class="ui-screen hidden pointer-through">
+        <!-- TOP HUD -->
+        <div class="hud-top">
+          <div class="hud-chip">
+            <span class="hud-label">LAP</span>
+            <span class="hud-value" id="hud-lap-text">1 / 2</span>
+          </div>
+          
+          <div class="hud-chip timer-chip">
+            <span class="hud-label">TIME</span>
+            <span class="hud-value digital" id="hud-timer-text">00:00.000</span>
+          </div>
+
+          <div class="hud-chip">
+            <span class="hud-label">SPEED</span>
+            <span class="hud-value" id="hud-speed-text">0 <small>KM/H</small></span>
+          </div>
+
+          <!-- STEWARDS PENALTY BADGE -->
+          <div class="hud-chip penalty-chip" id="hud-penalty-chip">
+            <span class="hud-label">PENALTY</span>
+            <span class="hud-value penalty-val" id="hud-penalty-text">+0.0s</span>
+          </div>
+        </div>
+
+        <!-- MID WARNING / CHECKPOINT & STEWARDS NOTIFICATION -->
+        <div id="hud-notification" class="hud-notification hidden">
+          GET READY: 3
+        </div>
+
+        <!-- BOTTOM HUD: BOOST METER & MOBILE TOUCH CONTROLS -->
+        <div class="hud-bottom">
+          <!-- Boost Energy Bar -->
+          <div class="boost-meter-container">
+            <div class="boost-label">BOOST ENERGY</div>
+            <div class="boost-bar-bg">
+              <div class="boost-bar-fill" id="hud-boost-fill"></div>
+            </div>
+          </div>
+
+          <!-- Touch Controls (Mobile Thumb Layout) -->
+          <div class="touch-controls-container">
+            <!-- Left Thumb: Steering -->
+            <div class="touch-group left-group">
+              <button id="btn-touch-left" class="touch-btn steer-btn">
+                <span>LEFT</span>
+              </button>
+              <button id="btn-touch-right" class="touch-btn steer-btn">
+                <span>RIGHT</span>
+              </button>
+            </div>
+
+            <!-- Right Thumb: REVERSE on left, GAS on right (right side of reverse), BOOST on top -->
+            <div class="touch-group right-group">
+              <button id="btn-touch-brake" class="touch-btn brake-btn">
+                <span>REVERSE</span>
+              </button>
+              <button id="btn-touch-accel" class="touch-btn accel-btn">
+                <span>GAS</span>
+              </button>
+              <button id="btn-touch-boost" class="touch-btn boost-btn">
+                <span>BOOST</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GAME OVER / FINISH SCREEN -->
+      <div id="screen-gameover" class="ui-screen hidden">
+        <div class="modal-card">
+          <div class="finish-banner">RACE FINISHED</div>
+          
+          <div class="time-display-box">
+            <div class="penalty-breakdown">
+              <div class="time-row">
+                <span>Raw Time:</span>
+                <span id="go-raw-time">00:45.320</span>
+              </div>
+              <div class="time-row penalty-row">
+                <span>Stewards Penalty:</span>
+                <span id="go-penalty-time">+0.000s</span>
+              </div>
+            </div>
+
+            <div class="final-time-label">FINAL ADJUSTED TIME</div>
+            <div class="final-time-value" id="go-final-time">00:45.320</div>
+            <div class="best-lap-sub" id="go-best-lap">Best Lap: 00:22.100</div>
+          </div>
+
+          <!-- Submit Score Form -->
+          <form id="score-form" class="score-form">
+            <label for="player-name-input">ENTER DRIVER NAME</label>
+            <div class="input-group">
+              <input type="text" id="player-name-input" maxlength="16" placeholder="Racer X" required autocomplete="off">
+              <button type="submit" id="btn-submit-score" class="btn btn-primary">
+                SUBMIT
+              </button>
+            </div>
+            <p id="submit-status" class="status-msg"></p>
+          </form>
+
+          <div class="gameover-actions">
+            <button id="btn-retry-race" class="btn btn-secondary">
+              RETRY
+            </button>
+            <button id="btn-view-leaderboard-go" class="btn btn-tertiary">
+              LEADERBOARD
+            </button>
+            <button id="btn-gameover-menu" class="btn btn-outline">
+              MENU
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD SCREEN -->
+      <div id="screen-leaderboard" class="ui-screen hidden">
+        <div class="modal-card wide-card">
+          <header class="modal-header">
+            <h2>GLOBAL LEADERBOARD</h2>
+            <button id="btn-close-leaderboard" class="btn-icon-only">X</button>
+          </header>
+
+          <!-- Track Tabs -->
+          <div class="track-tabs" id="lb-track-tabs">
+            <!-- Dynamically populated track tabs -->
+          </div>
+
+          <!-- Leaderboard Table -->
+          <div class="table-container">
+            <table class="leaderboard-table">
+              <thead>
+                <tr>
+                  <th>RANK</th>
+                  <th>DRIVER</th>
+                  <th>CAR</th>
+                  <th>TIME</th>
+                  <th>DATE</th>
+                </tr>
+              </thead>
+              <tbody id="lb-table-body">
+                <tr><td colspan="5" class="loading-cell">Loading times...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="modal-footer">
+            <span id="lb-backend-tag" class="backend-tag">Supabase Connected</span>
+            <button id="btn-refresh-lb" class="btn btn-secondary btn-sm">Refresh</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTROLS & INFO MODAL -->
+      <div id="screen-settings" class="ui-screen hidden">
+        <div class="modal-card">
+          <header class="modal-header">
+            <h2>CONTROLS AND F1 STEWARDS RULES</h2>
+            <button id="btn-close-settings" class="btn-icon-only">X</button>
+          </header>
+
+          <div class="info-content">
+            <div class="control-grid">
+              <div class="control-box">
+                <h4>Touch Screen (Mobile)</h4>
+                <ul>
+                  <li><strong>Left Thumb:</strong> Steering Left / Right</li>
+                  <li><strong>Right Thumb:</strong> REVERSE (left), GAS (right of reverse), BOOST (multiplier)</li>
+                </ul>
+              </div>
+              <div class="control-box">
+                <h4>Keyboard (Desktop)</h4>
+                <ul>
+                  <li><strong>Accelerate (GAS):</strong> W or Up Arrow</li>
+                  <li><strong>Reverse / Brake:</strong> S or Down Arrow</li>
+                  <li><strong>Steering:</strong> A / D or Left / Right Arrows</li>
+                  <li><strong>Boost:</strong> Shift or Spacebar</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="rules-box">
+              <h4>F1 Stewards & Penalty System</h4>
+              <p>Passing all checkpoints in order is mandatory. Leaving track limits (all 4 wheels on grass) triggers official warnings. 3 track limit offenses add a +5.0s time penalty to your final race time! Shortcut corner cutting adds +10.0s.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
