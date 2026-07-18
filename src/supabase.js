@@ -16,11 +16,24 @@ const SUPABASE_ANON_KEY = ENV_KEY && !ENV_KEY.includes('YOUR_SUPABASE_ANON_KEY')
 const isConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 let supabase = null;
+let connectionVerified = false;
 
 if (isConfigured) {
   try {
     supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('⚡ Supabase client initialized.');
+
+    supabase.from('scores').select('*', { count: 'exact', head: true }).then(({ error }) => {
+      if (error) {
+        console.warn('⚠️ Supabase connection verified but table may not exist:', error.message);
+        console.warn('⚠️ Run supabase/migrations/001_create_scores_table.sql in your Supabase SQL Editor.');
+      } else {
+        connectionVerified = true;
+        console.log('✅ Supabase connection verified. scores table exists and is accessible.');
+      }
+    }).catch((err) => {
+      console.warn('⚠️ Supabase connection failed:', err.message);
+    });
   } catch (err) {
     console.warn('⚠️ Supabase initialization error, falling back to local storage:', err);
   }
@@ -114,5 +127,7 @@ function getLocalScores(trackId) {
 }
 
 export function getBackendStatus() {
-  return isConfigured ? 'Supabase Connected' : 'Offline / LocalStorage';
+  if (!isConfigured) return 'Offline / LocalStorage';
+  if (!connectionVerified) return 'Supabase (table missing?)';
+  return 'Supabase Connected';
 }
