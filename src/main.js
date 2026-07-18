@@ -81,6 +81,17 @@ function initGame() {
   };
 
   phaserGame = new Phaser.Game(config);
+
+  // Real mobile browsers (e.g. Chrome on Android) shrink the visible area when
+  // the address bar shows/hides. Keep Phaser's canvas in sync with the visual
+  // viewport so the HUD and track stay aligned on real devices (DevTools
+  // emulation does not reproduce this).
+  const syncVisualViewport = () => phaserGame && phaserGame.scale && phaserGame.scale.refresh();
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', syncVisualViewport);
+    window.visualViewport.addEventListener('scroll', syncVisualViewport);
+  }
+  window.addEventListener('resize', syncVisualViewport);
 }
 
 // ----------------------------------------------------------------------------

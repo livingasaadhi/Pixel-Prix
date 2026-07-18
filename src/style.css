@@ -48,6 +48,7 @@ html, body {
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -333,7 +334,7 @@ html, body {
   gap: 1rem;
   width: 100%;
   max-width: 900px;
-  max-height: calc(100vh - 160px);
+  max-height: calc(100dvh - 160px);
   overflow-y: auto;
 }
 
@@ -1070,7 +1071,7 @@ html, body {
 
 @media (max-width: 640px) and (orientation: landscape) {
   .ui-screen { padding: max(8px, env(safe-area-inset-top)) 16px max(8px, env(safe-area-inset-bottom)); }
-  .modal-card { max-height: calc(100vh - 16px); overflow-y: auto; }
+  .modal-card { max-height: calc(100dvh - 16px); overflow-y: auto; }
 }
 
 /* Accessibility guardrail for every phone and tablet size. These rules keep

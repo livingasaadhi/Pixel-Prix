@@ -55,6 +55,7 @@ export class RaceScene extends Phaser.Scene {
     // Cleanup refs
     this._notifTimeout = null;
     this._preventScrollHandler = null;
+    this._kbHandler = null;
   }
 
   create() {
@@ -105,6 +106,35 @@ export class RaceScene extends Phaser.Scene {
     });
     this.boostKeyZ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
     this.boostKeyC = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
+
+    // Robust keyboard fallback driven by event.code (case- and layout-
+    // independent) so driving works whether the player types a/A, w/W, etc.
+    // Phaser's own key objects are OR-ed with this in update() for redundancy.
+    this._kb = {
+      up: false, down: false, left: false, right: false,
+      space: false, shift: false, z: false, c: false
+    };
+    const codeMap = {
+      KeyW: 'up', ArrowUp: 'up',
+      KeyS: 'down', ArrowDown: 'down',
+      KeyA: 'left', ArrowLeft: 'left',
+      KeyD: 'right', ArrowRight: 'right',
+      Space: 'space', ShiftLeft: 'shift', ShiftRight: 'shift',
+      KeyZ: 'z', KeyC: 'c'
+    };
+    this._kbHandler = (e) => {
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
+        return;
+      }
+      const action = codeMap[e.code];
+      if (action) {
+        this._kb[action] = e.type === 'keydown';
+        if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+      }
+    };
+    window.addEventListener('keydown', this._kbHandler);
+    window.addEventListener('keyup', this._kbHandler);
 
     // Prevent browser scrolling on game keys, but never while the user is
     // typing into a text field (e.g. the driver-name input on the results
@@ -200,8 +230,8 @@ export class RaceScene extends Phaser.Scene {
 
     // Steering
     let steerDir = 0;
-    if (this.isSteeringLeft || this.cursors.left.isDown || this.wasd.left.isDown) steerDir -= 1;
-    if (this.isSteeringRight || this.cursors.right.isDown || this.wasd.right.isDown) steerDir += 1;
+    if (this.isSteeringLeft || this.cursors.left.isDown || this.wasd.left.isDown || this._kb.left) steerDir -= 1;
+    if (this.isSteeringRight || this.cursors.right.isDown || this.wasd.right.isDown || this._kb.right) steerDir += 1;
 
     // Swap car texture for visual steering feedback
     const carTexBase = 'car_' + this.carData.id + '_';
@@ -214,7 +244,8 @@ export class RaceScene extends Phaser.Scene {
 
     // Boost activation logic: can only start boosting if energy >= 30%. Can sustain down to 2%.
     const boostButtonPressed = this.isBoosting || this.wasd.space.isDown || this.wasd.shift.isDown ||
-                               this.boostKeyZ.isDown || this.boostKeyC.isDown;
+                               this.boostKeyZ.isDown || this.boostKeyC.isDown ||
+                               this._kb.space || this._kb.shift || this._kb.z || this._kb.c;
     
     if (boostButtonPressed) {
       if (this.isBoostFiring) {
@@ -231,8 +262,8 @@ export class RaceScene extends Phaser.Scene {
     }
 
     const boostActive = this.isBoostFiring && this.boostEnergy > 2;
-    const gasOn = this.isAccelerating || this.cursors.up.isDown || this.wasd.up.isDown;
-    const brakeOn = this.isBraking || this.cursors.down.isDown || this.wasd.down.isDown;
+    const gasOn = this.isAccelerating || this.cursors.up.isDown || this.wasd.up.isDown || this._kb.up;
+    const brakeOn = this.isBraking || this.cursors.down.isDown || this.wasd.down.isDown || this._kb.down;
 
     // Realistic speed-dependent steering:
     // - At low speed: full turn rate (tight maneuvering)
@@ -478,6 +509,11 @@ export class RaceScene extends Phaser.Scene {
     if (this._preventScrollHandler) {
       window.removeEventListener('keydown', this._preventScrollHandler);
       this._preventScrollHandler = null;
+    }
+    if (this._kbHandler) {
+      window.removeEventListener('keydown', this._kbHandler);
+      window.removeEventListener('keyup', this._kbHandler);
+      this._kbHandler = null;
     }
   }
 }
