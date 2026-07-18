@@ -3,6 +3,8 @@
  * Provides engine acceleration sound, tire squeal, boost energy whoosh, and checkpoint chimes.
  */
 
+const ENGINE_IDLE_GAIN = 0.04;
+
 let audioCtx = null;
 let engineOsc = null;
 let engineGain = null;
@@ -31,7 +33,7 @@ export function startEngineSound() {
     engineOsc.type = 'sawtooth';
     engineOsc.frequency.setValueAtTime(60, audioCtx.currentTime);
 
-    engineGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+    engineGain.gain.setValueAtTime(ENGINE_IDLE_GAIN, audioCtx.currentTime);
 
     engineOsc.connect(engineGain);
     engineGain.connect(audioCtx.destination);
@@ -46,6 +48,17 @@ export function updateEnginePitch(speedRatio) {
   if (!audioCtx || !engineOsc || isMuted) return;
   const targetFreq = 50 + speedRatio * 220; // 50Hz idle to 270Hz top speed
   engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.05);
+}
+
+// Smoothly mute/unmute the running engine oscillator. The engine drone should
+// only be audible while the car is actively accelerating; otherwise its gain
+// is ramped to (near) zero so no background sound plays when coasting/braking.
+export function setEngineActive(active) {
+  if (!audioCtx || !engineGain) return;
+  const now = audioCtx.currentTime;
+  const target = active ? ENGINE_IDLE_GAIN : 0.0001;
+  engineGain.gain.cancelScheduledValues(now);
+  engineGain.gain.setTargetAtTime(target, now, 0.05);
 }
 
 export function stopEngineSound() {

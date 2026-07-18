@@ -3,7 +3,7 @@ import { getCarById } from '../data/cars.js';
 import { getTrackById } from '../data/tracks.js';
 import { renderTrackGraphics } from '../utils/trackRenderer.js';
 import { isOffRoad, checkCheckpointProximity } from '../utils/trackPhysics.js';
-import { startEngineSound, updateEnginePitch, stopEngineSound, playBoostSound, playCheckpointSound, playFinishSound } from '../utils/audio.js';
+import { startEngineSound, updateEnginePitch, stopEngineSound, setEngineActive, playBoostSound, playCheckpointSound, playFinishSound } from '../utils/audio.js';
 
 export class RaceScene extends Phaser.Scene {
   constructor() {
@@ -278,6 +278,7 @@ export class RaceScene extends Phaser.Scene {
     // Boost implies acceleration: tapping Boost alone accelerates the car.
     const gasOn = this.isAccelerating || this.cursors.up.isDown || this.wasd.up.isDown ||
                   this._kb.up || boostActive;
+    setEngineActive(gasOn);
     const brakeOn = this.isBraking || this.cursors.down.isDown || this.wasd.down.isDown || this._kb.down;
 
     // Realistic speed-dependent steering:
