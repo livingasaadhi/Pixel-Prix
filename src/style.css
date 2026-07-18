@@ -922,7 +922,7 @@ html, body {
   .touch-group { gap: 6px; }
 }
 
-.backend-tag {
+.leaderboard-hint {
   font-size: 0.72rem;
   color: var(--text-muted);
   font-weight: 700;
@@ -933,7 +933,7 @@ html, body {
   gap: 6px;
 }
 
-.backend-tag::before {
+.leaderboard-hint::before {
   content: '';
   display: inline-block;
   width: 6px;
@@ -941,12 +941,6 @@ html, body {
   border-radius: 50%;
   background-color: #30d158; /* Green Status Dot */
   box-shadow: 0 0 8px #30d158;
-}
-
-/* Offline badge adjusts status dot color */
-.backend-tag.offline::before {
-  background-color: #ff9f0a; /* Orange Status Dot */
-  box-shadow: 0 0 8px #ff9f0a;
 }
 
 /* CONTROLS INFO GRID */
@@ -986,4 +980,105 @@ html, body {
   padding: 1rem;
   font-size: 0.8rem;
   color: #ffffff;
+}
+
+/* Phone-first race presentation: controls stay in each thumb zone and content
+   remains readable without zooming or horizontal page scrolling. */
+@media (max-width: 640px) and (orientation: portrait) {
+  :root { --radius-card: 16px; --radius-btn: 12px; }
+
+  .ui-screen {
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  #screen-menu {
+    background:
+      radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 0.13), transparent 42%),
+      rgba(5, 5, 5, 0.9);
+  }
+
+  .brand-header { margin: auto 0 26px; }
+  .logo-badge { font-size: 0.62rem; letter-spacing: 3px; padding: 5px 12px; }
+  .logo-title { font-size: clamp(3rem, 16vw, 4.2rem); letter-spacing: -3px; }
+  .logo-subtitle { max-width: 280px; font-size: 0.62rem; line-height: 1.55; letter-spacing: 3px; }
+  .menu-actions { max-width: none; gap: 10px; }
+  .menu-actions .btn { min-height: 54px; width: 100%; }
+  .menu-footer { margin: 22px 0 4px; font-size: 0.68rem; }
+
+  #screen-select { align-items: stretch; }
+  .screen-header { position: sticky; top: 0; z-index: 2; margin: 0 0 12px; padding: 2px 0 10px; background: rgba(5, 5, 5, 0.92); }
+  .screen-header h2 { font-size: 0.78rem; letter-spacing: 0.8px; }
+  .btn-icon-only { width: 44px; height: 44px; border-radius: 50%; }
+  .selection-grid { gap: 12px; padding-bottom: 4px; }
+  .select-card { border-radius: 16px; padding: 16px; }
+  .select-card h3 { font-size: 0.72rem; letter-spacing: 1.6px; }
+  .carousel-container { min-height: 138px; }
+  .nav-arrow { width: 42px; height: 42px; flex: 0 0 42px; border-radius: 50%; }
+  .car-preview-box, .track-preview-box { min-width: 0; }
+  .car-desc, .track-info p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  .selection-footer { position: sticky; bottom: 0; z-index: 2; padding: 12px 0 calc(2px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg-dark) 28%); }
+  .selection-footer .btn { width: 100%; min-height: 56px; }
+
+  #screen-hud { padding: max(10px, env(safe-area-inset-top)) 12px max(16px, env(safe-area-inset-bottom)); touch-action: none; }
+  .hud-top { display: grid; grid-template-columns: 1fr 1.3fr; gap: 7px; width: 100%; }
+  .hud-chip { min-width: 0; padding: 7px 9px; border-radius: 10px; background: rgba(8, 8, 10, 0.78); backdrop-filter: blur(10px); }
+  .hud-chip:nth-child(2) { grid-row: span 2; }
+  .hud-label { font-size: 0.55rem; letter-spacing: 1px; }
+  .hud-value { font-size: 0.9rem; }
+  .digital { font-size: 1.05rem; }
+  .hud-notification { top: 112px; max-width: calc(100vw - 32px); white-space: normal; font-size: 0.7rem; padding: 8px 12px; }
+  .hud-bottom { gap: 12px; }
+  .boost-meter-container { max-width: 176px; margin: 0 auto 4px; }
+  .boost-label { font-size: 0.55rem; }
+  .boost-bar-bg { height: 7px; }
+  .touch-controls-container { align-items: flex-end; }
+  .touch-group { gap: 9px; }
+  .touch-btn { width: clamp(62px, 19vw, 78px); height: clamp(62px, 19vw, 78px); border-width: 2px; font-size: 0.65rem; background: rgba(13, 13, 16, 0.86); }
+  .right-group { position: relative; padding-top: 44px; }
+  .boost-btn { position: absolute; top: 0; right: 0; width: 48px; height: 48px; font-size: 0.55rem; }
+  .brake-btn { font-size: 0.53rem; }
+
+  #screen-gameover, #screen-leaderboard, #screen-settings { justify-content: center; }
+  .modal-card, .wide-card { gap: 14px; padding: 18px; border-radius: 18px; }
+  .finish-banner { font-size: 1.2rem; }
+  .time-display-box { padding: 14px; }
+  .final-time-value { font-size: clamp(2rem, 11vw, 2.7rem); }
+  .score-form label { font-size: 0.64rem; }
+  .input-group input { min-height: 50px; }
+  .input-group .btn { min-height: 50px; }
+  .gameover-actions { gap: 9px; }
+  .gameover-actions .btn { min-height: 46px; padding: 10px; font-size: 0.76rem; }
+
+  .modal-header { gap: 10px; }
+  .modal-header h2 { font-size: 0.92rem; }
+  .track-tabs { gap: 7px; padding-bottom: 6px; }
+  .tab-btn { min-height: 38px; padding: 7px 12px; font-size: 0.72rem; }
+  .table-container { max-height: min(50vh, 390px); border: 0; background: transparent; overflow: visible; }
+  .leaderboard-table, .leaderboard-table tbody, .leaderboard-table tr, .leaderboard-table td { display: block; width: 100%; min-width: 0; }
+  .leaderboard-table thead { display: none; }
+  .leaderboard-table tbody { display: grid; gap: 8px; }
+  .leaderboard-table tbody tr { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 11px 12px 10px 42px; border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 12px; background: rgba(255, 255, 255, 0.035); }
+  .leaderboard-table td { padding: 2px 0; border: 0; font-size: 0.72rem; color: var(--text-muted); }
+  .leaderboard-table td::before { content: attr(data-label); display: block; margin-bottom: 1px; color: var(--text-muted); font-size: 0.52rem; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; }
+  .leaderboard-table td:first-child { position: absolute; top: 12px; left: 12px; width: 24px; font-size: 0.8rem; }
+  .leaderboard-table td:first-child::before { display: none; }
+  .leaderboard-table td:nth-child(2), .leaderboard-table td:nth-child(4) { color: var(--text-main); font-size: 0.84rem; }
+  .leaderboard-table .loading-cell { display: block; grid-column: 1 / -1; padding: 28px 12px !important; text-align: center; }
+  .leaderboard-table .loading-cell::before { display: none; }
+  .modal-footer { padding-top: 12px; }
+  .leaderboard-hint { font-size: 0.62rem; }
+
+  .control-grid { grid-template-columns: 1fr; }
+  .control-box, .rules-box { padding: 14px; }
+}
+
+@media (max-width: 640px) and (orientation: landscape) {
+  .ui-screen { padding: max(8px, env(safe-area-inset-top)) 16px max(8px, env(safe-area-inset-bottom)); }
+  #screen-hud { padding: max(8px, env(safe-area-inset-top)) 16px max(8px, env(safe-area-inset-bottom)); }
+  .hud-top { max-width: 72%; }
+  .touch-btn { width: 58px; height: 58px; }
+  .boost-meter-container { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); width: 150px; }
+  .modal-card { max-height: calc(100vh - 16px); overflow-y: auto; }
 }

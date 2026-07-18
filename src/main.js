@@ -4,7 +4,7 @@ import { RaceScene } from './scenes/RaceScene.js';
 import { CARS } from './data/cars.js';
 import { TRACKS } from './data/tracks.js';
 import { drawTrackMinimap } from './utils/trackRenderer.js';
-import { submitScore, fetchTopScores, getBackendStatus, subscribeToScores } from './supabase.js';
+import { submitScore, fetchTopScores, subscribeToScores } from './supabase.js';
 
 // Global App State
 let selectedCarIndex = 0;
@@ -305,18 +305,7 @@ async function loadLeaderboard(trackId) {
   const tbody = document.getElementById('lb-table-body');
   tbody.innerHTML = '<tr><td colspan="5" class="loading-cell">Loading circuit times...</td></tr>';
 
-  const statusTag = document.getElementById('lb-backend-tag');
-  const statusText = getBackendStatus();
-  statusTag.innerText = statusText;
-  if (statusText.toLowerCase().includes('offline') || statusText.toLowerCase().includes('local')) {
-    statusTag.classList.add('offline');
-  } else {
-    statusTag.classList.remove('offline');
-  }
-
-  const { scores, backend, error } = await fetchTopScores(trackId);
-  statusTag.innerText = backend === 'Supabase' ? 'Supabase Connected' : 'Supabase unavailable';
-  statusTag.classList.toggle('offline', backend !== 'Supabase');
+  const { scores, error } = await fetchTopScores(trackId);
 
   if (error) {
     tbody.innerHTML = '<tr><td colspan="5" class="loading-cell">Unable to load global times. Please try again.</td></tr>';
@@ -333,11 +322,11 @@ async function loadLeaderboard(trackId) {
     const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString() : 'Today';
     return `
       <tr>
-        <td>#${idx + 1}</td>
-        <td><strong>${escapeHtml(s.player_name)}</strong></td>
-        <td>${escapeHtml(carName)}</td>
-        <td>${formatTime(s.time_ms)}</td>
-        <td>${dateStr}</td>
+        <td data-label="Rank">#${idx + 1}</td>
+        <td data-label="Driver"><strong>${escapeHtml(s.player_name)}</strong></td>
+        <td data-label="Car">${escapeHtml(carName)}</td>
+        <td data-label="Time">${formatTime(s.time_ms)}</td>
+        <td data-label="Date">${dateStr}</td>
       </tr>
     `;
   }).join('');
@@ -483,7 +472,7 @@ function initUI() {
 
     if (result.success) {
       statusMsg.className = 'status-msg success';
-      statusMsg.innerText = `Saved to ${result.backend}`;
+      statusMsg.innerText = 'TIME POSTED';
       setTimeout(() => {
         renderLeaderboardTabs(lastRaceResult.trackId);
         loadLeaderboard(lastRaceResult.trackId);
@@ -492,7 +481,7 @@ function initUI() {
       }, 1200);
     } else {
       statusMsg.className = 'status-msg error';
-      statusMsg.innerText = result.error || 'Failed to save score to Supabase.';
+      statusMsg.innerText = 'UNABLE TO POST TIME — TRY AGAIN';
       submitBtn.disabled = false;
     }
   });
