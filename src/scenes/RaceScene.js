@@ -75,11 +75,12 @@ export class RaceScene extends Phaser.Scene {
     this.player.rotation = startPos.rotation || 0;
 
     // 4. Camera
-    this.cameras.main.setBounds(0, 0, this.trackData.worldWidth, this.trackData.worldHeight);
+    // Bound the camera to the track's actual footprint (not the oversized world
+    // rectangle) so we never show large empty gridded margins around a small
+    // loop, then frame it dynamically on resize.
+    this.frameCamera();
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
-    // Zoom out so the player can read upcoming corners well ahead of the car
-    // while the follow camera keeps the car centered in the viewport.
-    this.cameras.main.setZoom(0.55);
+    this.scale.on('resize', this.frameCamera, this);
 
     // 5. Particles (smoke)
     this.smokeEmitter = this.add.particles(0, 0, 'smoke_particle', {
@@ -118,6 +119,39 @@ export class RaceScene extends Phaser.Scene {
 
     // 8. Start countdown
     this.startCountdown();
+  }
+
+  // Frame the camera around the track's real footprint. Using the spline
+  // bounding box (instead of the full world rectangle) removes the empty
+  // gridded margins, keeps the car centered, and zooms to show plenty of
+  // upcoming track without leaving dead space above or below.
+  frameCamera() {
+    const cam = this.cameras.main;
+    const pad = (this.roadWidth || 100) + 60;
+
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of this.curvePoints) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+
+    const trackW = (maxX - minX) + pad * 2;
+    const trackH = (maxY - minY) + pad * 2;
+
+    cam.setBounds(minX - pad, minY - pad, trackW, trackH);
+
+    const vw = this.scale.width || window.innerWidth;
+    const vh = this.scale.height || window.innerHeight;
+
+    // Cover the track footprint so it always fills the viewport (no empty
+    // gridded margins). Clamp the zoom so the car never becomes a tiny dot on
+    // large tracks nor too close on small ones; the follow camera keeps the
+    // car centered while showing upcoming track.
+    const cover = Math.max(vw / trackW, vh / trackH);
+    const zoom = Math.max(0.45, Math.min(cover, 0.85));
+    cam.setZoom(zoom);
   }
 
   startCountdown() {
@@ -427,6 +461,7 @@ export class RaceScene extends Phaser.Scene {
   cleanup() {
     stopEngineSound();
     clearTimeout(this._notifTimeout);
+    this.scale.off('resize', this.frameCamera, this);
     if (this._preventScrollHandler) {
       window.removeEventListener('keydown', this._preventScrollHandler);
       this._preventScrollHandler = null;

@@ -1017,37 +1017,22 @@ html, body {
   .menu-footer { margin: 22px 0 4px; font-size: 0.68rem; }
 
   #screen-select { align-items: stretch; }
-  .screen-header { position: sticky; top: 0; z-index: 2; margin: 0 0 12px; padding: 2px 0 10px; background: rgba(5, 5, 5, 0.92); }
+  .screen-header { position: sticky; top: 0; z-index: 2; margin: 0 0 10px; padding: 2px 0 8px; background: rgba(5, 5, 5, 0.92); }
   .screen-header h2 { font-size: 0.78rem; letter-spacing: 0.8px; }
   .btn-icon-only { width: 44px; height: 44px; border-radius: 50%; }
-  .selection-grid { gap: 12px; padding-bottom: 4px; }
-  .select-card { border-radius: 16px; padding: 16px; }
+  .selection-grid { gap: 10px; padding-bottom: 4px; }
+  .select-card { border-radius: 16px; }
   .select-card h3 { font-size: 0.72rem; letter-spacing: 1.6px; }
-  .carousel-container { min-height: 138px; }
+  .carousel-container { min-height: 84px; }
   .nav-arrow { width: 42px; height: 42px; flex: 0 0 42px; border-radius: 50%; }
   .car-preview-box, .track-preview-box { min-width: 0; }
-  .car-desc, .track-info p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-  .selection-footer { position: sticky; bottom: 0; z-index: 2; padding: 12px 0 calc(2px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg-dark) 28%); }
-  .selection-footer .btn { width: 100%; min-height: 56px; }
+  .selection-footer { position: sticky; bottom: 0; z-index: 2; padding: 10px 0 calc(2px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg-dark) 28%); }
+  .selection-footer .btn { width: 100%; min-height: 54px; }
 
-  #screen-hud { padding: max(10px, env(safe-area-inset-top)) 12px max(16px, env(safe-area-inset-bottom)); touch-action: none; }
-  .hud-top { display: grid; grid-template-columns: 1fr 1.3fr; gap: 7px; width: 100%; }
-  .hud-chip { min-width: 0; padding: 7px 9px; border-radius: 10px; background: rgba(8, 8, 10, 0.78); backdrop-filter: blur(10px); }
-  .hud-chip:nth-child(2) { grid-row: span 2; }
-  .hud-label { font-size: 0.55rem; letter-spacing: 1px; }
-  .hud-value { font-size: 0.9rem; }
-  .digital { font-size: 1.05rem; }
-  .hud-notification { top: 112px; max-width: calc(100vw - 32px); white-space: normal; font-size: 0.7rem; padding: 8px 12px; }
-  .hud-bottom { gap: 12px; }
-  .boost-meter-container { max-width: 176px; margin: 0 auto 4px; }
-  .boost-label { font-size: 0.55rem; }
-  .boost-bar-bg { height: 7px; }
-  .touch-controls-container { align-items: flex-end; }
-  .touch-group { gap: 9px; }
-  .touch-btn { width: clamp(62px, 19vw, 78px); height: clamp(62px, 19vw, 78px); border-width: 2px; font-size: 0.65rem; background: rgba(13, 13, 16, 0.86); }
-  .right-group { position: relative; padding-top: 44px; }
-  .boost-btn { position: absolute; top: 0; right: 0; width: 48px; height: 48px; font-size: 0.55rem; }
-  .brake-btn { font-size: 0.53rem; }
+  #screen-hud { padding: max(8px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); touch-action: none; }
+  /* Mobile HUD is defined in the shared (max-width:1100px) landscape block so
+     it applies to portrait too; keep portrait notification comfortably placed. */
+  .hud-notification { top: 44px; max-width: calc(100vw - 24px); white-space: normal; }
 
   #screen-gameover, #screen-leaderboard, #screen-settings { justify-content: center; }
   .modal-card, .wide-card { gap: 14px; padding: 18px; border-radius: 18px; }
@@ -1085,10 +1070,6 @@ html, body {
 
 @media (max-width: 640px) and (orientation: landscape) {
   .ui-screen { padding: max(8px, env(safe-area-inset-top)) 16px max(8px, env(safe-area-inset-bottom)); }
-  #screen-hud { padding: max(8px, env(safe-area-inset-top)) 16px max(8px, env(safe-area-inset-bottom)); }
-  .hud-top { max-width: 72%; }
-  .touch-btn { width: 58px; height: 58px; }
-  .boost-meter-container { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); width: 150px; }
   .modal-card { max-height: calc(100vh - 16px); overflow-y: auto; }
 }
 
@@ -1115,32 +1096,55 @@ html, body {
   #screen-menu .btn,
   .selection-footer .btn { width: min(100%, 420px); }
 
+  /* Select screen: a scrollable column with a sticky, always-reachable
+     Start Race footer. The middle grid scrolls independently so the CTA is
+     never pushed off-screen, and compact cards shrink the layout so it fits
+     without scrolling on most phone sizes. */
   #screen-select {
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
     align-items: stretch;
-    gap: 10px;
-    padding: max(12px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom));
+    gap: 8px;
+    padding: max(10px, env(safe-area-inset-top)) 14px max(10px, env(safe-area-inset-bottom));
   }
 
   #screen-select .screen-header,
   #screen-select .selection-grid,
   #screen-select .selection-footer { min-width: 0; }
 
-  #screen-select .screen-header { margin: 0; }
+  #screen-select .screen-header {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    margin: 0;
+    padding: 2px 0 8px;
+    background: linear-gradient(rgba(5, 5, 5, 0.96), rgba(5, 5, 5, 0.96));
+    backdrop-filter: blur(6px);
+  }
+
   #screen-select .selection-grid {
-    max-height: none;
+    flex: 1 1 auto;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 2px 1px 10px;
+    padding: 2px 2px 8px;
   }
 
   #screen-select .selection-footer {
-    position: static;
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    flex: 0 0 auto;
     margin: 0;
-    padding: 0;
-    background: none;
+    padding: 10px 0 2px;
+    background: linear-gradient(transparent, var(--bg-dark) 32%);
     text-align: center;
   }
 
@@ -1191,7 +1195,6 @@ html, body {
   }
 
   #screen-select {
-    grid-template-rows: var(--tap-size) minmax(0, 1fr) 56px;
     gap: 8px;
   }
 
@@ -1205,30 +1208,43 @@ html, body {
     padding: 12px;
   }
 
-  #screen-select .carousel-container { min-height: 94px; }
+  #screen-select .carousel-container { min-height: 84px; }
   #screen-select .car-preview-box,
-  #screen-select .track-preview-box { min-height: 82px; padding: 8px; gap: 4px; }
-  #screen-select #car-preview-canvas { width: 76px; height: 44px; margin-bottom: 2px !important; }
-  #screen-select #track-minimap { width: 118px; height: 82px; }
+  #screen-select .track-preview-box { min-height: 74px; padding: 8px; gap: 4px; }
+  #screen-select #car-preview-canvas { width: 72px; height: 42px; margin-bottom: 2px !important; }
+  #screen-select #track-minimap { width: 110px; height: 74px; }
   #screen-select .car-info h4,
   #screen-select .track-info h4 { font-size: 0.9rem; }
+  /* Single-line, truncated description instead of wrapping to two lines. */
   #screen-select .car-desc,
-  #screen-select .track-desc { font-size: 0.68rem; }
-  #screen-select .stat-bars { gap: 4px; }
-  #screen-select .stat-row { font-size: 0.68rem; }
-  #screen-select .bar-bg { height: 6px; }
+  #screen-select .track-desc {
+    font-size: 0.68rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  /* Compact 2x2 stat grid instead of four stacked rows. */
+  #screen-select .stat-bars {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 12px;
+  }
+  #screen-select .stat-row { font-size: 0.66rem; }
+  #screen-select .stat-row > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #screen-select .bar-bg { width: 100%; height: 6px; }
   #screen-select .track-tag { padding: 4px 7px; font-size: 0.62rem; }
-  #screen-select .selection-footer .btn { min-height: 56px; }
+  #screen-select .selection-footer .btn { min-height: 54px; }
 }
 
 /* Racing is designed around a two-thumb landscape grip. */
 @media (max-width: 1100px) and (orientation: landscape) {
   #screen-select {
     padding: max(8px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
-    grid-template-rows: 48px minmax(0, 1fr) 52px;
   }
 
   #screen-select .selection-grid {
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     overflow-y: auto;
   }
@@ -1243,70 +1259,94 @@ html, body {
   #screen-select .stat-row { font-size: 0.62rem; }
   #screen-select .track-stats { gap: 4px; }
   #screen-select .selection-footer .btn { min-height: 50px; }
+}
 
+/* Mobile HUD: applies to both portrait and landscape so the race is usable
+   even when orientation lock is unavailable. */
+@media (max-width: 1100px) {
+  /* ---- Shared mobile HUD ---- */
   #screen-hud {
-    padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    padding: max(6px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
     overflow: hidden;
+    justify-content: flex-start;
+    touch-action: none;
   }
 
+  /* Slim single-row stat strip so it barely eats vertical space. */
   #screen-hud .hud-top {
-    width: auto;
+    width: 100%;
     max-width: none;
     display: flex;
-    justify-content: flex-start;
-    gap: 6px;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 5px;
   }
+  #screen-hud .hud-chip {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 3px 6px;
+    border-radius: 7px;
+    background: rgba(8, 8, 10, 0.62);
+    backdrop-filter: blur(8px);
+  }
+  #screen-hud .hud-label { font-size: 0.46rem; letter-spacing: 0.5px; }
+  #screen-hud .hud-value, #screen-hud .digital { font-size: 0.74rem; }
+  #screen-hud .hud-notification { top: 46px; font-size: 0.6rem; padding: 6px 10px; max-width: calc(100vw - 24px); }
 
-  #screen-hud .hud-chip { padding: 4px 8px; border-radius: 8px; background: rgba(8, 8, 10, 0.66); }
-  #screen-hud .hud-label { font-size: 0.5rem; }
-  #screen-hud .hud-value, #screen-hud .digital { font-size: 0.82rem; }
-  #screen-hud .hud-notification { top: 48px; font-size: 0.62rem; padding: 6px 10px; }
+  /* The bottom flow container must not reserve space; its children are
+     absolutely positioned to the screen edges. */
+  #screen-hud .hud-bottom { display: contents; }
 
-  #screen-hud .hud-bottom { position: static; }
   #screen-hud .boost-meter-container {
     position: absolute;
     left: 50%;
-    bottom: max(10px, env(safe-area-inset-bottom));
+    bottom: max(8px, env(safe-area-inset-bottom));
     transform: translateX(-50%);
-    width: min(22vw, 170px);
+    width: min(26vw, 200px);
     margin: 0;
-    opacity: 0.8;
+    opacity: 0.85;
+    text-align: center;
   }
-  #screen-hud .boost-label { font-size: 0.5rem; }
-  #screen-hud .boost-bar-bg { height: 6px; }
+  #screen-hud .boost-label { font-size: 0.46rem; }
+  #screen-hud .boost-bar-bg { height: 5px; }
 
+  /* Touch controls anchored to the bottom corners, never clipped. Equal
+     bottom margin on every button via the safe-area inset. */
   #screen-hud .touch-controls-container {
     position: absolute;
-    inset: auto max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    inset: auto max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
     display: flex;
     justify-content: space-between;
-    align-items: end;
+    align-items: flex-end;
     pointer-events: none;
   }
   #screen-hud .touch-group { pointer-events: auto; }
-  #screen-hud .left-group { display: grid; grid-template-columns: repeat(2, 58px); gap: 8px; }
-  #screen-hud .right-group {
-    position: static;
+  #screen-hud .left-group {
     display: grid;
-    grid-template-columns: repeat(2, 58px);
+    grid-template-columns: repeat(2, min(15vw, 64px));
+    gap: 8px;
+  }
+  #screen-hud .right-group {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, min(15vw, 64px));
     grid-template-areas: '. boost' 'brake accel';
     gap: 8px;
-    padding: 0;
   }
   #screen-hud .touch-btn {
     position: static;
-    width: 58px;
-    height: 58px;
+    width: min(15vw, 64px);
+    height: min(15vw, 64px);
     min-width: 48px;
     min-height: 48px;
-    font-size: 0.56rem;
+    font-size: 0.52rem;
     border-radius: 50%;
-    background: rgba(10, 10, 13, 0.64);
+    background: rgba(10, 10, 13, 0.62);
     border-color: rgba(255, 255, 255, 0.48);
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.42);
   }
-  #screen-hud .steer-btn { font-size: 0.56rem; }
-  #screen-hud .brake-btn { grid-area: brake; font-size: 0.48rem; }
+  #screen-hud .steer-btn { font-size: 0.52rem; }
+  #screen-hud .brake-btn { grid-area: brake; font-size: 0.46rem; }
   #screen-hud .accel-btn { grid-area: accel; border-color: #fff; }
   #screen-hud .boost-btn { grid-area: boost; border-color: #fff; }
   #screen-hud .touch-btn:active, #screen-hud .touch-btn.active { transform: scale(0.9); background: rgba(255, 255, 255, 0.92); color: #050505; }
