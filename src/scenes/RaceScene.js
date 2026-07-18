@@ -48,6 +48,16 @@ export class RaceScene extends Phaser.Scene {
     this.isSteeringRight = false;
     this.onGrass = false;
 
+    // Tunable physics parameters
+    this.maxSpeed = this.carData.maxSpeed || this.carData.topSpeed || 275;
+    this.boostMaxSpeed = this.carData.boostMaxSpeed || (this.maxSpeed * (this.carData.boostPower || 1.45));
+    this.acceleration = this.carData.acceleration || 180;
+    this.boostAcceleration = this.carData.boostAcceleration || 380;
+    this.brakeForce = this.carData.brakeForce || 450;
+    this.drag = this.carData.drag || 25.0;
+    this.steeringSensitivity = this.carData.steeringSensitivity || this.carData.handling || 4.4;
+    this.highSpeedSteeringMultiplier = this.carData.highSpeedSteeringMultiplier || 0.48;
+
     // Lateral drift physics
     this.vx = 0;
     this.vy = 0;
@@ -275,21 +285,19 @@ export class RaceScene extends Phaser.Scene {
     }
 
     const boostActive = this.isBoostFiring && this.boostEnergy > 2;
-    // Boost implies acceleration: tapping Boost alone accelerates the car.
-    const gasOn = this.isAccelerating || this.cursors.up.isDown || this.wasd.up.isDown ||
-                  this._kb.up || boostActive;
-    setEngineActive(gasOn);
+    const gasOn = this.isAccelerating || this.cursors.up.isDown || this.wasd.up.isDown || this._kb.up;
     const brakeOn = this.isBraking || this.cursors.down.isDown || this.wasd.down.isDown || this._kb.down;
 
+    setEngineActive(gasOn || boostActive);
+
     // Realistic speed-dependent steering:
-    // - At low speed: full turn rate (tight maneuvering)
-    // - At high speed: reduced turn rate (wider, more stable arcs)
-    // - Minimum floor of 0.35 so steering never fully locks up
-    const speedRatio = Math.abs(this.currentSpeed) / this.carData.topSpeed;
-    const speedDamping = Math.max(0.35, 1.0 - speedRatio * 0.65);
+    // - Steering works while coasting (currentSpeed > 1)
+    // - Responsive at low speeds, stable/dampened at high speeds
+    const speedRatio = Math.min(1.0, Math.abs(this.currentSpeed) / this.maxSpeed);
+    const speedDamping = Math.max(this.highSpeedSteeringMultiplier, 1.0 - speedRatio * 0.55);
     const boostBonus = boostActive ? 1.15 : 1.0;
-    if (Math.abs(this.currentSpeed) > 3) {
-      this.player.rotation += steerDir * this.carData.handling * speedDamping * boostBonus * dt;
+    if (Math.abs(this.currentSpeed) > 1.0) {
+      this.player.rotation += steerDir * this.steeringSensitivity * speedDamping * boostBonus * dt;
     }
 
     // Off-road check
@@ -339,13 +347,11 @@ export class RaceScene extends Phaser.Scene {
       }
     }
 
-    // Speed physics
-    let topSpeed = this.carData.topSpeed;
-    let accel = this.carData.acceleration;
+    // Speed physics with momentum
+    let targetMaxSpeed = boostActive ? this.boostMaxSpeed : this.maxSpeed;
+    let currentAccel = boostActive ? this.boostAcceleration : this.acceleration;
 
     if (boostActive) {
-      topSpeed *= this.carData.boostPower;
-      accel *= 2.2;
       this.boostEnergy = Math.max(0, this.boostEnergy - 35 * dt);
       this.smokeEmitter.emitting = true;
       if (Math.random() < 0.1) playBoostSound();
@@ -354,41 +360,58 @@ export class RaceScene extends Phaser.Scene {
     }
 
     if (this.onGrass) {
-      topSpeed *= 0.55;
-      accel *= 0.6;
+      targetMaxSpeed *= 0.55;
+      currentAccel *= 0.6;
     }
 
     if (gasOn) {
       if (this.currentSpeed < 0) {
-        this.currentSpeed += accel * 3.0 * dt;
+        this.currentSpeed += this.brakeForce * dt;
         if (this.currentSpeed > 0) this.currentSpeed = 0;
-      } else {
-        const ratio = Math.max(0, this.currentSpeed / topSpeed);
-        const launchAccel = accel * (1.75 - 0.9 * Math.pow(ratio, 1.3));
-        if (this.currentSpeed < topSpeed) {
-          this.currentSpeed += launchAccel * dt;
+      } else if (this.currentSpeed < targetMaxSpeed) {
+        const ratio = Math.max(0, this.currentSpeed / targetMaxSpeed);
+        const launchAccel = currentAccel * (1.75 - 0.95 * Math.pow(ratio, 1.3));
+        this.currentSpeed += launchAccel * dt;
+        if (this.currentSpeed > targetMaxSpeed) {
+          this.currentSpeed = targetMaxSpeed;
+        }
+      } else if (this.currentSpeed > targetMaxSpeed) {
+        // Exiting boost or going onto grass: coast down smoothly to targetMaxSpeed via drag
+        this.currentSpeed -= (this.onGrass ? this.drag * 3.5 : this.drag) * dt;
+        if (this.currentSpeed < targetMaxSpeed) {
+          this.currentSpeed = targetMaxSpeed;
+        }
+      }
+    } else if (boostActive) {
+      if (this.currentSpeed < targetMaxSpeed) {
+        this.currentSpeed += currentAccel * dt;
+        if (this.currentSpeed > targetMaxSpeed) {
+          this.currentSpeed = targetMaxSpeed;
         }
       }
     } else if (brakeOn) {
-      if (this.currentSpeed > 15) {
-        this.currentSpeed -= accel * 2.8 * dt;
+      if (this.currentSpeed > 0) {
+        this.currentSpeed -= this.brakeForce * dt;
         if (this.currentSpeed < 0) this.currentSpeed = 0;
       } else {
         if (this.currentSpeed > -85) {
-          this.currentSpeed -= accel * 0.9 * dt;
+          this.currentSpeed -= this.acceleration * 0.8 * dt;
         }
       }
     } else {
-      if (this.currentSpeed > 0) {
-        this.currentSpeed -= accel * 0.75 * dt;
+      // Natural momentum coasting under rolling drag
+      const currentDrag = this.onGrass ? (this.drag * 3.5) : this.drag;
+      if (this.currentSpeed > targetMaxSpeed) {
+        this.currentSpeed -= currentDrag * dt;
+        if (this.currentSpeed < targetMaxSpeed) this.currentSpeed = targetMaxSpeed;
+      } else if (this.currentSpeed > 0) {
+        this.currentSpeed -= currentDrag * dt;
         if (this.currentSpeed < 0) this.currentSpeed = 0;
       } else if (this.currentSpeed < 0) {
-        this.currentSpeed += accel * 0.75 * dt;
+        this.currentSpeed += currentDrag * dt;
         if (this.currentSpeed > 0) this.currentSpeed = 0;
       }
     }
-
-    this.currentSpeed *= this.carData.drag;
 
     // Lateral drift physics
     const targetVx = Math.cos(this.player.rotation) * this.currentSpeed;
@@ -406,7 +429,7 @@ export class RaceScene extends Phaser.Scene {
     }
 
     this.player.setVelocity(this.vx, this.vy);
-    updateEnginePitch(Math.abs(this.currentSpeed) / this.carData.topSpeed);
+    updateEnginePitch(Math.abs(this.currentSpeed) / this.maxSpeed);
 
     // Checkpoints
     this.checkCheckpoints();

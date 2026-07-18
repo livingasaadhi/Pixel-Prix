@@ -6,10 +6,16 @@ export const CARS = [
     color: '#ff1801',
     accentColor: '#ffeb00',
     topSpeed: 275,
-    acceleration: 150,
+    maxSpeed: 275,
+    boostMaxSpeed: 398,
+    acceleration: 180,
+    boostAcceleration: 380,
+    brakeForce: 450,
+    drag: 26.0,
     handling: 4.4,
-    boostPower: 1.45,
-    drag: 0.985
+    steeringSensitivity: 4.4,
+    highSpeedSteeringMultiplier: 0.48,
+    boostPower: 1.45
   },
   {
     id: 'blue-bull',
@@ -18,10 +24,16 @@ export const CARS = [
     color: '#0f1c3f',
     accentColor: '#ff1801',
     topSpeed: 306,
-    acceleration: 138,
+    maxSpeed: 306,
+    boostMaxSpeed: 489,
+    acceleration: 165,
+    boostAcceleration: 420,
+    brakeForce: 420,
+    drag: 24.0,
     handling: 3.8,
-    boostPower: 1.6,
-    drag: 0.987
+    steeringSensitivity: 3.8,
+    highSpeedSteeringMultiplier: 0.42,
+    boostPower: 1.6
   },
   {
     id: 'silver-arrows',
@@ -30,10 +42,16 @@ export const CARS = [
     color: '#c0c0c0',
     accentColor: '#00ffc4',
     topSpeed: 262,
-    acceleration: 175,
+    maxSpeed: 262,
+    boostMaxSpeed: 353,
+    acceleration: 210,
+    boostAcceleration: 390,
+    brakeForce: 480,
+    drag: 28.0,
     handling: 5.0,
-    boostPower: 1.35,
-    drag: 0.982
+    steeringSensitivity: 5.0,
+    highSpeedSteeringMultiplier: 0.55,
+    boostPower: 1.35
   },
   {
     id: 'papaya-express',
@@ -42,10 +60,16 @@ export const CARS = [
     color: '#ff8700',
     accentColor: '#005aff',
     topSpeed: 288,
-    acceleration: 162,
+    maxSpeed: 288,
+    boostMaxSpeed: 432,
+    acceleration: 195,
+    boostAcceleration: 400,
+    brakeForce: 440,
+    drag: 25.0,
     handling: 4.6,
-    boostPower: 1.5,
-    drag: 0.984
+    steeringSensitivity: 4.6,
+    highSpeedSteeringMultiplier: 0.50,
+    boostPower: 1.5
   },
   {
     id: 'green-emerald',
@@ -54,10 +78,16 @@ export const CARS = [
     color: '#004b49',
     accentColor: '#ccff00',
     topSpeed: 331,
-    acceleration: 125,
+    maxSpeed: 331,
+    boostMaxSpeed: 513,
+    acceleration: 150,
+    boostAcceleration: 410,
+    brakeForce: 400,
+    drag: 22.0,
     handling: 3.4,
-    boostPower: 1.55,
-    drag: 0.988
+    steeringSensitivity: 3.4,
+    highSpeedSteeringMultiplier: 0.38,
+    boostPower: 1.55
   },
   {
     id: 'alpen-glow',
@@ -66,10 +96,16 @@ export const CARS = [
     color: '#ff4ba4',
     accentColor: '#00a2ff',
     topSpeed: 281,
-    acceleration: 168,
+    maxSpeed: 281,
+    boostMaxSpeed: 393,
+    acceleration: 200,
+    boostAcceleration: 385,
+    brakeForce: 460,
+    drag: 27.0,
     handling: 4.8,
-    boostPower: 1.4,
-    drag: 0.983
+    steeringSensitivity: 4.8,
+    highSpeedSteeringMultiplier: 0.52,
+    boostPower: 1.4
   }
 ];
 
