@@ -192,26 +192,11 @@ export class RaceScene extends Phaser.Scene {
     const trackH = (maxY - minY) + pad * 2;
 
     const vw = this.scale.width || window.innerWidth;
-    const vh = this.scale.height || window.innerHeight;
+    // Full-screen camera viewport (0, 0, vw, vh) - world renders edge-to-edge behind transparent HUD
+    cam.setViewport(0, 0, vw, vh);
 
-    // Dynamically measure reserved bottom UI height (touch controls & KERS bar)
-    let bottomControlsHeight = 0;
-    const driveGroup = document.getElementById('hud-drive-right-group');
-    const steerGroup = document.getElementById('hud-steer-left-group');
-    if (driveGroup && driveGroup.getBoundingClientRect().height > 0) {
-      bottomControlsHeight = driveGroup.getBoundingClientRect().height + 24;
-    } else if (steerGroup && steerGroup.getBoundingClientRect().height > 0) {
-      bottomControlsHeight = steerGroup.getBoundingClientRect().height + 24;
-    } else {
-      bottomControlsHeight = 180;
-    }
-
-    // Physically isolate gameplay rendering to the viewport area ABOVE controls
-    const gameplayHeight = Math.max(200, vh - bottomControlsHeight);
-    cam.setViewport(0, 0, vw, gameplayHeight);
-
-    // Zoom level calculation for optimal track visibility
-    const cover = Math.max(vw / trackW, gameplayHeight / trackH);
+    // Zoom level calculation for optimal track visibility across full screen
+    const cover = Math.max(vw / trackW, vh / trackH);
     this.baseZoom = Math.max(0.55, Math.min(cover, 0.85));
     cam.setZoom(this.baseZoom);
 
