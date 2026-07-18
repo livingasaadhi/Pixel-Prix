@@ -5,19 +5,15 @@ import { createClient } from '@supabase/supabase-js';
 // Replace the placeholders below with your Supabase Project URL and Anon Key.
 // See README.md for step-by-step instructions on setting up your database!
 // ============================================================================
-// Detect credentials from Vite environment variables (recommended) or fallback to constants
-const ENV_URL = import.meta.env.VITE_SUPABASE_URL;
-const ENV_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Detect credentials from environment variables (checking both Vite and Next.js prefixes)
+const ENV_URL = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
+const ENV_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const SUPABASE_URL = ENV_URL || 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co';
-const SUPABASE_ANON_KEY = ENV_KEY || 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = ENV_URL && !ENV_URL.includes('YOUR_SUPABASE_PROJECT_ID') ? ENV_URL : null;
+const SUPABASE_ANON_KEY = ENV_KEY && !ENV_KEY.includes('YOUR_SUPABASE_ANON_KEY') ? ENV_KEY : null;
 
 // Check if credentials have been updated by the user
-const isConfigured = 
-  SUPABASE_URL && 
-  SUPABASE_ANON_KEY && 
-  !SUPABASE_URL.includes('YOUR_SUPABASE_PROJECT_ID') && 
-  !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY');
+const isConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 let supabase = null;
 
