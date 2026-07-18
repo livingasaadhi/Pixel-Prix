@@ -106,8 +106,14 @@ export class RaceScene extends Phaser.Scene {
     this.boostKeyZ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
     this.boostKeyC = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
 
-    // Prevent browser scrolling on game keys
+    // Prevent browser scrolling on game keys, but never while the user is
+    // typing into a text field (e.g. the driver-name input on the results
+    // screen) so those characters remain typeable.
     this._preventScrollHandler = (e) => {
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
+        return;
+      }
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
         e.preventDefault();
       }
@@ -402,6 +408,13 @@ export class RaceScene extends Phaser.Scene {
     this.player.setVelocity(0, 0);
     stopEngineSound();
     playFinishSound();
+
+    // The race is over: release keyboard capture so the driver-name text input
+    // can receive characters that double as in-game controls (W/A/S/D/Space/etc).
+    if (this.input && this.input.keyboard) {
+      this.input.keyboard.enabled = false;
+      this.input.keyboard.clearCaptures();
+    }
 
     const bestLapMs = this.lapTimes.length > 0 ? Math.min(...this.lapTimes) : this.elapsedMs;
     const finalTime = this.elapsedMs + this.penaltyMs;
