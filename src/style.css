@@ -54,13 +54,13 @@
   --margin:         20px;
 
   /* Glass / blur */
-  --glass-bg:       rgba(20, 19, 19, 0.80);
-  --glass-border:   rgba(255, 255, 255, 0.08);
-  --glass-blur:     12px;
+  --glass-bg:       rgba(20, 19, 19, 0.82);
+  --glass-border:   rgba(255, 255, 255, 0.12);
+  --glass-blur:     20px;
 
   /* Shadows */
-  --shadow-glow:    0 0 20px rgba(255, 255, 255, 0.15);
-  --shadow-card:    0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-glow:    0 0 24px rgba(255, 255, 255, 0.18);
+  --shadow-card:    0 12px 40px rgba(0, 0, 0, 0.75);
 }
 
 /* --- RESET --------------------------------------------------------------- */

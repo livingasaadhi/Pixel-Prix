@@ -52,24 +52,13 @@ function updateNavTabStates(screenId) {
   if (screenId === 'screen-menu') activeTab = 'garage';
   else if (screenId === 'screen-select') activeTab = 'race';
   else if (screenId === 'screen-leaderboard') activeTab = 'leaderboard';
-  else if (screenId === 'screen-settings') activeTab = 'profile';
 
   const bottomTabs = {
     garage: document.getElementById('nav-tab-garage'),
     race: document.getElementById('nav-tab-race'),
-    leaderboard: document.getElementById('nav-tab-leaderboard'),
-    profile: document.getElementById('nav-tab-profile')
+    leaderboard: document.getElementById('nav-tab-leaderboard')
   };
   Object.entries(bottomTabs).forEach(([key, el]) => {
-    if (el) el.classList.toggle('active', key === activeTab);
-  });
-
-  const topLinks = {
-    garage: document.getElementById('top-nav-garage'),
-    race: document.getElementById('top-nav-race'),
-    leaderboard: document.getElementById('top-nav-leaderboard')
-  };
-  Object.entries(topLinks).forEach(([key, el]) => {
     if (el) el.classList.toggle('active', key === activeTab);
   });
 }
