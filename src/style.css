@@ -1082,3 +1082,86 @@ html, body {
   .boost-meter-container { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); width: 150px; }
   .modal-card { max-height: calc(100vh - 16px); overflow-y: auto; }
 }
+
+/* Accessibility guardrail for every phone and tablet size. These rules keep
+   navigation in the viewport even when browser chrome or a small screen cuts
+   the available height. */
+@media (max-width: 900px) {
+  button, input, .tab-btn { touch-action: manipulation; }
+
+  .ui-screen:not(#screen-hud) {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #screen-menu {
+    min-height: 100dvh;
+    justify-content: center;
+    padding-block: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-bottom));
+  }
+
+  #screen-menu .menu-actions,
+  #screen-menu .btn,
+  .selection-footer .btn { width: min(100%, 420px); }
+
+  #screen-select {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: 10px;
+    padding: max(12px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom));
+  }
+
+  #screen-select .screen-header,
+  #screen-select .selection-grid,
+  #screen-select .selection-footer { min-width: 0; }
+
+  #screen-select .screen-header { margin: 0; }
+  #screen-select .selection-grid {
+    max-height: none;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 2px 1px 10px;
+  }
+
+  #screen-select .selection-footer {
+    position: static;
+    margin: 0;
+    padding: 0;
+    background: none;
+    text-align: center;
+  }
+
+  .btn, .btn-icon-only, .nav-arrow, .tab-btn { min-height: 44px; }
+  .btn { min-width: 44px; }
+  .btn-icon-only, .nav-arrow { min-width: 44px; }
+
+  #screen-gameover, #screen-leaderboard, #screen-settings {
+    align-items: stretch;
+    justify-content: center;
+    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+  }
+
+  #screen-gameover .modal-card,
+  #screen-leaderboard .modal-card,
+  #screen-settings .modal-card {
+    flex: 0 0 auto;
+    width: min(100%, 680px);
+    margin: auto;
+  }
+
+  .modal-header .btn-icon-only { flex: 0 0 44px; }
+}
+
+@media (max-width: 380px) {
+  .logo-title { font-size: 2.65rem; }
+  .logo-subtitle { letter-spacing: 2px; }
+  .select-card { padding: 12px; }
+  .touch-btn { width: 58px; height: 58px; }
+  .touch-group { gap: 6px; }
+  .modal-card { padding: 14px; }
+  .gameover-actions .btn { font-size: 0.68rem; }
+}
