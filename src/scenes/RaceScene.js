@@ -217,9 +217,7 @@ export class RaceScene extends Phaser.Scene {
     if (!this.player || !this.cameras.main) return;
     const cam = this.cameras.main;
     cam.rotation = 0;
-    const zoom = cam.zoom || this.baseZoom || 0.7;
-    cam.scrollX = this.player.x - (cam.width / 2) / zoom;
-    cam.scrollY = this.player.y - (cam.height / 2) / zoom;
+    cam.centerOn(this.player.x, this.player.y);
   }
 
   startCountdown() {
