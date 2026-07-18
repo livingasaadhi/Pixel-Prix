@@ -39,9 +39,39 @@ function showScreen(screenId) {
     target.classList.remove('hidden');
   }
 
+  // Synchronize active states of bottom tabs and top desktop nav links
+  updateNavTabStates(screenId);
+
   // Nav chrome hidden during active race (HUD or Pause)
   const isRaceActive = screenId === 'screen-hud' || screenId === 'screen-pause';
   if (!isRaceActive) setRaceMode(false);
+}
+
+function updateNavTabStates(screenId) {
+  let activeTab = 'garage';
+  if (screenId === 'screen-menu') activeTab = 'garage';
+  else if (screenId === 'screen-select') activeTab = 'race';
+  else if (screenId === 'screen-leaderboard') activeTab = 'leaderboard';
+  else if (screenId === 'screen-settings') activeTab = 'profile';
+
+  const bottomTabs = {
+    garage: document.getElementById('nav-tab-garage'),
+    race: document.getElementById('nav-tab-race'),
+    leaderboard: document.getElementById('nav-tab-leaderboard'),
+    profile: document.getElementById('nav-tab-profile')
+  };
+  Object.entries(bottomTabs).forEach(([key, el]) => {
+    if (el) el.classList.toggle('active', key === activeTab);
+  });
+
+  const topLinks = {
+    garage: document.getElementById('top-nav-garage'),
+    race: document.getElementById('top-nav-race'),
+    leaderboard: document.getElementById('top-nav-leaderboard')
+  };
+  Object.entries(topLinks).forEach(([key, el]) => {
+    if (el) el.classList.toggle('active', key === activeTab);
+  });
 }
 
 function setRaceMode(enabled) {
@@ -483,16 +513,23 @@ function initUI() {
   // Menu screen's "Controls & Info" button
   bindClickOrTouch('btn-open-settings-menu', openSettings);
 
-  // Bottom nav tab wiring
-  bindClickOrTouch('nav-tab-leaderboard', openLeaderboard);
-
-  bindClickOrTouch('nav-tab-race', () => {
+  // Bottom & Top nav tab wiring
+  const openRaceSelect = () => {
     updateCarSelection();
     updateTrackSelection();
     showScreen('screen-select');
-  });
+  };
+
+  bindClickOrTouch('nav-tab-leaderboard', openLeaderboard);
+  bindClickOrTouch('top-nav-leaderboard', openLeaderboard);
+
+  bindClickOrTouch('nav-tab-race', openRaceSelect);
+  bindClickOrTouch('top-nav-race', openRaceSelect);
 
   bindClickOrTouch('nav-tab-garage', () => showScreen('screen-menu'));
+  bindClickOrTouch('top-nav-garage', () => showScreen('screen-menu'));
+
+  bindClickOrTouch('nav-tab-profile', openSettings);
 
   bindClickOrTouch('btn-close-settings', () => {
     showScreen('screen-menu');
