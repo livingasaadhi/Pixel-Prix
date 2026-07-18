@@ -109,82 +109,85 @@
           <div class="spacer"></div>
         </header>
 
-        <!-- ---- SELECT CAR -------------------------------------------- -->
-        <div class="select-section">
-          <p class="section-label">Select Car</p>
+        <!-- Select grid wrapper for 2-column desktop layout -->
+        <div class="select-grid">
+          <!-- ---- SELECT CAR -------------------------------------------- -->
+          <div class="select-section">
+            <p class="section-label">Select Car</p>
 
-          <div class="glass-card car-select-card">
-            <!-- Carousel header: prev / car visual / next -->
-            <div class="carousel-header">
-              <button id="car-prev" class="nav-arrow" aria-label="Previous car">&#8249;</button>
+            <div class="glass-card car-select-card">
+              <!-- Carousel header: prev / car visual / next -->
+              <div class="carousel-header">
+                <button id="car-prev" class="nav-arrow" aria-label="Previous car">&#8249;</button>
 
-              <div class="carousel-content">
-                <div class="car-preview-area">
-                  <canvas id="car-preview-canvas" width="96" height="56"></canvas>
+                <div class="carousel-content">
+                  <div class="car-preview-area">
+                    <canvas id="car-preview-canvas" width="96" height="56"></canvas>
+                  </div>
+                  <h3 id="car-name">Apex Phantom</h3>
+                  <p id="car-desc">Balanced speed and precision handling.</p>
                 </div>
-                <h3 id="car-name">Apex Phantom</h3>
-                <p id="car-desc">Balanced speed and precision handling.</p>
+
+                <button id="car-next" class="nav-arrow" aria-label="Next car">&#8250;</button>
               </div>
 
-              <button id="car-next" class="nav-arrow" aria-label="Next car">&#8250;</button>
-            </div>
-
-            <!-- Stat bars: 2x2 grid -->
-            <div class="stat-bars">
-              <div class="stat-row">
-                <div class="stat-row-header">
-                  <span class="stat-label">Top Speed</span>
+              <!-- Stat bars: 2x2 grid -->
+              <div class="stat-bars">
+                <div class="stat-row">
+                  <div class="stat-row-header">
+                    <span class="stat-label">Top Speed</span>
+                  </div>
+                  <div class="bar-bg"><div class="bar-fill" id="stat-speed"></div></div>
                 </div>
-                <div class="bar-bg"><div class="bar-fill" id="stat-speed"></div></div>
-              </div>
-              <div class="stat-row">
-                <div class="stat-row-header">
-                  <span class="stat-label">Acceleration</span>
+                <div class="stat-row">
+                  <div class="stat-row-header">
+                    <span class="stat-label">Acceleration</span>
+                  </div>
+                  <div class="bar-bg"><div class="bar-fill" id="stat-accel"></div></div>
                 </div>
-                <div class="bar-bg"><div class="bar-fill" id="stat-accel"></div></div>
-              </div>
-              <div class="stat-row">
-                <div class="stat-row-header">
-                  <span class="stat-label">Handling</span>
+                <div class="stat-row">
+                  <div class="stat-row-header">
+                    <span class="stat-label">Handling</span>
+                  </div>
+                  <div class="bar-bg"><div class="bar-fill" id="stat-handling"></div></div>
                 </div>
-                <div class="bar-bg"><div class="bar-fill" id="stat-handling"></div></div>
-              </div>
-              <div class="stat-row">
-                <div class="stat-row-header">
-                  <span class="stat-label">Boost Power</span>
+                <div class="stat-row">
+                  <div class="stat-row-header">
+                    <span class="stat-label">Boost Power</span>
+                  </div>
+                  <div class="bar-bg"><div class="bar-fill" id="stat-boost"></div></div>
                 </div>
-                <div class="bar-bg"><div class="bar-fill" id="stat-boost"></div></div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- ---- SELECT CIRCUIT ---------------------------------------- -->
-        <div class="select-section">
-          <p class="section-label">Select Circuit</p>
+          <!-- ---- SELECT CIRCUIT ---------------------------------------- -->
+          <div class="select-section">
+            <p class="section-label">Select Circuit</p>
 
-          <div class="glass-card track-select-card">
-            <div class="track-carousel-row">
-              <button id="track-prev" class="track-carousel-nav" aria-label="Previous circuit">&#8249;</button>
+            <div class="glass-card track-select-card">
+              <div class="track-carousel-row">
+                <button id="track-prev" class="track-carousel-nav" aria-label="Previous circuit">&#8249;</button>
 
-              <div class="track-content">
-                <div class="track-preview-row">
-                  <div class="track-minimap-box">
-                    <canvas id="track-minimap" width="160" height="120"></canvas>
-                  </div>
-                  <div class="track-info-col">
-                    <h3 id="track-name">Monaco Oval</h3>
-                    <p id="track-desc">Smooth beginner oval track with wide turns.</p>
-                    <div class="track-tags">
-                      <span class="track-tag" id="track-difficulty">EASY</span>
-                      <span class="track-tag" id="track-laps">2 LAPS</span>
-                      <span class="track-tag" id="track-length">1.2 KM</span>
+                <div class="track-content">
+                  <div class="track-preview-row">
+                    <div class="track-minimap-box">
+                      <canvas id="track-minimap" width="160" height="120"></canvas>
+                    </div>
+                    <div class="track-info-col">
+                      <h3 id="track-name">Monaco Oval</h3>
+                      <p id="track-desc">Smooth beginner oval track with wide turns.</p>
+                      <div class="track-tags">
+                        <span class="track-tag" id="track-difficulty">EASY</span>
+                        <span class="track-tag" id="track-laps">2 LAPS</span>
+                        <span class="track-tag" id="track-length">1.2 KM</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <button id="track-next" class="track-carousel-nav" aria-label="Next circuit">&#8250;</button>
+                <button id="track-next" class="track-carousel-nav" aria-label="Next circuit">&#8250;</button>
+              </div>
             </div>
           </div>
         </div>
@@ -253,9 +256,11 @@
           <div class="hud-steer-group" id="hud-steer-left-group">
             <button id="btn-touch-left" class="hud-ctrl-btn hud-ctrl-square" aria-label="Steer left">
               <span class="material-symbols-outlined">arrow_back</span>
+              <span class="hud-key-badge">A</span>
             </button>
             <button id="btn-touch-right" class="hud-ctrl-btn hud-ctrl-square" aria-label="Steer right">
               <span class="material-symbols-outlined">arrow_forward</span>
+              <span class="hud-key-badge">D</span>
             </button>
           </div>
 
@@ -274,14 +279,17 @@
               <button id="btn-touch-boost" class="hud-ctrl-btn hud-ctrl-tri-boost" aria-label="Boost">
                 <span class="material-symbols-outlined hud-icon-primary">bolt</span>
                 <span class="hud-ctrl-label">BOOST</span>
+                <span class="hud-key-badge">SPACE</span>
               </button>
               <button id="btn-touch-brake" class="hud-ctrl-btn hud-ctrl-tri-brake" aria-label="Brake">
                 <span class="material-symbols-outlined hud-icon-error">eject</span>
                 <span class="hud-ctrl-label hud-ctrl-label-error">BRAKE</span>
+                <span class="hud-key-badge">S</span>
               </button>
               <button id="btn-touch-accel" class="hud-ctrl-btn hud-ctrl-tri-gas" aria-label="Accelerate">
                 <span class="material-symbols-outlined hud-icon-primary hud-icon-lg">speed</span>
                 <span class="hud-ctrl-label">GAS</span>
+                <span class="hud-key-badge">W</span>
               </button>
             </div>
           </div>
