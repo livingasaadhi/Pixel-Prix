@@ -9,8 +9,8 @@ import { createClient } from '@supabase/supabase-js';
 const ENV_URL = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
 const ENV_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const SUPABASE_URL = ENV_URL && !ENV_URL.includes('YOUR_SUPABASE_PROJECT_ID') ? ENV_URL : null;
-const SUPABASE_ANON_KEY = ENV_KEY && !ENV_KEY.includes('YOUR_SUPABASE_ANON_KEY') ? ENV_KEY : null;
+const SUPABASE_URL = ENV_URL && !ENV_URL.includes('YOUR_SUPABASE_PROJECT_ID') ? ENV_URL : 'https://vtnezkwpauvxgfnktjbf.supabase.co';
+const SUPABASE_ANON_KEY = ENV_KEY && !ENV_KEY.includes('YOUR_SUPABASE_ANON_KEY') ? ENV_KEY : 'sb_publishable_rCP0G5TWK69ak7WjWpVGYQ_U0kYl5hm';
 
 // Check if credentials have been updated by the user
 const isConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
