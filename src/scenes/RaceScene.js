@@ -192,6 +192,8 @@ export class RaceScene extends Phaser.Scene {
     const trackH = (maxY - minY) + pad * 2;
 
     const vw = this.scale.width || window.innerWidth;
+    const vh = this.scale.height || window.innerHeight;
+
     // Full-screen camera viewport (0, 0, vw, vh) - world renders edge-to-edge behind transparent HUD
     cam.setViewport(0, 0, vw, vh);
 
