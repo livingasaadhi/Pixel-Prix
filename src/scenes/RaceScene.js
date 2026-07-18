@@ -284,9 +284,9 @@ export class RaceScene extends Phaser.Scene {
 
     // Boost activation logic: can only start boosting if energy >= 30%. Can sustain down to 2%.
     const boostButtonPressed = this.isBoosting || this.wasd.space.isDown || this.wasd.shift.isDown ||
-                               this.boostKeyZ.isDown || this.boostKeyC.isDown ||
-                               this._kb.space || this._kb.shift || this._kb.z || this._kb.c;
-    
+      this.boostKeyZ.isDown || this.boostKeyC.isDown ||
+      this._kb.space || this._kb.shift || this._kb.z || this._kb.c;
+
     if (boostButtonPressed) {
       if (this.isBoostFiring) {
         if (this.boostEnergy <= 2) {
@@ -323,7 +323,7 @@ export class RaceScene extends Phaser.Scene {
     // Penalty engine (lenient: > 2.5s continuous off-road)
     if (this.onGrass && Math.abs(this.currentSpeed) > 60) {
       this.offRoadDurationMs += delta;
-      
+
       // Track limits warning: triggered after 1.5 seconds off-road
       if (this.offRoadDurationMs > 1500) {
         this.handleTrackLimitsViolation();
@@ -441,7 +441,7 @@ export class RaceScene extends Phaser.Scene {
     const lateralSlip = Math.abs(this.vx - targetVx) + Math.abs(this.vy - targetVy);
     if (lateralSlip > 45 && Math.abs(this.currentSpeed) > 120 && steerDir !== 0) {
       this.smokeEmitter.emitting = true;
-    } else if (!boostActive || !gasOn) {
+    } else if (!boostActive) {
       this.smokeEmitter.emitting = false;
     }
 

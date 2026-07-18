@@ -76,14 +76,14 @@ function setRaceMode(enabled) {
   // Hide / show persistent nav chrome during a race session
   const topBar = document.getElementById('top-app-bar');
   const bottomNav = document.getElementById('bottom-nav');
-  if (topBar)    topBar.style.display    = enabled ? 'none' : '';
+  if (topBar) topBar.style.display = enabled ? 'none' : '';
   if (bottomNav) bottomNav.style.display = enabled ? 'none' : '';
 
   // Orientation locking is supported by installed/PWA-capable browsers. The
   // layout remains fully usable when a browser declines the request.
   if (screen.orientation?.lock) {
     if (enabled) {
-      screen.orientation.lock('landscape').catch(() => {});
+      screen.orientation.lock('landscape').catch(() => { });
     } else {
       screen.orientation.unlock?.();
     }
@@ -250,14 +250,14 @@ function updateCarSelection() {
   const car = CARS[selectedCarIndex];
   document.getElementById('car-name').innerText = car.name;
   document.getElementById('car-desc').innerText = car.description;
-  
+
   const previewCanvas = document.getElementById('car-preview-canvas');
   drawCarPreview(previewCanvas, car.color, car.accentColor);
 
-  document.getElementById('stat-speed').style.width = `${(car.topSpeed / 340) * 100}%`;
-  document.getElementById('stat-accel').style.width = `${(car.acceleration / 180) * 100}%`;
-  document.getElementById('stat-handling').style.width = `${(car.handling / 5.2) * 100}%`;
-  document.getElementById('stat-boost').style.width = `${(car.boostPower / 1.7) * 100}%`;
+  document.getElementById('stat-speed').style.width = `${Math.min(100, (car.topSpeed / 340) * 100)}%`;
+  document.getElementById('stat-accel').style.width = `${Math.min(100, (car.acceleration / 180) * 100)}%`;
+  document.getElementById('stat-handling').style.width = `${Math.min(100, (car.handling / 5.2) * 100)}%`;
+  document.getElementById('stat-boost').style.width = `${Math.min(100, (car.boostPower / 1.7) * 100)}%`;
 
   const speedVal = document.getElementById('stat-speed-val');
   if (speedVal) speedVal.innerText = `${car.topSpeed} KM/H`;
@@ -286,7 +286,7 @@ function updateTrackSelection() {
 function launchSelectedRace() {
   setRaceMode(true);
   showScreen('screen-hud');
-  
+
   if (phaserGame) {
     phaserGame.scale.refresh();
 
@@ -550,7 +550,7 @@ async function loadLeaderboard(trackId) {
 
   container.innerHTML = scores.map((s, idx) => {
     const carName = CARS.find(c => c.id === s.car_id)?.name || s.car_id;
-    const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'2-digit', year:'2-digit' }).replace(/\//g, '.') : 'Today';
+    const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'Today';
     const isFirst = idx === 0;
     return `
       <div class="lb-row${isFirst ? ' lb-row-first' : ''}">
@@ -653,9 +653,6 @@ function initUI() {
   const openSettings = () => showScreen('screen-settings');
 
   bindClickOrTouch('btn-open-leaderboard', openLeaderboard);
-
-  // Top app bar settings (menu icon) opens settings screen
-  bindClickOrTouch('btn-open-settings', openSettings);
 
   // Top-right settings icon
   bindClickOrTouch('top-settings-icon', openSettings);
@@ -800,7 +797,7 @@ function initUI() {
 
   // Leaderboard Refresh
   bindClickOrTouch('btn-refresh-lb', () => {
-    const activeTab = document.querySelector('#lb-track-tabs .tab-btn.active');
+    const activeTab = document.querySelector('#lb-track-tabs .lb-tab-btn.active');
     const trackId = activeTab ? activeTab.dataset.trackId : TRACKS[0].id;
     loadLeaderboard(trackId);
   });
