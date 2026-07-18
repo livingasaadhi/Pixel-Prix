@@ -1128,6 +1128,7 @@ html, body {
 
 .input-group input {
   flex: 1;
+  min-width: 0;
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-md);
@@ -1136,12 +1137,23 @@ html, body {
   font-family: var(--font-sans);
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   -webkit-user-select: text;
   user-select: text;
 }
 
-.input-group input:focus { border-color: var(--primary); }
+.input-group input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+
+.input-group input:disabled { opacity: 0.6; }
+
+/* Invalid state while submitting is blocked by validation feedback */
+.score-form.is-error .input-group input {
+  border-color: var(--error);
+  box-shadow: 0 0 0 2px rgba(255, 80, 80, 0.25);
+}
 
 .status-msg {
   font-family: var(--font-sans);
@@ -1151,7 +1163,34 @@ html, body {
   color: var(--on-surface-variant);
 }
 .status-msg.success { color: var(--primary); font-weight: 700; }
-.status-msg.error   { color: var(--error); }
+.status-msg.error   { color: var(--error); font-weight: 700; }
+
+.status-hint {
+  font-family: var(--font-sans);
+  font-size: 0.66rem;
+  text-align: center;
+  color: var(--on-surface-variant);
+  opacity: 0.7;
+  margin: 0;
+}
+
+/* Save button loading spinner */
+.btn-spinner {
+  display: none;
+  width: 14px;
+  height: 14px;
+  margin-left: 8px;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: score-spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+@keyframes score-spin { to { transform: rotate(360deg); } }
+
+.btn.is-loading .btn-label { opacity: 0.85; }
+.btn.is-loading .btn-spinner { display: inline-block; }
+.btn.is-loading { opacity: 0.9; cursor: progress; }
 
 .gameover-actions {
   display: flex;
@@ -1159,6 +1198,14 @@ html, body {
   gap: 8px;
   justify-content: center;
 }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--on-surface-variant);
+}
+.btn-ghost:hover { border-color: rgba(255, 255, 255, 0.4); }
+.btn-ghost:active { background: rgba(255, 255, 255, 0.06); }
 
 /* ==========================================================================
    SCREEN: LEADERBOARD (#screen-leaderboard)
@@ -1479,7 +1526,7 @@ html, body {
   .input-group { flex-direction: column; }
   .input-group .btn { width: 100%; }
   .gameover-actions { display: grid; grid-template-columns: 1fr 1fr; }
-  .gameover-actions .btn:last-child { grid-column: 1 / -1; }
+  .gameover-actions .btn-ghost { grid-column: 2 / 3; }
 
   .modal-header h2 { font-size: 0.9rem; }
   .control-grid { grid-template-columns: 1fr; }

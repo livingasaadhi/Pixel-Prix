@@ -31,6 +31,13 @@ function formatTime(ms) {
 
 // UI Screen Navigation
 function showScreen(screenId) {
+  // While the username dialog is open, never let anything navigate away from
+  // the race-complete screen. Only an explicit user action (which clears
+  // scoreDialogOpen first) is allowed to move off it.
+  if (scoreDialogOpen && screenId !== 'screen-gameover') {
+    return;
+  }
+
   const screens = document.querySelectorAll('.ui-screen');
   screens.forEach(s => s.classList.add('hidden'));
 
@@ -362,9 +369,163 @@ function setupGameEventListeners() {
     document.getElementById('go-penalty-time').innerText = `+${(lastRaceResult.penaltyMs / 1000).toFixed(3)}s`;
     document.getElementById('go-final-time').innerText = formatTime(lastRaceResult.totalTimeMs);
     document.getElementById('go-best-lap').innerText = `Best Lap: ${formatTime(lastRaceResult.bestLapMs)}`;
-    document.getElementById('submit-status').innerText = '';
 
+    // Stop the race scene's input/update loop now that the race is over. This
+    // prevents stray game-loop events (camera, resize, keyboard capture) from
+    // interfering with the username dialog that we are about to show.
+    if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
+      phaserGame.scene.stop('RaceScene');
+    }
+
+    openScoreDialog();
     showScreen('screen-gameover');
+  });
+}
+
+// ----------------------------------------------------------------------------
+// PERSISTENT USERNAME DIALOG (post-race leaderboard save)
+//
+// The dialog MUST stay open until the user explicitly acts:
+//   - a successful leaderboard submission, or
+//   - an explicit cancel/close (SKIP / MENU / LEADERBOARD / RETRY).
+// It is NEVER auto-dismissed by timers, screen transitions, focus changes,
+// or game-state updates. While it is open, navigation is paused so nothing
+// can dismiss it unexpectedly.
+// ----------------------------------------------------------------------------
+let scoreDialogOpen = false;
+
+function validateDriverName(raw) {
+  const name = String(raw || '').trim();
+  if (!name) return { ok: false, error: 'ENTER A DRIVER NAME TO SAVE YOUR TIME.' };
+  if (name.length < 3) return { ok: false, error: 'NAME MUST BE AT LEAST 3 CHARACTERS.' };
+  if (name.length > 16) return { ok: false, error: 'NAME MUST BE 16 CHARACTERS OR FEWER.' };
+  if (!/^[\p{L}\p{N} _.\-]+$/u.test(name)) {
+    return { ok: false, error: 'USE LETTERS, NUMBERS, SPACES OR . - _ ONLY.' };
+  }
+  return { ok: true, name };
+}
+
+function setScoreDialogState(state) {
+  const form = document.getElementById('score-form');
+  const submitBtn = document.getElementById('btn-submit-score');
+  const statusMsg = document.getElementById('submit-status');
+  const hint = document.getElementById('submit-hint');
+  if (!form || !submitBtn) return;
+
+  form.classList.remove('is-loading', 'is-success', 'is-error');
+  submitBtn.classList.remove('is-loading');
+
+  if (state === 'loading') {
+    form.classList.add('is-loading');
+    submitBtn.classList.add('is-loading');
+    submitBtn.disabled = true;
+    statusMsg.className = 'status-msg';
+    statusMsg.innerText = 'POSTING TIME…';
+    if (hint) hint.style.display = 'none';
+  } else if (state === 'success') {
+    form.classList.add('is-success');
+    statusMsg.className = 'status-msg success';
+    statusMsg.innerText = 'TIME POSTED ✓';
+    if (hint) hint.style.display = 'none';
+  } else if (state === 'error') {
+    // error message is set by caller; just flag styling and re-enable input
+    form.classList.add('is-error');
+    submitBtn.disabled = false;
+    if (hint) hint.style.display = '';
+  } else {
+    submitBtn.disabled = false;
+    if (hint) hint.style.display = '';
+  }
+}
+
+function openScoreDialog() {
+  scoreDialogOpen = true;
+  document.documentElement.classList.add('score-dialog-open');
+
+  const form = document.getElementById('score-form');
+  const nameInput = document.getElementById('player-name-input');
+  const statusMsg = document.getElementById('submit-status');
+
+  if (form) {
+    form.reset();
+    form.classList.remove('is-loading', 'is-success', 'is-error');
+  }
+  if (statusMsg) {
+    statusMsg.className = 'status-msg';
+    statusMsg.innerText = '';
+  }
+  if (nameInput) nameInput.disabled = false;
+  setScoreDialogState('idle');
+
+  // Auto-focus the input so the user can start typing immediately on both
+  // desktop and mobile. Use a short delay so focus lands after the screen
+  // transition, and retry once if the browser deferred it.
+  const focusInput = () => {
+    if (!scoreDialogOpen || !nameInput) return;
+    try { nameInput.focus({ preventScroll: true }); } catch (_) { nameInput.focus(); }
+  };
+  setTimeout(focusInput, 60);
+  setTimeout(focusInput, 350);
+}
+
+function closeScoreDialog() {
+  scoreDialogOpen = false;
+  document.documentElement.classList.remove('score-dialog-open');
+}
+
+function submitScoreFromDialog() {
+  if (!scoreDialogOpen) return;
+
+  const nameInput = document.getElementById('player-name-input');
+  const statusMsg = document.getElementById('submit-status');
+  const submitBtn = document.getElementById('btn-submit-score');
+
+  const check = validateDriverName(nameInput?.value);
+  if (!check.ok) {
+    setScoreDialogState('error');
+    statusMsg.className = 'status-msg error';
+    statusMsg.innerText = check.error;
+    nameInput?.focus();
+    return;
+  }
+
+  setScoreDialogState('loading');
+
+  submitScore({
+    playerName: check.name,
+    carId: lastRaceResult.carId,
+    trackId: lastRaceResult.trackId,
+    timeMs: lastRaceResult.totalTimeMs
+  }).then((result) => {
+    // The dialog may have been explicitly closed while the request was in
+    // flight; only update UI if it is still open.
+    if (!scoreDialogOpen) return;
+
+    if (result.success) {
+      setScoreDialogState('success');
+      setTimeout(() => {
+        if (!scoreDialogOpen) return;
+        closeScoreDialog();
+        const trackId = lastRaceResult.trackId;
+        renderLeaderboardTabs(trackId);
+        watchLeaderboard(trackId);
+        loadLeaderboard(trackId);
+        showScreen('screen-leaderboard');
+      }, 1200);
+    } else {
+      setScoreDialogState('error');
+      statusMsg.className = 'status-msg error';
+      statusMsg.innerText = (result.error && /unavailable/i.test(result.error))
+        ? 'LEADERBOARD UNAVAILABLE — CHECK CONNECTION AND RETRY.'
+        : 'UNABLE TO POST TIME — TRY AGAIN.';
+      nameInput?.focus();
+    }
+  }).catch(() => {
+    if (!scoreDialogOpen) return;
+    setScoreDialogState('error');
+    statusMsg.className = 'status-msg error';
+    statusMsg.innerText = 'UNABLE TO POST TIME — TRY AGAIN.';
+    nameInput?.focus();
   });
 }
 
@@ -584,11 +745,14 @@ function initUI() {
   });
 
   // Game Over Actions
+  // These actions are explicit user intents that dismiss the username dialog.
   bindClickOrTouch('btn-retry-race', () => {
+    closeScoreDialog();
     launchSelectedRace();
   });
 
   bindClickOrTouch('btn-view-leaderboard-go', () => {
+    closeScoreDialog();
     const trackId = lastRaceResult?.trackId || TRACKS[0].id;
     renderLeaderboardTabs(trackId);
     watchLeaderboard(trackId);
@@ -597,50 +761,41 @@ function initUI() {
   });
 
   bindClickOrTouch('btn-gameover-menu', () => {
+    closeScoreDialog();
     if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
       phaserGame.scene.stop('RaceScene');
     }
     showScreen('screen-menu');
   });
 
+  // Explicit cancel/skip: dismiss the dialog without saving.
+  bindClickOrTouch('btn-close-score', () => {
+    closeScoreDialog();
+    const trackId = lastRaceResult?.trackId || TRACKS[0].id;
+    renderLeaderboardTabs(trackId);
+    watchLeaderboard(trackId);
+    loadLeaderboard(trackId);
+    showScreen('screen-leaderboard');
+  });
+
   // Score Submit Form
   const scoreForm = document.getElementById('score-form');
   if (scoreForm) {
-    scoreForm.addEventListener('submit', async (e) => {
+    scoreForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const nameInput = document.getElementById('player-name-input');
-      const statusMsg = document.getElementById('submit-status');
-      const submitBtn = document.getElementById('btn-submit-score');
-
-      const playerName = nameInput.value.trim();
-      if (!playerName || !lastRaceResult) return;
-
-      submitBtn.disabled = true;
-      statusMsg.className = 'status-msg';
-      statusMsg.innerText = 'Submitting time...';
-
-      const result = await submitScore({
-        playerName,
-        carId: lastRaceResult.carId,
-        trackId: lastRaceResult.trackId,
-        timeMs: lastRaceResult.totalTimeMs
-      });
-
-      if (result.success) {
-        statusMsg.className = 'status-msg success';
-        statusMsg.innerText = 'TIME POSTED';
-        setTimeout(() => {
-          renderLeaderboardTabs(lastRaceResult.trackId);
-          loadLeaderboard(lastRaceResult.trackId);
-          showScreen('screen-leaderboard');
-          submitBtn.disabled = false;
-        }, 1200);
-      } else {
-        statusMsg.className = 'status-msg error';
-        statusMsg.innerText = 'UNABLE TO POST TIME — TRY AGAIN';
-        submitBtn.disabled = false;
-      }
+      submitScoreFromDialog();
     });
+
+    // Keep focus inside the dialog: pressing Enter submits, Escape cancels.
+    const nameInput = document.getElementById('player-name-input');
+    if (nameInput) {
+      nameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          document.getElementById('btn-close-score')?.click();
+        }
+      });
+    }
   }
 
   // Leaderboard Refresh
