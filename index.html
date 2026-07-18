@@ -17,8 +17,8 @@
   <!-- Material Symbols (icon font) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
 
-  <script type="module" crossorigin src="./assets/index-DJqzJg38.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-H-gtO9pD.css">
+  <script type="module" crossorigin src="./assets/index-BiEWSeXL.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CC8JhkYk.css">
 </head>
 <body>
   <div id="app">
@@ -110,13 +110,19 @@
           <div class="spacer"></div>
         </header>
 
-        <!-- Select grid wrapper for 2-column desktop layout -->
+        <!-- Select grid wrapper for 2-column Telemetry Noir layout -->
         <div class="select-grid">
-          <!-- ---- SELECT CAR -------------------------------------------- -->
+          <!-- ---- SELECT CAR (Vehicle Configuration) --------------------- -->
           <div class="select-section">
-            <p class="section-label">Select Car</p>
+            <div class="section-header-row">
+              <p class="section-label">Vehicle Configuration</p>
+              <div class="telemetry-live-badge">
+                <span class="pulse-dot"></span>
+                <span>SYNCING LIVE TELEMETRY</span>
+              </div>
+            </div>
 
-            <div class="glass-card car-select-card">
+            <div class="glass-card car-select-card telemetry-grid">
               <!-- Carousel header: prev / car visual / next -->
               <div class="carousel-header">
                 <button id="car-prev" class="nav-arrow" aria-label="Previous car">&#8249;</button>
@@ -132,29 +138,33 @@
                 <button id="car-next" class="nav-arrow" aria-label="Next car">&#8250;</button>
               </div>
 
-              <!-- Stat bars: 2x2 grid -->
+              <!-- Stat bars: 2x2 grid with numeric readouts -->
               <div class="stat-bars">
                 <div class="stat-row">
                   <div class="stat-row-header">
-                    <span class="stat-label">Top Speed</span>
+                    <span class="stat-label">TOP SPEED</span>
+                    <span class="stat-val-mono" id="stat-speed-val">342 KM/H</span>
                   </div>
                   <div class="bar-bg"><div class="bar-fill" id="stat-speed"></div></div>
                 </div>
                 <div class="stat-row">
                   <div class="stat-row-header">
-                    <span class="stat-label">Acceleration</span>
+                    <span class="stat-label">ACCELERATION</span>
+                    <span class="stat-val-mono" id="stat-accel-val">0-100: 2.1S</span>
                   </div>
                   <div class="bar-bg"><div class="bar-fill" id="stat-accel"></div></div>
                 </div>
                 <div class="stat-row">
                   <div class="stat-row-header">
-                    <span class="stat-label">Handling</span>
+                    <span class="stat-label">HANDLING</span>
+                    <span class="stat-val-mono" id="stat-handling-val">GRIP 0.98G</span>
                   </div>
                   <div class="bar-bg"><div class="bar-fill" id="stat-handling"></div></div>
                 </div>
                 <div class="stat-row">
                   <div class="stat-row-header">
-                    <span class="stat-label">Boost Power</span>
+                    <span class="stat-label">BOOST POWER</span>
+                    <span class="stat-val-mono" id="stat-boost-val">ERS 150KW</span>
                   </div>
                   <div class="bar-bg"><div class="bar-fill" id="stat-boost"></div></div>
                 </div>
@@ -162,9 +172,12 @@
             </div>
           </div>
 
-          <!-- ---- SELECT CIRCUIT ---------------------------------------- -->
+          <!-- ---- SELECT CIRCUIT (Circuit Selection) --------------------- -->
           <div class="select-section">
-            <p class="section-label">Select Circuit</p>
+            <div class="section-header-row">
+              <p class="section-label">Select Circuit</p>
+              <span class="circuit-avail-tag">CIRCUITS: ACTIVE</span>
+            </div>
 
             <div class="glass-card track-select-card">
               <div class="track-carousel-row">
@@ -193,12 +206,19 @@
           </div>
         </div>
 
-        <!-- Sticky footer CTA -->
-        <div class="selection-footer">
-          <button id="btn-launch-race" class="btn btn-primary btn-large btn-full glow-btn">
+        <!-- Floating Sticky Bottom-Right CTA -->
+        <div class="selection-footer selection-footer-floating">
+          <button id="btn-launch-race" class="btn btn-primary btn-large glow-btn btn-floating-start">
             INITIALIZE SESSION
             <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">play_arrow</span>
           </button>
+          <div class="telemetry-session-meta">
+            <span>ID: PX-992-SESSION</span>
+            <span class="dot-sep">•</span>
+            <span>PING: 14MS</span>
+            <span class="dot-sep">•</span>
+            <span class="meta-active">ENCRYPTED CONNECTION ACTIVE</span>
+          </div>
         </div>
       </div>
 
