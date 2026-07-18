@@ -38,6 +38,22 @@ function showScreen(screenId) {
   if (target) {
     target.classList.remove('hidden');
   }
+
+  if (screenId !== 'screen-hud') setRaceMode(false);
+}
+
+function setRaceMode(enabled) {
+  document.documentElement.classList.toggle('race-mode', enabled);
+
+  // Orientation locking is supported by installed/PWA-capable browsers. The
+  // layout remains fully usable when a browser declines the request.
+  if (screen.orientation?.lock) {
+    if (enabled) {
+      screen.orientation.lock('landscape').catch(() => {});
+    } else {
+      screen.orientation.unlock?.();
+    }
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -211,6 +227,7 @@ function updateTrackSelection() {
 }
 
 function launchSelectedRace() {
+  setRaceMode(true);
   showScreen('screen-hud');
   
   if (phaserGame) {

@@ -77,7 +77,9 @@ export class RaceScene extends Phaser.Scene {
     // 4. Camera
     this.cameras.main.setBounds(0, 0, this.trackData.worldWidth, this.trackData.worldHeight);
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
-    this.cameras.main.setZoom(1.1);
+    // Zoom out so the player can read upcoming corners well ahead of the car
+    // while the follow camera keeps the car centered in the viewport.
+    this.cameras.main.setZoom(0.55);
 
     // 5. Particles (smoke)
     this.smokeEmitter = this.add.particles(0, 0, 'smoke_particle', {

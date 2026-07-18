@@ -90,7 +90,14 @@ html, body {
   transition: opacity 0.3s ease, visibility 0.3s ease;
   background: rgba(5, 5, 5, 0.85);
   backdrop-filter: blur(10px);
-  padding: 1rem;
+  padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+  /* Any screen with more content than the viewport must scroll cleanly so the
+     primary action (e.g. Start Race) is always reachable. The HUD overrides
+     this with overflow:hidden. */
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .ui-screen.hidden {
@@ -183,7 +190,7 @@ html, body {
   padding: 14px 28px;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
   text-decoration: none;
   letter-spacing: 1px;
 }
@@ -460,6 +467,8 @@ html, body {
   backdrop-filter: none !important;
   justify-content: space-between;
   padding: 12px;
+  overflow: hidden;
+  touch-action: none;
 }
 
 .hud-top {
@@ -808,7 +817,7 @@ html, body {
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .tab-btn:hover {
@@ -1086,7 +1095,7 @@ html, body {
 /* Accessibility guardrail for every phone and tablet size. These rules keep
    navigation in the viewport even when browser chrome or a small screen cuts
    the available height. */
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   button, input, .tab-btn { touch-action: manipulation; }
 
   .ui-screen:not(#screen-hud) {
@@ -1164,4 +1173,156 @@ html, body {
   .touch-group { gap: 6px; }
   .modal-card { padding: 14px; }
   .gameover-actions .btn { font-size: 0.68rem; }
+}
+
+/* Mobile game layout ------------------------------------------------------ */
+@media (max-width: 1100px) {
+  :root {
+    --mobile-gutter: max(12px, env(safe-area-inset-left));
+    --mobile-bottom: max(12px, env(safe-area-inset-bottom));
+    --tap-size: 48px;
+  }
+
+  .btn, .btn-icon-only, .nav-arrow, .tab-btn { min-height: var(--tap-size); }
+  .btn-icon-only, .nav-arrow { min-width: var(--tap-size); }
+  .btn:active, .btn-icon-only:active, .nav-arrow:active, .tab-btn:active {
+    transform: scale(0.96);
+    opacity: 0.82;
+  }
+
+  #screen-select {
+    grid-template-rows: var(--tap-size) minmax(0, 1fr) 56px;
+    gap: 8px;
+  }
+
+  #screen-select .selection-grid {
+    align-content: start;
+    gap: 10px;
+  }
+
+  #screen-select .select-card {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  #screen-select .carousel-container { min-height: 94px; }
+  #screen-select .car-preview-box,
+  #screen-select .track-preview-box { min-height: 82px; padding: 8px; gap: 4px; }
+  #screen-select #car-preview-canvas { width: 76px; height: 44px; margin-bottom: 2px !important; }
+  #screen-select #track-minimap { width: 118px; height: 82px; }
+  #screen-select .car-info h4,
+  #screen-select .track-info h4 { font-size: 0.9rem; }
+  #screen-select .car-desc,
+  #screen-select .track-desc { font-size: 0.68rem; }
+  #screen-select .stat-bars { gap: 4px; }
+  #screen-select .stat-row { font-size: 0.68rem; }
+  #screen-select .bar-bg { height: 6px; }
+  #screen-select .track-tag { padding: 4px 7px; font-size: 0.62rem; }
+  #screen-select .selection-footer .btn { min-height: 56px; }
+}
+
+/* Racing is designed around a two-thumb landscape grip. */
+@media (max-width: 1100px) and (orientation: landscape) {
+  #screen-select {
+    padding: max(8px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    grid-template-rows: 48px minmax(0, 1fr) 52px;
+  }
+
+  #screen-select .selection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow-y: auto;
+  }
+
+  #screen-select .select-card { min-height: max-content; }
+  #screen-select .carousel-container { min-height: 72px; }
+  #screen-select .car-preview-box,
+  #screen-select .track-preview-box { min-height: 62px; flex-direction: row; justify-content: center; }
+  #screen-select #car-preview-canvas { width: 64px; height: 38px; }
+  #screen-select #track-minimap { width: 86px; height: 58px; }
+  #screen-select .stat-bars { gap: 3px; }
+  #screen-select .stat-row { font-size: 0.62rem; }
+  #screen-select .track-stats { gap: 4px; }
+  #screen-select .selection-footer .btn { min-height: 50px; }
+
+  #screen-hud {
+    padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    overflow: hidden;
+  }
+
+  #screen-hud .hud-top {
+    width: auto;
+    max-width: none;
+    display: flex;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  #screen-hud .hud-chip { padding: 4px 8px; border-radius: 8px; background: rgba(8, 8, 10, 0.66); }
+  #screen-hud .hud-label { font-size: 0.5rem; }
+  #screen-hud .hud-value, #screen-hud .digital { font-size: 0.82rem; }
+  #screen-hud .hud-notification { top: 48px; font-size: 0.62rem; padding: 6px 10px; }
+
+  #screen-hud .hud-bottom { position: static; }
+  #screen-hud .boost-meter-container {
+    position: absolute;
+    left: 50%;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: min(22vw, 170px);
+    margin: 0;
+    opacity: 0.8;
+  }
+  #screen-hud .boost-label { font-size: 0.5rem; }
+  #screen-hud .boost-bar-bg { height: 6px; }
+
+  #screen-hud .touch-controls-container {
+    position: absolute;
+    inset: auto max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    pointer-events: none;
+  }
+  #screen-hud .touch-group { pointer-events: auto; }
+  #screen-hud .left-group { display: grid; grid-template-columns: repeat(2, 58px); gap: 8px; }
+  #screen-hud .right-group {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(2, 58px);
+    grid-template-areas: '. boost' 'brake accel';
+    gap: 8px;
+    padding: 0;
+  }
+  #screen-hud .touch-btn {
+    position: static;
+    width: 58px;
+    height: 58px;
+    min-width: 48px;
+    min-height: 48px;
+    font-size: 0.56rem;
+    border-radius: 50%;
+    background: rgba(10, 10, 13, 0.64);
+    border-color: rgba(255, 255, 255, 0.48);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.42);
+  }
+  #screen-hud .steer-btn { font-size: 0.56rem; }
+  #screen-hud .brake-btn { grid-area: brake; font-size: 0.48rem; }
+  #screen-hud .accel-btn { grid-area: accel; border-color: #fff; }
+  #screen-hud .boost-btn { grid-area: boost; border-color: #fff; }
+  #screen-hud .touch-btn:active, #screen-hud .touch-btn.active { transform: scale(0.9); background: rgba(255, 255, 255, 0.92); color: #050505; }
+}
+
+@media (max-width: 640px) and (orientation: landscape) {
+  #screen-hud .left-group { grid-template-columns: repeat(2, 52px); gap: 6px; }
+  #screen-hud .right-group { grid-template-columns: repeat(2, 52px); gap: 6px; }
+  #screen-hud .touch-btn { width: 52px; height: 52px; min-width: 48px; min-height: 48px; }
+  /* Keep the boost meter visible on small phones too (compact, edge-centered). */
+  #screen-hud .boost-meter-container {
+    display: block;
+    width: min(20vw, 130px);
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    opacity: 0.82;
+  }
+  #screen-hud .boost-bar-bg { height: 5px; }
+  #screen-hud .boost-label { font-size: 0.45rem; }
 }
