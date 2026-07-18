@@ -114,7 +114,15 @@ html, body {
 }
 
 .pointer-through {
-  pointer-events: none !important;
+  pointer-events: none;
+}
+.pointer-through button,
+.pointer-through .hud-action-btns,
+.pointer-through .hud-steer-group,
+.pointer-through .hud-drive-group,
+.pointer-through .hud-ctrl-btn,
+.pointer-through .hud-circle-btn {
+  pointer-events: auto !important;
 }
 
 /* --- SCREEN BASE --------------------------------------------------------- */
@@ -133,6 +141,7 @@ html, body {
 }
 
 .ui-screen.hidden {
+  display: none !important;
   opacity: 0;
   visibility: hidden;
   pointer-events: none !important;
@@ -1514,114 +1523,6 @@ html, body {
   .modal-header .btn-icon-only { flex: 0 0 44px; }
 }
 
-/* --- Mobile HUD: both portrait and landscape ---------------------------- */
-@media (max-width: 1100px) {
-  #screen-hud {
-    padding: max(6px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
-    overflow: hidden;
-    justify-content: flex-start;
-    touch-action: none;
-  }
-
-  #screen-hud .hud-top {
-    width: 100%;
-    max-width: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: stretch;
-    gap: 5px;
-  }
-
-  #screen-hud .hud-chip {
-    flex: 1 1 0;
-    min-width: 0;
-    padding: 3px 5px;
-    border-radius: 6px;
-    background: rgba(8, 8, 10, 0.65);
-    backdrop-filter: blur(8px);
-  }
-
-  #screen-hud .hud-label  { font-size: 0.44rem; letter-spacing: 0.04em; }
-  #screen-hud .hud-value,
-  #screen-hud .digital    { font-size: 0.72rem; }
-
-  #screen-hud .hud-notification {
-    top: 44px;
-    font-size: 0.6rem;
-    padding: 6px 12px;
-    max-width: calc(100vw - 24px);
-    white-space: normal;
-  }
-
-  /* Bottom section: absolute-positioned corners */
-  #screen-hud .hud-bottom { display: contents; }
-
-  #screen-hud .boost-meter-container {
-    position: absolute;
-    left: 50%;
-    bottom: max(8px, env(safe-area-inset-bottom));
-    transform: translateX(-50%);
-    width: min(26vw, 200px);
-    margin: 0;
-    opacity: 0.85;
-    text-align: center;
-  }
-  #screen-hud .boost-label   { font-size: 0.44rem; }
-  #screen-hud .boost-bar-bg  { height: 4px; }
-
-  #screen-hud .touch-controls-container {
-    position: absolute;
-    inset: auto max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    pointer-events: none;
-  }
-  #screen-hud .touch-group { pointer-events: auto; }
-
-  #screen-hud .left-group {
-    display: grid;
-    grid-template-columns: repeat(2, min(17vw, 80px, (50vw - 28px) / 2));
-    gap: 8px;
-  }
-
-  #screen-hud .right-group {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(2, min(17vw, 80px, (50vw - 28px) / 2));
-    grid-template-areas: '. boost' 'brake accel';
-    gap: 8px;
-  }
-
-  #screen-hud .touch-btn {
-    position: static;
-    width:  min(17vw, 80px, (50vw - 28px) / 2);
-    height: min(17vw, 80px, (50vw - 28px) / 2);
-    min-width: 48px;
-    min-height: 48px;
-    font-size: 0.52rem;
-    border-radius: 50%;
-    background: rgba(8, 8, 10, 0.68);
-    border-color: rgba(255, 255, 255, 0.42);
-    box-shadow: 0 3px 12px rgba(0,0,0,0.42);
-  }
-
-  #screen-hud .steer-btn  { font-size: clamp(1rem, 5vw, 1.4rem); line-height: 1; }
-  #screen-hud .brake-btn  { grid-area: brake; font-size: 0.46rem; }
-  #screen-hud .accel-btn  { grid-area: accel; border-color: rgba(255,255,255,0.85); }
-  #screen-hud .boost-btn  { grid-area: boost; border-color: rgba(255,255,255,0.85); }
-  #screen-hud .touch-btn:active,
-  #screen-hud .touch-btn.active { transform: scale(0.90); background: rgba(255,255,255,0.9); color: #050505; }
-}
-
-@media (max-width: 640px) and (orientation: landscape) {
-  #screen-hud .left-group  { grid-template-columns: repeat(2, min(14vw, 60px, (50vw - 24px) / 2)); gap: 6px; }
-  #screen-hud .right-group { grid-template-columns: repeat(2, min(14vw, 60px, (50vw - 24px) / 2)); gap: 6px; }
-  #screen-hud .touch-btn   { width: min(14vw, 60px, (50vw - 24px) / 2); height: min(14vw, 60px, (50vw - 24px) / 2); min-width: 48px; min-height: 48px; }
-  #screen-hud .boost-meter-container { width: min(20vw, 130px); bottom: calc(8px + env(safe-area-inset-bottom)); }
-  #screen-hud .boost-bar-bg { height: 4px; }
-}
-
 /* Very small screens */
 @media (max-width: 380px) {
   .logo-title  { font-size: 2.5rem; }
@@ -1821,12 +1722,19 @@ html, body {
   color: rgba(255, 255, 255, 0.4);
 }
 
-/* 3-Tier Vertical Stack: Top Boost, Middle Brake, Bottom Gas */
-.hud-drive-vstack {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
+/* Ergonomic Triangular Control Layout:
+   Top-Right: BOOST (directly above GAS)
+   Bottom-Left: BRAKE (immediately left of GAS)
+   Bottom-Right: GAS */
+.hud-drive-triangular {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    ". boost"
+    "brake accel";
+  gap: 8px;
+  align-items: end;
 }
 
 /* Generic control button */
@@ -1856,28 +1764,31 @@ html, body {
   height: clamp(64px, 18vw, 80px);
 }
 
-/* Tier 1 (Top): Boost button */
-.hud-ctrl-tier-boost {
+/* Triangular Boost: Top-Right (directly above Gas) */
+.hud-ctrl-tri-boost {
+  grid-area: boost;
   width: clamp(72px, 20vw, 96px);
-  height: clamp(48px, 12vw, 60px);
+  height: clamp(52px, 14vw, 68px);
 }
 
-/* Tier 2 (Middle): Brake button */
-.hud-ctrl-tier-brake {
-  width: clamp(72px, 20vw, 96px);
-  height: clamp(48px, 12vw, 60px);
+/* Triangular Brake: Bottom-Left (immediately left of Gas) */
+.hud-ctrl-tri-brake {
+  grid-area: brake;
+  width: clamp(64px, 18vw, 80px);
+  height: clamp(64px, 18vw, 80px);
   border-color: rgba(255, 180, 171, 0.25);
 }
-.hud-ctrl-tier-brake:active { background: rgba(255,180,171,0.08); }
+.hud-ctrl-tri-brake:active { background: rgba(255,180,171,0.08); }
 
-/* Tier 3 (Bottom): Gas button */
-.hud-ctrl-tier-gas {
+/* Triangular Gas: Bottom-Right */
+.hud-ctrl-tri-gas {
+  grid-area: accel;
   width: clamp(72px, 20vw, 96px);
-  height: clamp(76px, 20vw, 100px);
+  height: clamp(84px, 22vw, 112px);
   background: rgba(255,255,255,0.08);
   border-color: rgba(255,255,255,0.22);
 }
-.hud-ctrl-tier-gas:active { background: rgba(255,255,255,0.18); }
+.hud-ctrl-tri-gas:active { background: rgba(255,255,255,0.18); }
 
 /* Icons inside control buttons */
 .hud-icon-primary   { color: var(--primary); font-size: 22px; }

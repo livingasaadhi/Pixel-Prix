@@ -415,12 +415,36 @@ function renderLeaderboardTabs(activeTrackId = TRACKS[selectedTrackIndex].id) {
   });
 }
 
+// Helper to robustly handle both touch and click events without delay or drop
+function bindClickOrTouch(idOrEl, handler) {
+  const el = typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
+  if (!el) return;
+
+  let handled = false;
+  const trigger = (e) => {
+    if (handled) return;
+    handled = true;
+    setTimeout(() => { handled = false; }, 250);
+    handler(e);
+  };
+
+  el.addEventListener('click', (e) => {
+    trigger(e);
+  });
+
+  el.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'touch') {
+      trigger(e);
+    }
+  });
+}
+
 // ----------------------------------------------------------------------------
 // DOM EVENT LISTENERS ATTACHMENT
 // ----------------------------------------------------------------------------
 function initUI() {
   // Navigation Buttons
-  document.getElementById('btn-start-game').addEventListener('click', () => {
+  bindClickOrTouch('btn-start-game', () => {
     updateCarSelection();
     updateTrackSelection();
     showScreen('screen-select');
@@ -436,72 +460,62 @@ function initUI() {
 
   const openSettings = () => showScreen('screen-settings');
 
-  document.getElementById('btn-open-leaderboard').addEventListener('click', openLeaderboard);
+  bindClickOrTouch('btn-open-leaderboard', openLeaderboard);
 
   // Top app bar settings (menu icon) opens settings screen
-  document.getElementById('btn-open-settings').addEventListener('click', openSettings);
+  bindClickOrTouch('btn-open-settings', openSettings);
 
   // Top-right settings icon
-  const topSettingsIcon = document.getElementById('top-settings-icon');
-  if (topSettingsIcon) topSettingsIcon.addEventListener('click', openSettings);
+  bindClickOrTouch('top-settings-icon', openSettings);
 
   // Menu screen's "Controls & Info" button
-  const btnOpenSettingsMenu = document.getElementById('btn-open-settings-menu');
-  if (btnOpenSettingsMenu) btnOpenSettingsMenu.addEventListener('click', openSettings);
+  bindClickOrTouch('btn-open-settings-menu', openSettings);
 
   // Bottom nav tab wiring
-  const navTabLeaderboard = document.getElementById('nav-tab-leaderboard');
-  if (navTabLeaderboard) navTabLeaderboard.addEventListener('click', openLeaderboard);
+  bindClickOrTouch('nav-tab-leaderboard', openLeaderboard);
 
-  const navTabRace = document.getElementById('nav-tab-race');
-  if (navTabRace) navTabRace.addEventListener('click', () => {
+  bindClickOrTouch('nav-tab-race', () => {
     updateCarSelection();
     updateTrackSelection();
     showScreen('screen-select');
   });
 
-  const navTabGarage = document.getElementById('nav-tab-garage');
-  if (navTabGarage) navTabGarage.addEventListener('click', () => showScreen('screen-menu'));
+  bindClickOrTouch('nav-tab-garage', () => showScreen('screen-menu'));
 
-  document.getElementById('btn-close-settings').addEventListener('click', () => {
+  bindClickOrTouch('btn-close-settings', () => {
     showScreen('screen-menu');
   });
 
-  document.getElementById('btn-close-leaderboard').addEventListener('click', () => {
+  bindClickOrTouch('btn-close-leaderboard', () => {
     stopWatchingLeaderboard();
     showScreen('screen-menu');
   });
 
-  document.getElementById('btn-select-back').addEventListener('click', () => {
+  bindClickOrTouch('btn-select-back', () => {
     showScreen('screen-menu');
   });
 
   // Pause menu
-  const showPause = () => {
+  bindClickOrTouch('btn-touch-pause', () => {
     showScreen('screen-pause');
-  };
-  const hidePause = () => {
-    showScreen('screen-hud');
-  };
+  });
 
-  const btnPause = document.getElementById('btn-touch-pause');
-  if (btnPause) btnPause.addEventListener('click', showPause);
-
-  const btnHudBack = document.getElementById('btn-hud-back');
-  if (btnHudBack) btnHudBack.addEventListener('click', () => {
+  bindClickOrTouch('btn-hud-back', () => {
     if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
       phaserGame.scene.stop('RaceScene');
     }
     showScreen('screen-menu');
   });
 
-  document.getElementById('btn-resume-race').addEventListener('click', hidePause);
+  bindClickOrTouch('btn-resume-race', () => {
+    showScreen('screen-hud');
+  });
 
-  document.getElementById('btn-restart-race').addEventListener('click', () => {
+  bindClickOrTouch('btn-restart-race', () => {
     launchSelectedRace();
   });
 
-  document.getElementById('btn-exit-to-menu').addEventListener('click', () => {
+  bindClickOrTouch('btn-exit-to-menu', () => {
     if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
       phaserGame.scene.stop('RaceScene');
     }
@@ -509,34 +523,34 @@ function initUI() {
   });
 
   // Carousel Controls
-  document.getElementById('car-prev').addEventListener('click', () => {
+  bindClickOrTouch('car-prev', () => {
     selectedCarIndex = (selectedCarIndex - 1 + CARS.length) % CARS.length;
     updateCarSelection();
   });
-  document.getElementById('car-next').addEventListener('click', () => {
+  bindClickOrTouch('car-next', () => {
     selectedCarIndex = (selectedCarIndex + 1) % CARS.length;
     updateCarSelection();
   });
 
-  document.getElementById('track-prev').addEventListener('click', () => {
+  bindClickOrTouch('track-prev', () => {
     selectedTrackIndex = (selectedTrackIndex - 1 + TRACKS.length) % TRACKS.length;
     updateTrackSelection();
   });
-  document.getElementById('track-next').addEventListener('click', () => {
+  bindClickOrTouch('track-next', () => {
     selectedTrackIndex = (selectedTrackIndex + 1) % TRACKS.length;
     updateTrackSelection();
   });
 
-  document.getElementById('btn-launch-race').addEventListener('click', () => {
+  bindClickOrTouch('btn-launch-race', () => {
     launchSelectedRace();
   });
 
   // Game Over Actions
-  document.getElementById('btn-retry-race').addEventListener('click', () => {
+  bindClickOrTouch('btn-retry-race', () => {
     launchSelectedRace();
   });
 
-  document.getElementById('btn-view-leaderboard-go').addEventListener('click', () => {
+  bindClickOrTouch('btn-view-leaderboard-go', () => {
     const trackId = lastRaceResult?.trackId || TRACKS[0].id;
     renderLeaderboardTabs(trackId);
     watchLeaderboard(trackId);
@@ -544,7 +558,7 @@ function initUI() {
     showScreen('screen-leaderboard');
   });
 
-  document.getElementById('btn-gameover-menu').addEventListener('click', () => {
+  bindClickOrTouch('btn-gameover-menu', () => {
     if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
       phaserGame.scene.stop('RaceScene');
     }
@@ -553,44 +567,46 @@ function initUI() {
 
   // Score Submit Form
   const scoreForm = document.getElementById('score-form');
-  scoreForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const nameInput = document.getElementById('player-name-input');
-    const statusMsg = document.getElementById('submit-status');
-    const submitBtn = document.getElementById('btn-submit-score');
+  if (scoreForm) {
+    scoreForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('player-name-input');
+      const statusMsg = document.getElementById('submit-status');
+      const submitBtn = document.getElementById('btn-submit-score');
 
-    const playerName = nameInput.value.trim();
-    if (!playerName || !lastRaceResult) return;
+      const playerName = nameInput.value.trim();
+      if (!playerName || !lastRaceResult) return;
 
-    submitBtn.disabled = true;
-    statusMsg.className = 'status-msg';
-    statusMsg.innerText = 'Submitting time...';
+      submitBtn.disabled = true;
+      statusMsg.className = 'status-msg';
+      statusMsg.innerText = 'Submitting time...';
 
-    const result = await submitScore({
-      playerName,
-      carId: lastRaceResult.carId,
-      trackId: lastRaceResult.trackId,
-      timeMs: lastRaceResult.totalTimeMs
-    });
+      const result = await submitScore({
+        playerName,
+        carId: lastRaceResult.carId,
+        trackId: lastRaceResult.trackId,
+        timeMs: lastRaceResult.totalTimeMs
+      });
 
-    if (result.success) {
-      statusMsg.className = 'status-msg success';
-      statusMsg.innerText = 'TIME POSTED';
-      setTimeout(() => {
-        renderLeaderboardTabs(lastRaceResult.trackId);
-        loadLeaderboard(lastRaceResult.trackId);
-        showScreen('screen-leaderboard');
+      if (result.success) {
+        statusMsg.className = 'status-msg success';
+        statusMsg.innerText = 'TIME POSTED';
+        setTimeout(() => {
+          renderLeaderboardTabs(lastRaceResult.trackId);
+          loadLeaderboard(lastRaceResult.trackId);
+          showScreen('screen-leaderboard');
+          submitBtn.disabled = false;
+        }, 1200);
+      } else {
+        statusMsg.className = 'status-msg error';
+        statusMsg.innerText = 'UNABLE TO POST TIME — TRY AGAIN';
         submitBtn.disabled = false;
-      }, 1200);
-    } else {
-      statusMsg.className = 'status-msg error';
-      statusMsg.innerText = 'UNABLE TO POST TIME — TRY AGAIN';
-      submitBtn.disabled = false;
-    }
-  });
+      }
+    });
+  }
 
   // Leaderboard Refresh
-  document.getElementById('btn-refresh-lb').addEventListener('click', () => {
+  bindClickOrTouch('btn-refresh-lb', () => {
     const activeTab = document.querySelector('#lb-track-tabs .tab-btn.active');
     const trackId = activeTab ? activeTab.dataset.trackId : TRACKS[0].id;
     loadLeaderboard(trackId);
@@ -603,7 +619,13 @@ function initUI() {
 // ----------------------------------------------------------------------------
 // ENTRY POINT
 // ----------------------------------------------------------------------------
-window.addEventListener('DOMContentLoaded', () => {
+function startApp() {
   initGame();
   initUI();
-});
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', startApp);
+} else {
+  startApp();
+}

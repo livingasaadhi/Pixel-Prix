@@ -259,7 +259,7 @@
             </button>
           </div>
 
-          <!-- RIGHT: KERS meter + BOOST (Top) / BRAKE (Middle) / GAS (Bottom) -->
+          <!-- RIGHT: KERS meter + Triangular Controls (Boost top, Brake bottom-left, Gas bottom-right) -->
           <div class="hud-drive-group" id="hud-drive-right-group">
             <!-- KERS energy bar -->
             <div class="hud-kers-meter">
@@ -269,17 +269,17 @@
               <span class="hud-kers-label">KERS ENERGY</span>
             </div>
 
-            <!-- 3-Tier Vertical Control Stack -->
-            <div class="hud-drive-vstack">
-              <button id="btn-touch-boost" class="hud-ctrl-btn hud-ctrl-tier-boost" aria-label="Boost">
+            <!-- Triangular Control Layout -->
+            <div class="hud-drive-triangular">
+              <button id="btn-touch-boost" class="hud-ctrl-btn hud-ctrl-tri-boost" aria-label="Boost">
                 <span class="material-symbols-outlined hud-icon-primary">bolt</span>
                 <span class="hud-ctrl-label">BOOST</span>
               </button>
-              <button id="btn-touch-brake" class="hud-ctrl-btn hud-ctrl-tier-brake" aria-label="Brake">
+              <button id="btn-touch-brake" class="hud-ctrl-btn hud-ctrl-tri-brake" aria-label="Brake">
                 <span class="material-symbols-outlined hud-icon-error">eject</span>
                 <span class="hud-ctrl-label hud-ctrl-label-error">BRAKE</span>
               </button>
-              <button id="btn-touch-accel" class="hud-ctrl-btn hud-ctrl-tier-gas" aria-label="Accelerate">
+              <button id="btn-touch-accel" class="hud-ctrl-btn hud-ctrl-tri-gas" aria-label="Accelerate">
                 <span class="material-symbols-outlined hud-icon-primary hud-icon-lg">speed</span>
                 <span class="hud-ctrl-label">GAS</span>
               </button>

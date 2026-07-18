@@ -174,8 +174,8 @@ export class RaceScene extends Phaser.Scene {
     this.startCountdown();
   }
 
-  // Frame the camera around the track's real footprint with player-locked
-  // vertical offset and HUD viewport isolation.
+  // Frame the camera with a fixed 0° heading, viewport isolation above controls,
+  // and smooth position follow centered on the player.
   frameCamera() {
     const cam = this.cameras.main;
     const pad = (this.roadWidth || 100) + 60;
@@ -212,18 +212,15 @@ export class RaceScene extends Phaser.Scene {
 
     // Zoom level calculation for optimal track visibility
     const cover = Math.max(vw / trackW, gameplayHeight / trackH);
-    const zoom = Math.max(0.55, Math.min(cover, 0.85));
-    cam.setZoom(zoom);
+    this.baseZoom = Math.max(0.55, Math.min(cover, 0.85));
+    cam.setZoom(this.baseZoom);
 
-    // Lock car visually at 62% from top of gameplay viewport (giving maximum track visibility ahead)
-    const targetCarScreenY = gameplayHeight * 0.62;
-    const centerScreenY = gameplayHeight * 0.50;
-    const screenOffsetY = targetCarScreenY - centerScreenY;
-    const worldOffsetY = screenOffsetY / zoom;
+    // Lock camera rotation permanently to 0 degrees (no spinning horizon)
+    cam.setRotation(0);
+    cam.setFollowOffset(0, 0);
 
-    // Fluid player-locked tracking with track rotation
-    cam.removeBounds();
-    cam.setFollowOffset(0, worldOffsetY);
+    // Set camera bounds to match track bounds smoothly
+    cam.setBounds(minX - pad, minY - pad, trackW, trackH);
   }
 
   startCountdown() {
@@ -264,14 +261,13 @@ export class RaceScene extends Phaser.Scene {
     this.elapsedMs = this.time.now - this.startTime;
     this.emitHUDUpdate();
 
-    // Smooth camera rotation so the world rotates around the player
-    // and forward driving is always oriented towards the top of the screen
-    const targetRotation = this.player.rotation + Math.PI / 2;
-    this.cameras.main.rotation = Phaser.Math.Angle.RotateTo(
-      this.cameras.main.rotation,
-      targetRotation,
-      4.5 * dt
-    );
+    // Camera rotation is fixed at 0° permanently
+    this.cameras.main.rotation = 0;
+
+    // Smooth high-speed zoom out (~8% zoom expansion at top speed)
+    const speedRatio = Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275));
+    const targetZoom = (this.baseZoom || 0.7) * (1.0 - speedRatio * 0.08);
+    this.cameras.main.zoom = Phaser.Math.Linear(this.cameras.main.zoom, targetZoom, 2.5 * dt);
 
     // Steering
     let steerDir = 0;
@@ -315,8 +311,8 @@ export class RaceScene extends Phaser.Scene {
     // Realistic speed-dependent steering:
     // - Steering works while coasting (currentSpeed > 1)
     // - Responsive at low speeds, stable/dampened at high speeds
-    const speedRatio = Math.min(1.0, Math.abs(this.currentSpeed) / this.maxSpeed);
-    const speedDamping = Math.max(this.highSpeedSteeringMultiplier, 1.0 - speedRatio * 0.55);
+    const steerSpeedRatio = Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275));
+    const speedDamping = Math.max(this.highSpeedSteeringMultiplier, 1.0 - steerSpeedRatio * 0.55);
     const boostBonus = boostActive ? 1.15 : 1.0;
     if (Math.abs(this.currentSpeed) > 1.0) {
       this.player.rotation += steerDir * this.steeringSensitivity * speedDamping * boostBonus * dt;
