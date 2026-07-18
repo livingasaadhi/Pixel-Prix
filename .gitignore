@@ -43,3 +43,6 @@ dist-ssr/
 .env.test
 .env.production
 .env.*.local
+
+# Supabase CLI generated cache
+supabase/.temp/
