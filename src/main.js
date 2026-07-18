@@ -45,6 +45,12 @@ function showScreen(screenId) {
 function setRaceMode(enabled) {
   document.documentElement.classList.toggle('race-mode', enabled);
 
+  // Hide / show persistent nav chrome during a race session
+  const topBar = document.getElementById('top-app-bar');
+  const bottomNav = document.getElementById('bottom-nav');
+  if (topBar)    topBar.style.display    = enabled ? 'none' : '';
+  if (bottomNav) bottomNav.style.display = enabled ? 'none' : '';
+
   // Orientation locking is supported by installed/PWA-capable browsers. The
   // layout remains fully usable when a browser declines the request.
   if (screen.orientation?.lock) {
@@ -330,32 +336,52 @@ function setupGameEventListeners() {
 // LEADERBOARD SCREEN MANAGEMENT
 // ----------------------------------------------------------------------------
 async function loadLeaderboard(trackId) {
-  const tbody = document.getElementById('lb-table-body');
-  tbody.innerHTML = '<tr><td colspan="5" class="loading-cell">Loading circuit times...</td></tr>';
+  const container = document.getElementById('lb-table-body');
+  container.innerHTML = '<p class="loading-cell">Loading circuit times...</p>';
 
   const { scores, error } = await fetchTopScores(trackId);
 
   if (error) {
-    tbody.innerHTML = '<tr><td colspan="5" class="loading-cell">Unable to load global times. Please try again.</td></tr>';
+    container.innerHTML = '<p class="loading-cell">Unable to load global times. Please try again.</p>';
     return;
   }
 
   if (!scores || scores.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="loading-cell">No times recorded for this track yet. Be the first!</td></tr>';
+    container.innerHTML = '<p class="loading-cell">No times recorded for this track yet. Be the first!</p>';
     return;
   }
 
-  tbody.innerHTML = scores.map((s, idx) => {
+  container.innerHTML = scores.map((s, idx) => {
     const carName = CARS.find(c => c.id === s.car_id)?.name || s.car_id;
     const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString() : 'Today';
+    const rankClass = idx === 0 ? 'rank-first' : 'rank-other';
     return `
-      <tr>
-        <td data-label="Rank">#${idx + 1}</td>
-        <td data-label="Driver"><strong>${escapeHtml(s.player_name)}</strong></td>
-        <td data-label="Car">${escapeHtml(carName)}</td>
-        <td data-label="Time">${formatTime(s.time_ms)}</td>
-        <td data-label="Date">${dateStr}</td>
-      </tr>
+      <div class="lb-entry glass-panel ${rankClass}">
+        <div class="lb-entry-col">
+          <div>
+            <p class="lb-field-label">POS</p>
+            <p class="lb-field-value">#${idx + 1}</p>
+          </div>
+          <div>
+            <p class="lb-field-label">PILOT</p>
+            <p class="lb-field-value">${escapeHtml(s.player_name)}</p>
+          </div>
+        </div>
+        <div class="lb-entry-col right">
+          <div>
+            <p class="lb-field-label">CONSTRUCTOR</p>
+            <p class="lb-field-value">${escapeHtml(carName)}</p>
+          </div>
+          <div>
+            <p class="lb-field-label">LAP TIME</p>
+            <p class="lb-field-mono">${formatTime(s.time_ms)}</p>
+          </div>
+        </div>
+        <div class="lb-entry-footer" style="grid-column: 1 / -1; display: flex; justify-content: space-between; width: 100%;">
+          <p class="lb-entry-date">${dateStr}</p>
+          <span class="material-symbols-outlined" style="color: rgba(255,255,255,0.2); font-size:18px;">chevron_right</span>
+        </div>
+      </div>
     `;
   }).join('');
 }
@@ -408,17 +434,42 @@ function initUI() {
     showScreen('screen-select');
   });
 
-  document.getElementById('btn-open-leaderboard').addEventListener('click', () => {
+  const openLeaderboard = () => {
     const trackId = TRACKS[selectedTrackIndex].id;
     renderLeaderboardTabs(trackId);
     watchLeaderboard(trackId);
     loadLeaderboard(trackId);
     showScreen('screen-leaderboard');
+  };
+
+  const openSettings = () => showScreen('screen-settings');
+
+  document.getElementById('btn-open-leaderboard').addEventListener('click', openLeaderboard);
+
+  // Top app bar settings (menu icon) opens settings screen
+  document.getElementById('btn-open-settings').addEventListener('click', openSettings);
+
+  // Top-right settings icon
+  const topSettingsIcon = document.getElementById('top-settings-icon');
+  if (topSettingsIcon) topSettingsIcon.addEventListener('click', openSettings);
+
+  // Menu screen's "Controls & Info" button
+  const btnOpenSettingsMenu = document.getElementById('btn-open-settings-menu');
+  if (btnOpenSettingsMenu) btnOpenSettingsMenu.addEventListener('click', openSettings);
+
+  // Bottom nav tab wiring
+  const navTabLeaderboard = document.getElementById('nav-tab-leaderboard');
+  if (navTabLeaderboard) navTabLeaderboard.addEventListener('click', openLeaderboard);
+
+  const navTabRace = document.getElementById('nav-tab-race');
+  if (navTabRace) navTabRace.addEventListener('click', () => {
+    updateCarSelection();
+    updateTrackSelection();
+    showScreen('screen-select');
   });
 
-  document.getElementById('btn-open-settings').addEventListener('click', () => {
-    showScreen('screen-settings');
-  });
+  const navTabGarage = document.getElementById('nav-tab-garage');
+  if (navTabGarage) navTabGarage.addEventListener('click', () => showScreen('screen-menu'));
 
   document.getElementById('btn-close-settings').addEventListener('click', () => {
     showScreen('screen-menu');
