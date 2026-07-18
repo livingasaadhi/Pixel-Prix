@@ -42,92 +42,82 @@ if (isConfigured) {
 }
 
 /**
- * Submits a new race score to Supabase or LocalStorage.
+ * Submits a new race score to the global Supabase leaderboard.
  */
 export async function submitScore({ playerName, carId, trackId, timeMs }) {
-  const scoreData = {
-    player_name: playerName || 'Anonymous',
-    car_id: carId,
-    track_id: trackId,
-    time_ms: timeMs,
-    created_at: new Date().toISOString()
-  };
-
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('scores')
-        .insert([scoreData])
-        .select();
-
-      if (error) throw error;
-      return { success: true, backend: 'Supabase', data };
-    } catch (err) {
-      console.warn('Supabase insert failed, saving locally:', err.message);
-    }
+  const normalizedName = String(playerName || '').trim().slice(0, 16);
+  if (!normalizedName || !carId || !trackId || !Number.isFinite(timeMs) || timeMs <= 0) {
+    return { success: false, error: 'Enter a driver name and finish a valid race first.' };
   }
 
-  // LocalStorage Fallback
-  saveScoreLocally(scoreData);
-  return { success: true, backend: 'LocalStorage', data: [scoreData] };
+  const scoreData = {
+    player_name: normalizedName,
+    car_id: carId,
+    track_id: trackId,
+    time_ms: Math.round(timeMs)
+  };
+
+  if (!supabase) {
+    return { success: false, error: 'Global leaderboard is unavailable.' };
+  }
+
+  const { data, error } = await supabase
+    .from('scores')
+    .insert(scoreData)
+    .select()
+    .single();
+
+  if (error) {
+    console.warn('Supabase score submission failed:', error.message);
+    return { success: false, error: error.message };
+  }
+
+  connectionVerified = true;
+  return { success: true, backend: 'Supabase', data: [data] };
 }
 
 /**
  * Fetches top 10 fastest times for a given track_id.
  */
 export async function fetchTopScores(trackId) {
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('scores')
-        .select('*')
-        .eq('track_id', trackId)
-        .order('time_ms', { ascending: true })
-        .limit(10);
-
-      if (!error && data) {
-        return { scores: data, backend: 'Supabase' };
-      }
-    } catch (err) {
-      console.warn('Supabase fetch failed, loading local scores:', err.message);
-    }
+  if (!supabase) {
+    return { scores: [], backend: 'Unavailable', error: 'Global leaderboard is unavailable.' };
   }
 
-  // LocalStorage Fallback
-  const localScores = getLocalScores(trackId);
-  return { scores: localScores, backend: 'LocalStorage' };
+  const { data, error } = await supabase
+    .from('scores')
+    .select('*')
+    .eq('track_id', trackId)
+    .order('time_ms', { ascending: true })
+    .limit(10);
+
+  if (error) {
+    console.warn('Supabase leaderboard fetch failed:', error.message);
+    return { scores: [], backend: 'Unavailable', error: error.message };
+  }
+
+  connectionVerified = true;
+  return { scores: data || [], backend: 'Supabase' };
 }
 
-/**
- * Saves a score entry to window.localStorage
- */
-function saveScoreLocally(score) {
-  try {
-    const existing = JSON.parse(localStorage.getItem('pixel_prix_scores') || '[]');
-    existing.push(score);
-    localStorage.setItem('pixel_prix_scores', JSON.stringify(existing));
-  } catch (e) {
-    console.error('LocalStorage write error:', e);
-  }
-}
+export function subscribeToScores(trackId, onChange) {
+  if (!supabase) return () => {};
 
-/**
- * Reads and filters top 10 scores from window.localStorage
- */
-function getLocalScores(trackId) {
-  try {
-    const existing = JSON.parse(localStorage.getItem('pixel_prix_scores') || '[]');
-    return existing
-      .filter(s => s.track_id === trackId)
-      .sort((a, b) => a.time_ms - b.time_ms)
-      .slice(0, 10);
-  } catch (e) {
-    return [];
-  }
+  const channel = supabase
+    .channel(`scores:${trackId}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'scores',
+      filter: `track_id=eq.${trackId}`
+    }, onChange)
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
 }
 
 export function getBackendStatus() {
-  if (!isConfigured) return 'Offline / LocalStorage';
-  if (!connectionVerified) return 'Supabase (table missing?)';
+  if (!isConfigured) return 'Supabase unavailable';
+  if (!connectionVerified) return 'Connecting to Supabase…';
   return 'Supabase Connected';
 }

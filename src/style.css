@@ -884,6 +884,44 @@ html, body {
   border-top: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
+/* Mobile layout: retain large, reachable race controls and prevent modal overflow. */
+@media (max-width: 640px) {
+  .ui-screen {
+    justify-content: flex-start;
+    overflow-y: auto;
+    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+  }
+
+  #screen-menu {
+    justify-content: center;
+  }
+
+  .brand-header { margin-bottom: 1.5rem; }
+  .logo-title { font-size: clamp(2.5rem, 14vw, 3.5rem); }
+  .logo-subtitle { font-size: 0.7rem; }
+
+  .screen-header { margin-top: 4px; }
+  .screen-header h2 { font-size: 0.9rem; text-align: center; }
+  .selection-grid { grid-template-columns: 1fr; max-height: none; overflow: visible; }
+  .select-card { padding: 14px; }
+
+  .modal-card, .wide-card { width: 100%; max-width: none; max-height: none; margin: auto 0; padding: 18px; }
+  .modal-header h2 { font-size: 1rem; }
+  .input-group { flex-direction: column; }
+  .input-group .btn { width: 100%; }
+  .gameover-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .gameover-actions .btn:last-child { grid-column: 1 / -1; }
+
+  .track-tabs { margin-right: -6px; width: calc(100% + 6px); }
+  .tab-btn { white-space: nowrap; }
+  .table-container { overflow-x: auto; margin: 0 -6px; }
+  .leaderboard-table { min-width: 520px; }
+
+  #screen-hud { justify-content: space-between; overflow: hidden; padding: max(8px, env(safe-area-inset-top)) 8px max(10px, env(safe-area-inset-bottom)); }
+  .touch-btn { width: clamp(58px, 18vw, 72px); height: clamp(58px, 18vw, 72px); }
+  .touch-group { gap: 6px; }
+}
+
 .backend-tag {
   font-size: 0.72rem;
   color: var(--text-muted);

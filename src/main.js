@@ -4,13 +4,15 @@ import { RaceScene } from './scenes/RaceScene.js';
 import { CARS } from './data/cars.js';
 import { TRACKS } from './data/tracks.js';
 import { drawTrackMinimap } from './utils/trackRenderer.js';
-import { submitScore, fetchTopScores, getBackendStatus } from './supabase.js';
+import { submitScore, fetchTopScores, getBackendStatus, subscribeToScores } from './supabase.js';
 
 // Global App State
 let selectedCarIndex = 0;
 let selectedTrackIndex = 0;
 let lastRaceResult = null;
 let phaserGame = null;
+let leaderboardUnsubscribe = null;
+let leaderboardTrackId = null;
 
 // Helper to convert milliseconds to MM:SS.mmm format
 function formatTime(ms) {
@@ -312,7 +314,14 @@ async function loadLeaderboard(trackId) {
     statusTag.classList.remove('offline');
   }
 
-  const { scores } = await fetchTopScores(trackId);
+  const { scores, backend, error } = await fetchTopScores(trackId);
+  statusTag.innerText = backend === 'Supabase' ? 'Supabase Connected' : 'Supabase unavailable';
+  statusTag.classList.toggle('offline', backend !== 'Supabase');
+
+  if (error) {
+    tbody.innerHTML = '<tr><td colspan="5" class="loading-cell">Unable to load global times. Please try again.</td></tr>';
+    return;
+  }
 
   if (!scores || scores.length === 0) {
     tbody.innerHTML = '<tr><td colspan="5" class="loading-cell">No times recorded for this track yet. Be the first!</td></tr>';
@@ -334,16 +343,29 @@ async function loadLeaderboard(trackId) {
   }).join('');
 }
 
+function watchLeaderboard(trackId) {
+  if (leaderboardTrackId === trackId) return;
+  leaderboardUnsubscribe?.();
+  leaderboardTrackId = trackId;
+  leaderboardUnsubscribe = subscribeToScores(trackId, () => loadLeaderboard(trackId));
+}
+
+function stopWatchingLeaderboard() {
+  leaderboardUnsubscribe?.();
+  leaderboardUnsubscribe = null;
+  leaderboardTrackId = null;
+}
+
 function escapeHtml(str) {
   return String(str || '').replace(/[&<>"']/g, m => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
   })[m]);
 }
 
-function renderLeaderboardTabs() {
+function renderLeaderboardTabs(activeTrackId = TRACKS[selectedTrackIndex].id) {
   const container = document.getElementById('lb-track-tabs');
   container.innerHTML = TRACKS.map((t, idx) => `
-    <button class="tab-btn ${idx === selectedTrackIndex ? 'active' : ''}" data-track-id="${t.id}">
+    <button class="tab-btn ${t.id === activeTrackId ? 'active' : ''}" data-track-id="${t.id}">
       ${t.name}
     </button>
   `).join('');
@@ -352,6 +374,7 @@ function renderLeaderboardTabs() {
     btn.addEventListener('click', (e) => {
       container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
+      watchLeaderboard(e.target.dataset.trackId);
       loadLeaderboard(e.target.dataset.trackId);
     });
   });
@@ -369,8 +392,10 @@ function initUI() {
   });
 
   document.getElementById('btn-open-leaderboard').addEventListener('click', () => {
-    renderLeaderboardTabs();
-    loadLeaderboard(TRACKS[selectedTrackIndex].id);
+    const trackId = TRACKS[selectedTrackIndex].id;
+    renderLeaderboardTabs(trackId);
+    watchLeaderboard(trackId);
+    loadLeaderboard(trackId);
     showScreen('screen-leaderboard');
   });
 
@@ -383,6 +408,7 @@ function initUI() {
   });
 
   document.getElementById('btn-close-leaderboard').addEventListener('click', () => {
+    stopWatchingLeaderboard();
     showScreen('screen-menu');
   });
 
@@ -419,8 +445,10 @@ function initUI() {
   });
 
   document.getElementById('btn-view-leaderboard-go').addEventListener('click', () => {
-    renderLeaderboardTabs();
-    loadLeaderboard(lastRaceResult?.trackId || TRACKS[0].id);
+    const trackId = lastRaceResult?.trackId || TRACKS[0].id;
+    renderLeaderboardTabs(trackId);
+    watchLeaderboard(trackId);
+    loadLeaderboard(trackId);
     showScreen('screen-leaderboard');
   });
 
@@ -457,14 +485,14 @@ function initUI() {
       statusMsg.className = 'status-msg success';
       statusMsg.innerText = `Saved to ${result.backend}`;
       setTimeout(() => {
-        renderLeaderboardTabs();
+        renderLeaderboardTabs(lastRaceResult.trackId);
         loadLeaderboard(lastRaceResult.trackId);
         showScreen('screen-leaderboard');
         submitBtn.disabled = false;
       }, 1200);
     } else {
       statusMsg.className = 'status-msg error';
-      statusMsg.innerText = 'Failed to save score.';
+      statusMsg.innerText = result.error || 'Failed to save score to Supabase.';
       submitBtn.disabled = false;
     }
   });
