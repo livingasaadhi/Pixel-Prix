@@ -90,7 +90,10 @@ export class RaceScene extends Phaser.Scene {
     // rectangle) so we never show large empty gridded margins around a small
     // loop, then frame it dynamically on resize.
     this.frameCamera();
-    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+    // Tighter follow lerp keeps the car (and its immediate track area) centered
+    // with minimal lag; no follow offset so the car stays dead-centered.
+    this.cameras.main.startFollow(this.player, true, 0.18, 0.18);
+    this.cameras.main.setFollowOffset(0, 0);
     this.scale.on('resize', this.frameCamera, this);
 
     // 5. Particles (smoke)
@@ -194,9 +197,9 @@ export class RaceScene extends Phaser.Scene {
     // Cover the track footprint so it always fills the viewport (no empty
     // gridded margins). Clamp the zoom so the car never becomes a tiny dot on
     // large tracks nor too close on small ones; the follow camera keeps the
-    // car centered while showing upcoming track.
+    // car centered while showing its immediate track surroundings.
     const cover = Math.max(vw / trackW, vh / trackH);
-    const zoom = Math.max(0.45, Math.min(cover, 0.85));
+    const zoom = Math.max(0.5, Math.min(cover, 0.8));
     cam.setZoom(zoom);
   }
 

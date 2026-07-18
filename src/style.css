@@ -1324,20 +1324,20 @@ html, body {
   #screen-hud .touch-group { pointer-events: auto; }
   #screen-hud .left-group {
     display: grid;
-    grid-template-columns: repeat(2, min(19vw, 82px));
+    grid-template-columns: repeat(2, min(17vw, 80px, (50vw - 28px) / 2));
     gap: 8px;
   }
   #screen-hud .right-group {
     position: relative;
     display: grid;
-    grid-template-columns: repeat(2, min(19vw, 82px));
+    grid-template-columns: repeat(2, min(17vw, 80px, (50vw - 28px) / 2));
     grid-template-areas: '. boost' 'brake accel';
     gap: 8px;
   }
   #screen-hud .touch-btn {
     position: static;
-    width: min(19vw, 82px);
-    height: min(19vw, 82px);
+    width: min(17vw, 80px, (50vw - 28px) / 2);
+    height: min(17vw, 80px, (50vw - 28px) / 2);
     min-width: 48px;
     min-height: 48px;
     font-size: 0.52rem;
@@ -1346,7 +1346,7 @@ html, body {
     border-color: rgba(255, 255, 255, 0.48);
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.42);
   }
-  #screen-hud .steer-btn { font-size: 0.52rem; }
+  #screen-hud .steer-btn { font-size: clamp(1rem, 5vw, 1.4rem); line-height: 1; }
   #screen-hud .brake-btn { grid-area: brake; font-size: 0.46rem; }
   #screen-hud .accel-btn { grid-area: accel; border-color: #fff; }
   #screen-hud .boost-btn { grid-area: boost; border-color: #fff; }
@@ -1354,9 +1354,9 @@ html, body {
 }
 
 @media (max-width: 640px) and (orientation: landscape) {
-  #screen-hud .left-group { grid-template-columns: repeat(2, 60px); gap: 6px; }
-  #screen-hud .right-group { grid-template-columns: repeat(2, 60px); gap: 6px; }
-  #screen-hud .touch-btn { width: 60px; height: 60px; min-width: 48px; min-height: 48px; }
+  #screen-hud .left-group { grid-template-columns: repeat(2, min(14vw, 60px, (50vw - 24px) / 2)); gap: 6px; }
+  #screen-hud .right-group { grid-template-columns: repeat(2, min(14vw, 60px, (50vw - 24px) / 2)); gap: 6px; }
+  #screen-hud .touch-btn { width: min(14vw, 60px, (50vw - 24px) / 2); height: min(14vw, 60px, (50vw - 24px) / 2); min-width: 48px; min-height: 48px; }
   /* Keep the boost meter visible on small phones too (compact, edge-centered). */
   #screen-hud .boost-meter-container {
     display: block;
