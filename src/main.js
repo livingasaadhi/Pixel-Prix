@@ -1595,10 +1595,9 @@ function fireCelebrationEffect() {
 // ENTRY POINT
 // ----------------------------------------------------------------------------
 function startApp() {
-  initGame();
-  initUI();
-
-  // Detect touch support and add corresponding CSS helper class
+  // Detect touch support and add the corresponding CSS helper class BEFORE
+  // wiring up UI listeners — desktop-only keyboard shortcuts are gated on the
+  // 'desktop-device' class, so it must exist when initUI() runs.
   const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
   if (hasTouch) {
     document.documentElement.classList.add('touch-device');
@@ -1606,6 +1605,8 @@ function startApp() {
     document.documentElement.classList.add('desktop-device');
   }
 
+  initGame();
+  initUI();
   startAmbientParticles();
 }
 
