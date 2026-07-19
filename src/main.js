@@ -1389,6 +1389,58 @@ function initUI() {
       showScreen('screen-hud');
     }
   });
+
+  // Desktop: keyboard shortcuts for menu/overlay buttons (context-aware)
+  if (document.documentElement.classList.contains('desktop-device')) {
+    const isActive = (id) => {
+      const el = document.getElementById(id);
+      return el && !el.classList.contains('hidden');
+    };
+    const click = (id) => document.getElementById(id)?.click();
+    const inField = () => {
+      const a = document.activeElement;
+      return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
+    };
+
+    window.addEventListener('keydown', (e) => {
+      if (inField()) return;
+      const k = e.key;
+      // Global back/close on overlays
+      if (k === 'Escape') {
+        if (isActive('screen-settings')) { e.preventDefault(); click('btn-close-settings'); return; }
+        if (isActive('screen-leaderboard')) { e.preventDefault(); click('btn-close-leaderboard'); return; }
+        if (isActive('screen-select')) { e.preventDefault(); click('btn-select-back'); return; }
+      }
+
+      if (isActive('screen-menu')) {
+        if (k === 'Enter') { e.preventDefault(); click('btn-start-game'); }
+        return;
+      }
+
+      if (isActive('screen-select')) {
+        if (k === 'Enter') { e.preventDefault(); click('btn-launch-race'); }
+        else if (k === 'ArrowLeft') { e.preventDefault(); click('car-prev'); }
+        else if (k === 'ArrowRight') { e.preventDefault(); click('car-next'); }
+        else if (k === 'ArrowUp') { e.preventDefault(); click('track-prev'); }
+        else if (k === 'ArrowDown') { e.preventDefault(); click('track-next'); }
+        return;
+      }
+
+      if (isActive('screen-pause')) {
+        if (k === 'Enter') { e.preventDefault(); click('btn-resume-race'); }
+        else if (k === 'r' || k === 'R') { e.preventDefault(); click('btn-restart-race'); }
+        else if (k === 'm' || k === 'M') { e.preventDefault(); click('btn-exit-to-menu'); }
+        return;
+      }
+
+      if (isActive('screen-gameover')) {
+        if (k === 'Enter') { e.preventDefault(); click('btn-retry-race'); }
+        else if (k === 'l' || k === 'L') { e.preventDefault(); click('btn-view-leaderboard-go'); }
+        else if (k === 'm' || k === 'M') { e.preventDefault(); click('btn-gameover-menu'); }
+        return;
+      }
+    });
+  }
 }
 
 // ----------------------------------------------------------------------------
