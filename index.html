@@ -17,8 +17,8 @@
   <!-- Material Symbols (icon font) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
 
-  <script type="module" crossorigin src="./assets/index-BIkP575I.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CmaTFcz2.css">
+  <script type="module" crossorigin src="./assets/index-C8vZKwYE.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-C7cIBgdh.css">
 </head>
 <body>
   <!-- Scanline CRT overlay -->
@@ -130,6 +130,11 @@
                   </div>
                   <h3 id="car-name">Apex Phantom</h3>
                   <p id="car-desc">Balanced speed and precision handling.</p>
+                  <div class="carousel-dots" id="car-selection-dots">
+                    <span class="dot active"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                  </div>
                 </div>
 
                 <button id="car-next" class="nav-arrow" aria-label="Next car">&#8250;</button>
@@ -188,6 +193,14 @@
                     <div class="track-info-col">
                       <h3 id="track-name">Monaco Oval</h3>
                       <p id="track-desc">Smooth beginner oval track with wide turns.</p>
+                      <div class="carousel-dots" id="track-selection-dots">
+                        <span class="dot active"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                      </div>
                       <div class="track-tags">
                         <span class="track-tag" id="track-difficulty">EASY</span>
                         <span class="track-tag" id="track-laps">2 LAPS</span>
@@ -206,8 +219,8 @@
         <!-- Floating Sticky Bottom-Right CTA -->
         <div class="selection-footer selection-footer-floating">
           <button id="btn-launch-race" class="btn btn-primary btn-large glow-btn btn-floating-start">
-            INITIALIZE SESSION
-            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">play_arrow</span>
+            START RACE
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">sports_motorsports</span>
           </button>
           <div class="telemetry-session-meta">
             <span>ID: PX-992-SESSION</span>
@@ -291,13 +304,41 @@
             </button>
           </div>
 
-          <!-- RIGHT: Steering wheel control (mobile/touch only) -->
-          <div class="hud-steering-wheel-container" id="hud-steering-wheel-container">
-            <div id="hud-steering-wheel" class="hud-steering-wheel" aria-label="Steering wheel">
-              <div class="wheel-rim"></div>
-              <div class="wheel-spoke wheel-spoke-h"></div>
-              <div class="wheel-spoke wheel-spoke-v"></div>
-              <div class="wheel-hub"></div>
+          <!-- RIGHT: Steering joystick control (mobile/touch only) -->
+          <div class="hud-joystick-container" id="hud-joystick-container">
+            <div id="hud-joystick-base" class="hud-joystick-base" aria-label="Steering Joystick">
+              <div id="hud-joystick-handle" class="hud-joystick-handle"></div>
+            </div>
+          </div>
+
+          <!-- LEFT: Combined Pedals & Boost for touch devices -->
+          <div class="hud-drive-group" id="hud-drive-left-group">
+            <!-- KERS energy bar -->
+            <div class="hud-kers-meter">
+              <div class="hud-kers-bar-bg">
+                <div class="boost-bar-fill" id="hud-boost-fill-left"></div>
+              </div>
+              <span class="hud-kers-label">KERS ENERGY</span>
+            </div>
+
+            <div class="hud-combined-pedals-row">
+              <!-- Combined Vertical Slider -->
+              <div id="hud-pedal-slider" class="hud-pedal-slider" aria-label="Combined accelerator and brake slider">
+                <div class="slider-track-labels">
+                  <span class="label-gas">GAS</span>
+                  <span class="label-neutral">N</span>
+                  <span class="label-brake">BRAKE</span>
+                </div>
+                <div class="pedal-slider-track"></div>
+                <div id="pedal-slider-handle" class="pedal-slider-handle"></div>
+              </div>
+
+              <!-- Boost Button (Conditional Visibility) -->
+              <button id="btn-touch-boost-left" class="hud-ctrl-btn hud-ctrl-tri-boost" aria-label="Boost">
+                <span class="material-symbols-outlined hud-icon-primary">bolt</span>
+                <span class="hud-ctrl-label">BOOST</span>
+                <span class="hud-key-badge">SPACE</span>
+              </button>
             </div>
           </div>
 
