@@ -75,6 +75,15 @@ function updateNavTabStates(screenId) {
   Object.entries(bottomTabs).forEach(([key, el]) => {
     if (el) el.classList.toggle('active', key === activeTab);
   });
+
+  const topTabs = {
+    garage: document.getElementById('top-nav-garage'),
+    race: document.getElementById('top-nav-race'),
+    leaderboard: document.getElementById('top-nav-leaderboard')
+  };
+  Object.entries(topTabs).forEach(([key, el]) => {
+    if (el) el.classList.toggle('active', key === activeTab);
+  });
 }
 
 function setRaceMode(enabled) {

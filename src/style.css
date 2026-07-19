@@ -289,7 +289,7 @@ body {
   height: 64px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 20px;
   padding: 0 var(--margin);
   background: rgba(10, 10, 14, 0.96);
   backdrop-filter: blur(16px);
@@ -305,6 +305,10 @@ body {
   color: var(--primary);
   line-height: 1;
   text-transform: uppercase;
+}
+
+.top-app-bar .top-desktop-nav {
+  margin-right: auto;
 }
 
 .top-app-bar-actions {
@@ -498,12 +502,15 @@ body {
 
 .btn-tertiary {
   background: transparent;
-  color: var(--on-surface-variant);
-  border-color: transparent;
+  color: var(--on-surface);
+  border-color: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(4px);
 }
 
 .btn-tertiary:hover {
-  color: var(--on-surface);
+  color: var(--primary);
+  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .btn-outline {
@@ -1123,9 +1130,14 @@ body {
 /* HUD top action buttons */
 .hud-action-btns {
   position: absolute;
-  top: max(24px, env(safe-area-inset-top));
-  left: var(--margin);
+  top: max(14px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 560px;
+  padding: 0 var(--margin);
   display: flex;
+  justify-content: space-between;
   gap: 8px;
   z-index: 10;
   pointer-events: auto;
@@ -2216,9 +2228,10 @@ body {
 /* Circular FAB (refresh) */
 .lb-fab {
   position: fixed;
-  bottom: max(96px, calc(72px + env(safe-area-inset-bottom)));
+  bottom: max(96px, calc(84px + env(safe-area-inset-bottom)));
   right: var(--margin);
   z-index: 40;
+  transition: transform 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .lb-fab-btn {
@@ -2500,9 +2513,22 @@ body {
   #screen-gameover,
   #screen-leaderboard,
   #screen-settings {
-    padding: 72px 12px 88px;
+    padding: 72px 12px calc(88px + env(safe-area-inset-bottom));
     align-items: stretch;
     justify-content: flex-start;
+  }
+
+  /* Keep modal cards from being clipped at the bottom on notched devices */
+  #screen-gameover .modal-card,
+  #screen-settings .modal-card {
+    max-height: calc(100dvh - 168px);
+    overflow-y: auto;
+  }
+
+  /* Select header respects notch on mobile */
+  #screen-select .screen-header {
+    top: 0;
+    padding-top: max(8px, env(safe-area-inset-top));
   }
 
   .modal-card,
@@ -2761,6 +2787,29 @@ body {
     flex-direction: column;
     justify-content: space-between;
     padding: 24px;
+  }
+
+  /* Balance the track card vertically so it mirrors the car card height */
+  .track-select-card .track-carousel-row {
+    flex: 1;
+    align-items: center;
+  }
+
+  /* Keep the floating CTA clear of scrolling content on shorter screens */
+  .selection-footer-floating {
+    animation: cta-rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  @keyframes cta-rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Floating Sticky Bottom-Right Start CTA */
