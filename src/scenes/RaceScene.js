@@ -54,6 +54,9 @@ export class RaceScene extends Phaser.Scene {
     this.touchSteerValue = 0;       // analog touch steering wheel input (-1 to 1)
     this.touchGas = 0;              // analog touch gas input (0 to 1)
     this.touchBrake = 0;            // analog touch brake input (0 to 1)
+    this.joystickHeading = 0;       // absolute target heading from joystick (radians)
+    this.joystickActive = false;    // whether joystick is currently engaged
+    this.turnRate = 3.2;            // max rotation per second toward target heading
 
     // Tunable physics parameters (scaled by 2.4x for high-speed AAA racing feel)
     const VEL_MULT = 2.4;
@@ -320,7 +323,7 @@ export class RaceScene extends Phaser.Scene {
     }
 
     const boostActive = this.boostActive;
-    
+
     // Proportional analog inputs mapping
     let gasValue = 0;
     if (this.isAccelerating || this.cursors.up.isDown || this.wasd.up.isDown || this._kb.up) {
@@ -345,7 +348,18 @@ export class RaceScene extends Phaser.Scene {
     const speedDamping = Math.max(this.highSpeedSteeringMultiplier, 1.0 - steerSpeedRatio * 0.55);
     const boostBonus = boostActive ? 1.15 : 1.0;
     if (Math.abs(this.currentSpeed) > 1.0) {
-      this.player.rotation += steerDir * this.steeringSensitivity * speedDamping * boostBonus * dt;
+      // Joystick absolute heading mode (mobile touch)
+      if (this.joystickActive) {
+        // Compute shortest angular difference toward target heading
+        const diff = Phaser.Math.Angle.Wrap(this.joystickHeading - this.player.rotation);
+        // Apply limited turn rate per second for smooth rotation
+        const maxTurn = this.turnRate * speedDamping * boostBonus * dt;
+        const step = Math.sign(diff) * Math.min(Math.abs(diff), maxTurn);
+        this.player.rotation += step;
+      } else {
+        // Keyboard / button steering: relative delta (existing behavior)
+        this.player.rotation += steerDir * this.steeringSensitivity * speedDamping * boostBonus * dt;
+      }
     }
 
     this.onGrass = isOffRoad(this.player.x, this.player.y, this.curvePoints, this.roadWidth);
@@ -628,6 +642,15 @@ export class RaceScene extends Phaser.Scene {
   setSteeringValue(v) { this.touchSteerValue = v; }
   setTouchGas(v) { this.touchGas = v; }
   setTouchBrake(v) { this.touchBrake = v; }
+  setJoystickHeading(heading, active) {
+    this.joystickHeading = heading;
+    this.joystickActive = active;
+    // When joystick is released, stop the car's angular rotation immediately.
+    // If the joystick becomes active but heading hasn't changed, treat as release.
+    if (!active) {
+      this.joystickActive = false;
+    }
+  }
 
   cleanup() {
     stopEngineSound();

@@ -297,7 +297,7 @@ function drawCarPreview(canvas, color, accentColor) {
 
 function updateCarSelection() {
   const car = CARS[selectedCarIndex];
-  
+
   const content = document.querySelector('.car-select-card .carousel-content');
   if (content) {
     content.classList.remove('carousel-slide');
@@ -362,7 +362,7 @@ function updateTrackSelection() {
   diffEl.dataset.level = track.difficulty;
 
   document.getElementById('track-laps').innerText = `${track.laps} LAPS`;
-  
+
   const lengthEl = document.getElementById('track-length');
   if (lengthEl) lengthEl.innerText = track.length || "1.2 KM";
 
@@ -436,7 +436,7 @@ function setupTouchControls() {
   // Joystick control for mobile / touch devices (Steering)
   const joystickBaseEl = document.getElementById('hud-joystick-base');
   const joystickHandleEl = document.getElementById('hud-joystick-handle');
-  
+
   if (joystickBaseEl && joystickHandleEl) {
     let isDraggingJoystick = false;
     let recenterInterval = null;
@@ -460,16 +460,16 @@ function setupTouchControls() {
 
       joystickHandleEl.style.transform = `translate(${dx}px, ${dy}px)`;
 
-      // Proportional analog steering value based on horizontal displacement (-1 to 1)
-      const normalizedX = dx / limit;
-      let steeringValue = 0;
-      if (Math.abs(normalizedX) > deadzone) {
-        const sign = Math.sign(normalizedX);
-        steeringValue = sign * ((Math.abs(normalizedX) - deadzone) / (1.0 - deadzone));
-      }
-
+      // Compute absolute heading angle from joystick direction (screen-space)
+      // atan2 gives: 0 = right, PI/2 = down, PI = left, -PI/2 = up
+      // This matches Phaser's rotation coordinate system.
       const sc = raceScene();
-      if (sc) sc.setSteeringValue(steeringValue);
+      if (distance > deadzone * limit) {
+        const angle = Math.atan2(dy, dx);
+        if (sc) sc.setJoystickHeading(angle, true);
+      } else {
+        if (sc) sc.setJoystickHeading(0, false);
+      }
     };
 
     const startDrag = (e) => {
@@ -496,11 +496,15 @@ function setupTouchControls() {
       if (!isDraggingJoystick) return;
       isDraggingJoystick = false;
 
+      // Immediately clear joystick heading so car stops turning toward last target
+      const scImmediate = raceScene();
+      if (scImmediate) scImmediate.setJoystickHeading(0, false);
+
       // Smoothly ease joystick handle back to center
       let rect = joystickBaseEl.getBoundingClientRect();
       let maxRadius = rect.width / 2;
       let limit = maxRadius * 0.7;
-      
+
       const style = window.getComputedStyle(joystickHandleEl);
       const matrix = new DOMMatrix(style.transform);
       let curDx = matrix.m41;
@@ -565,7 +569,7 @@ function setupTouchControls() {
     const updateSlider = (clientY) => {
       const rect = pedalSliderEl.getBoundingClientRect();
       const centerY = rect.top + rect.height / 2;
-      
+
       let offsetY = clientY - centerY;
       offsetY = Math.max(-maxLimit, Math.min(maxLimit, offsetY));
 
@@ -573,7 +577,7 @@ function setupTouchControls() {
 
       // Map to normalized input: -1.0 (Brake/Reverse bottom) to 1.0 (Gas top)
       const val = -offsetY / maxLimit;
-      
+
       let gas = 0;
       let brake = 0;
 
@@ -597,14 +601,14 @@ function setupTouchControls() {
         cancelAnimationFrame(recenterInterval);
         recenterInterval = null;
       }
-      const clientY = e.touches ? e.touches[0].clientX : e.clientY;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       updateSlider(clientY);
     };
 
     const drag = (e) => {
       if (!isDraggingPedal) return;
       if (e.cancelable) e.preventDefault();
-      const clientY = e.touches ? e.touches[0].clientX : e.clientY;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       updateSlider(clientY);
     };
 
@@ -660,7 +664,7 @@ function setupTouchControls() {
 
     pedalSliderEl.addEventListener('mousedown', startDrag);
     window.addEventListener('mousemove', drag);
-}
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -678,7 +682,7 @@ function setupGameEventListeners() {
     // Warning bar penalty
     const penaltyVal = (penaltyMs / 1000).toFixed(1);
     document.getElementById('hud-penalty-text').innerText = penaltyMs > 0 ? `+${penaltyVal}s PENALTY` : 'STEWARD INVESTIGATION';
-    
+
     // Update both boost meter fills (desktop and mobile)
     const fillPercent = `${Math.max(0, Math.min(100, boostEnergy))}%`;
     const fillRight = document.getElementById('hud-boost-fill');
@@ -691,7 +695,7 @@ function setupGameEventListeners() {
     if (boostBtnLeft) {
       const sc = raceScene();
       const isBoostActive = sc ? sc.boostActive : false;
-      if (isBoostActive || boostEnergy >= 100) {
+      if (!isBoostActive && boostEnergy >= 100) {
         boostBtnLeft.classList.add('visible-boost');
       } else {
         boostBtnLeft.classList.remove('visible-boost');
@@ -720,14 +724,14 @@ function setupGameEventListeners() {
 
   window.addEventListener('pixel-prix:boost-state', (e) => {
     const active = e.detail.active;
-    
+
     // Desktop boost btn
     const btnRight = document.getElementById('btn-touch-boost');
     if (btnRight) {
       if (active) btnRight.classList.add('engaged');
       else btnRight.classList.remove('engaged');
     }
-    
+
     // Mobile boost btn
     const btnLeft = document.getElementById('btn-touch-boost-left');
     if (btnLeft) {
@@ -918,9 +922,9 @@ async function loadLeaderboard(trackId) {
   container.innerHTML = scores.map((s, idx) => {
     const carName = CARS.find(c => c.id === s.car_id)?.name || s.car_id;
     const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'Today';
-    const isFirst  = idx === 0;
+    const isFirst = idx === 0;
     const isSecond = idx === 1;
-    const isThird  = idx === 2;
+    const isThird = idx === 2;
     const podiumClass = isFirst ? ' lb-row-first' : isSecond ? ' lb-row-second' : isThird ? ' lb-row-third' : '';
     const posStr = `#${String(idx + 1).padStart(2, '0')}`;
     return `
@@ -1185,7 +1189,7 @@ function startAmbientParticles() {
   if (!canvas) return;
 
   const resize = () => {
-    canvas.width  = canvas.offsetWidth  || window.innerWidth;
+    canvas.width = canvas.offsetWidth || window.innerWidth;
     canvas.height = canvas.offsetHeight || window.innerHeight;
   };
   resize();
@@ -1256,7 +1260,7 @@ function stopAmbientParticles() {
 // ----------------------------------------------------------------------------
 function playCountdownLights() {
   const overlay = document.getElementById('countdown-overlay');
-  const lights  = [1, 2, 3, 4, 5].map(i => document.getElementById(`cl-${i}`));
+  const lights = [1, 2, 3, 4, 5].map(i => document.getElementById(`cl-${i}`));
   if (!overlay || lights.some(l => !l)) return;
 
   // Reset
@@ -1310,7 +1314,7 @@ function fireCelebrationEffect() {
 function startApp() {
   initGame();
   initUI();
-  
+
   // Detect touch support and add corresponding CSS helper class
   const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
   if (hasTouch) {
