@@ -3685,21 +3685,100 @@ body {
   transition: width 0.1s linear;
 }
 
-/* Mobile Media Queries to prevent control collision */
+/* Mobile Media Queries: AAA Clean HUD Layout (No Collisions) */
 @media (max-width: 768px) {
+  /* 1. Clear top action buttons */
+  .hud-action-btns {
+    top: max(8px, env(safe-area-inset-top));
+    padding: 0 max(8px, env(safe-area-inset-left)) 0 max(8px, env(safe-area-inset-right));
+  }
+
+  .hud-circle-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+
+  /* 2. Compact floating chip bar — sits cleanly between Back and Pause buttons */
   .hud-chip-bar {
     top: max(8px, env(safe-area-inset-top));
-    width: calc(100% - 16px);
+    width: calc(100% - 96px);
+    max-width: 440px;
+    padding: 1px;
+    border-radius: var(--radius-sm);
   }
+
+  .hud-chip-cell {
+    padding: 3px 6px;
+    gap: 1px;
+  }
+
+  .hud-chip-label {
+    font-size: 0.42rem;
+    letter-spacing: 0.05em;
+  }
+
+  .hud-chip-value {
+    font-size: 0.88rem;
+  }
+
+  .hud-chip-sub {
+    font-size: 0.6rem;
+  }
+
+  /* 3. Compact warning bar sitting directly under chip bar */
   .hud-warning-bar {
-    top: max(60px, calc(env(safe-area-inset-top) + 52px));
-    width: calc(100% - 16px);
+    top: max(46px, calc(env(safe-area-inset-top) + 38px));
+    width: calc(100% - 96px);
+    max-width: 440px;
+    padding: 3px 10px;
+    border-radius: var(--radius-sm);
   }
+
+  .hud-warning-left,
+  .hud-warning-right {
+    font-size: 0.48rem;
+    letter-spacing: 0.06em;
+  }
+
+  /* 4. Sector completion banner positioned safely below warning bar */
   .hud-sector-banner {
-    top: max(124px, calc(env(safe-area-inset-top) + 110px));
+    top: max(82px, calc(env(safe-area-inset-top) + 74px));
+    padding: 4px 12px;
+    font-size: 0.64rem;
+    gap: 10px;
   }
+
+  .hud-sector-banner .sector-diff {
+    font-size: 0.6rem;
+  }
+
+  /* 5. Left notification stack scaled down and tucked under Back button */
+  .hud-notif-container {
+    top: max(50px, calc(env(safe-area-inset-top) + 42px));
+    left: max(8px, env(safe-area-inset-left));
+    max-width: 170px;
+    gap: 4px;
+  }
+
+  .hud-notif-pill {
+    padding: 4px 8px;
+    font-size: 0.62rem;
+    border-left-width: 3px;
+  }
+
+  /* 6. Compact ERS/KERS bar at bottom center so it never hits controls */
   .hud-kers-container {
-    bottom: max(16px, env(safe-area-inset-bottom));
-    max-width: 180px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    max-width: 140px;
+    gap: 2px;
+  }
+
+  .hud-kers-container .kers-label {
+    font-size: 0.42rem;
+  }
+
+  .hud-kers-container .kers-bar-bg {
+    height: 4px;
   }
 }
