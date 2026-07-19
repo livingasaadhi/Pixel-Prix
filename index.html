@@ -249,6 +249,12 @@
       </div>
 
       <div id="screen-hud" class="ui-screen hidden pointer-through">
+        <!-- Sector completion comparison banner -->
+        <div id="hud-sector-banner" class="hud-sector-banner" aria-live="polite">
+          <span class="sector-name">SECTOR 1</span>
+          <span class="sector-time">00.000s</span>
+          <span class="sector-diff">--</span>
+        </div>
 
         <!-- Top HUD: Back + Pause buttons (pointer-events re-enabled) -->
         <div class="hud-action-btns">
@@ -276,6 +282,11 @@
           <div class="hud-chip-cell hud-chip-speed">
             <span class="hud-chip-label">KM/H</span>
             <span class="hud-chip-value" id="hud-speed-text">0</span>
+          </div>
+          <!-- SECTOR chip -->
+          <div class="hud-chip-cell hud-chip-sector">
+            <span class="hud-chip-label" id="hud-sector-label">SECTOR 1</span>
+            <span class="hud-chip-value digital" id="hud-sector-timer">00:00.000</span>
           </div>
         </div>
 
@@ -422,6 +433,9 @@
             <div class="final-time-value" id="go-final-time">00:45.320</div>
             <div class="best-lap-sub" id="go-best-lap">Best Lap: 00:22.100</div>
           </div>
+
+          <!-- Sector Timing Breakdown -->
+          <div id="go-sector-breakdown"></div>
 
           <!-- Submit score form (persistent username dialog) -->
           <form id="score-form" class="score-form" novalidate>

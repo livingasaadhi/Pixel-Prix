@@ -40,6 +40,13 @@ export class RaceScene extends Phaser.Scene {
     this.lapTimes = [];
     this.lapStartTime = 0;
 
+    // Sector state
+    this.currentSector = 1;
+    this.sectorStartTime = 0;
+    this.currentLapSectors = [0, 0, 0];
+    this.lapSectors = [];
+    this.bestSectors = [null, null, null];
+
     // Car physics state
     this.currentSpeed = 0;
     this.boostEnergy = 100;
@@ -287,6 +294,7 @@ export class RaceScene extends Phaser.Scene {
           this.raceStarted = true;
           this.startTime = this.time.now;
           this.lapStartTime = this.time.now;
+          this.sectorStartTime = this.time.now;
           startEngineSound();
         } else {
           el.classList.add('hidden');
@@ -607,19 +615,73 @@ export class RaceScene extends Phaser.Scene {
 
   checkCheckpoints() {
     const cps = this.trackData.checkpoints;
-    const targetCP = cps[this.nextCheckpointIndex];
+    const targetCPIndex = this.nextCheckpointIndex;
+    const targetCP = cps[targetCPIndex];
     if (!targetCP) return;
 
     if (checkCheckpointProximity(this.player.x, this.player.y, targetCP, this.roadWidth)) {
       playCheckpointSound();
-      this.showNotification('CHECKPOINT ' + targetCP.id);
+
+      const s1End = this.trackData.sector1End;
+      const s2End = this.trackData.sector2End;
+
+      if (targetCPIndex === s1End) {
+        // Sector 1 completes
+        const s1_time = this.time.now - this.sectorStartTime;
+        this.currentLapSectors[0] = s1_time;
+
+        const isBest = this.bestSectors[0] === null || s1_time < this.bestSectors[0];
+        if (isBest) this.bestSectors[0] = s1_time;
+
+        window.dispatchEvent(new CustomEvent('pixel-prix:sector-complete', {
+          detail: { sector: 1, timeMs: s1_time, isBest }
+        }));
+
+        this.currentSector = 2;
+        this.sectorStartTime = this.time.now;
+      }
+      else if (targetCPIndex === s2End) {
+        // Sector 2 completes
+        const s2_time = this.time.now - this.sectorStartTime;
+        this.currentLapSectors[1] = s2_time;
+
+        const isBest = this.bestSectors[1] === null || s2_time < this.bestSectors[1];
+        if (isBest) this.bestSectors[1] = s2_time;
+
+        window.dispatchEvent(new CustomEvent('pixel-prix:sector-complete', {
+          detail: { sector: 2, timeMs: s2_time, isBest }
+        }));
+
+        this.currentSector = 3;
+        this.sectorStartTime = this.time.now;
+      }
+
       this.totalCheckpointsHit++;
       this.nextCheckpointIndex = (this.nextCheckpointIndex + 1) % cps.length;
 
+      // Hitting START/FINISH line (checkpoint 0)
       if (this.nextCheckpointIndex === 1) {
+        // Sector 3 completes
+        const s3_time = this.time.now - this.sectorStartTime;
+        this.currentLapSectors[2] = s3_time;
+
+        const isBest = this.bestSectors[2] === null || s3_time < this.bestSectors[2];
+        if (isBest) this.bestSectors[2] = s3_time;
+
+        window.dispatchEvent(new CustomEvent('pixel-prix:sector-complete', {
+          detail: { sector: 3, timeMs: s3_time, isBest }
+        }));
+
+        this.lapSectors.push([...this.currentLapSectors]);
+        this.currentSector = 1;
+        this.sectorStartTime = this.time.now;
+
         const lapTime = this.time.now - this.lapStartTime;
         this.lapTimes.push(lapTime);
         this.lapStartTime = this.time.now;
+        
+        // Reset current lap sectors
+        this.currentLapSectors = [0, 0, 0];
 
         if (this.currentLap < this.totalLaps) {
           this.currentLap++;
@@ -627,6 +689,9 @@ export class RaceScene extends Phaser.Scene {
         } else {
           this.finishRace();
         }
+      } else if (targetCPIndex !== s1End && targetCPIndex !== s2End) {
+        // Normal intermediate checkpoints
+        this.showNotification('CHECKPOINT ' + targetCP.id);
       }
     }
   }
@@ -658,7 +723,9 @@ export class RaceScene extends Phaser.Scene {
         totalTimeMs: finalTime,
         bestLapMs: bestLapMs,
         carId: this.carData.id,
-        trackId: this.trackData.id
+        trackId: this.trackData.id,
+        lapSectors: this.lapSectors,
+        bestSectors: this.bestSectors
       }
     }));
   }
@@ -693,7 +760,9 @@ export class RaceScene extends Phaser.Scene {
         penaltyMs: this.penaltyMs,
         boostEnergy: this.boostEnergy,
         boostActive: this.boostActive,
-        speedRatio: Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275))
+        speedRatio: Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275)),
+        currentSector: this.currentSector,
+        sectorTimeMs: this.raceStarted && !this.raceFinished ? (this.time.now - this.sectorStartTime) : 0
       }
     }));
   }

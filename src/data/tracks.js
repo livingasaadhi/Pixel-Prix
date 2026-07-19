@@ -10,6 +10,8 @@ export const TRACKS = [
     worldWidth: 3600,
     worldHeight: 2400,
     startPos: { x: 1800, y: 2000, rotation: 0 },
+    sector1End: 2,
+    sector2End: 4,
     points: [
       { x: 800, y: 2000 },
       { x: 1800, y: 2000 },
@@ -45,6 +47,8 @@ export const TRACKS = [
     worldWidth: 4000,
     worldHeight: 2800,
     startPos: { x: 2000, y: 2400, rotation: 0 },
+    sector1End: 2,
+    sector2End: 4,
     points: [
       { x: 800, y: 2400 },
       { x: 2000, y: 2400 },
@@ -79,6 +83,8 @@ export const TRACKS = [
     worldWidth: 3600,
     worldHeight: 2800,
     startPos: { x: 1800, y: 2400, rotation: 0 },
+    sector1End: 2,
+    sector2End: 4,
     points: [
       { x: 600, y: 2400 },
       { x: 1800, y: 2400 },
@@ -117,6 +123,8 @@ export const TRACKS = [
     worldWidth: 4400,
     worldHeight: 3000,
     startPos: { x: 2200, y: 2600, rotation: 0 },
+    sector1End: 1,
+    sector2End: 3,
     points: [
       { x: 1000, y: 2600 },
       { x: 2200, y: 2600 },
@@ -149,6 +157,8 @@ export const TRACKS = [
     worldWidth: 3200,
     worldHeight: 2400,
     startPos: { x: 1600, y: 2100, rotation: 0 },
+    sector1End: 1,
+    sector2End: 3,
     points: [
       { x: 700, y: 2100 },
       { x: 1600, y: 2100 },
@@ -182,6 +192,8 @@ export const TRACKS = [
     worldWidth: 4000,
     worldHeight: 2800,
     startPos: { x: 2000, y: 2500, rotation: 0 },
+    sector1End: 1,
+    sector2End: 3,
     points: [
       { x: 1200, y: 2500 },
       { x: 2000, y: 2500 },

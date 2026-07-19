@@ -76,7 +76,7 @@ function saveLocalScores(trackId, scores) {
 /**
  * Submits a new race score to the global Supabase leaderboard.
  */
-export async function submitScore({ playerName, carId, trackId, timeMs }) {
+export async function submitScore({ playerName, carId, trackId, timeMs, metadata }) {
   const normalizedName = String(playerName || '').trim().slice(0, 16);
   if (!normalizedName || !carId || !trackId || !Number.isFinite(timeMs) || timeMs <= 0) {
     return { success: false, error: 'Enter a driver name and finish a valid race first.' };
@@ -86,7 +86,8 @@ export async function submitScore({ playerName, carId, trackId, timeMs }) {
     player_name: normalizedName,
     car_id: carId,
     track_id: trackId,
-    time_ms: Math.round(timeMs)
+    time_ms: Math.round(timeMs),
+    metadata: metadata || null
   };
 
   if (!supabase) {

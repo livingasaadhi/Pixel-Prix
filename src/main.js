@@ -15,6 +15,7 @@ let leaderboardUnsubscribe = null;
 let leaderboardTrackId = null;
 let ambientAnimId = null;      // requestAnimationFrame for menu particles
 let countdownLightsTimer = null; // F1 countdown lights timeout chain
+let sessionBestSectors = {};     // session best S1, S2, S3 per trackId
 
 // Helper to convert milliseconds to MM:SS.mmm format
 function formatTime(ms) {
@@ -742,7 +743,7 @@ function setupTouchControls() {
 // ----------------------------------------------------------------------------
 function setupGameEventListeners() {
   window.addEventListener('pixel-prix:hud', (e) => {
-    const { speed, isReverse, lap, totalLaps, timeMs, penaltyMs, boostEnergy, boostActive, speedRatio } = e.detail;
+    const { speed, isReverse, lap, totalLaps, timeMs, penaltyMs, boostEnergy, boostActive, speedRatio, currentSector, sectorTimeMs } = e.detail;
 
     // Speed: number only (KM/H is the label)
     const speedEl = document.getElementById('hud-speed-text');
@@ -754,6 +755,13 @@ function setupGameEventListeners() {
     // Lap: number + sub-text /N
     document.getElementById('hud-lap-text').innerHTML = `${lap}<span class="hud-chip-sub">/${totalLaps}</span>`;
     document.getElementById('hud-timer-text').innerText = formatTime(timeMs);
+
+    // Active Sector Info
+    const sectorLabelEl = document.getElementById('hud-sector-label');
+    const sectorTimerEl = document.getElementById('hud-sector-timer');
+    if (sectorLabelEl) sectorLabelEl.innerText = `SECTOR ${currentSector || 1}`;
+    if (sectorTimerEl) sectorTimerEl.innerText = formatTime(sectorTimeMs || 0);
+
     // Warning bar penalty
     const penaltyVal = (penaltyMs / 1000).toFixed(1);
     document.getElementById('hud-penalty-text').innerText = penaltyMs > 0 ? `+${penaltyVal}s PENALTY` : 'STEWARD INVESTIGATION';
@@ -778,6 +786,65 @@ function setupGameEventListeners() {
     }
   });
 
+  window.addEventListener('pixel-prix:sector-complete', (e) => {
+    const { sector, timeMs, isBest } = e.detail;
+    const trackId = TRACKS[selectedTrackIndex].id;
+
+    if (!sessionBestSectors[trackId]) {
+      sessionBestSectors[trackId] = [null, null, null];
+    }
+
+    let colorClass = 'yellow';
+    let isSessionBest = false;
+
+    const overallBest = sessionBestSectors[trackId][sector - 1];
+    if (overallBest === null || timeMs < overallBest) {
+      sessionBestSectors[trackId][sector - 1] = timeMs;
+      colorClass = 'purple';
+      isSessionBest = true;
+    } else if (isBest) {
+      colorClass = 'green';
+    }
+
+    // Dynamic sector slide-down notification banner
+    const banner = document.getElementById('hud-sector-banner');
+    if (banner) {
+      const nameEl = banner.querySelector('.sector-name');
+      const timeEl = banner.querySelector('.sector-time');
+      const diffEl = banner.querySelector('.sector-diff');
+
+      if (nameEl) nameEl.innerText = `SECTOR ${sector}`;
+      if (timeEl) {
+        timeEl.innerText = `${(timeMs / 1000).toFixed(3)}s`;
+        timeEl.className = `sector-time ${colorClass}`;
+      }
+
+      if (diffEl) {
+        if (overallBest !== null) {
+          const diff = timeMs - overallBest;
+          const diffStr = (diff / 1000).toFixed(3);
+          if (diff <= 0) {
+            diffEl.innerText = `${diffStr}s`;
+            diffEl.style.color = '#00e676'; // green
+          } else {
+            diffEl.innerText = `+${diffStr}s`;
+            diffEl.style.color = '#ff4d6d'; // red
+          }
+        } else {
+          diffEl.innerText = 'NEW SESSION BEST';
+          diffEl.style.color = '#d12df2'; // purple
+        }
+      }
+
+      banner.classList.add('visible');
+
+      if (window._sectorBannerTimeout) clearTimeout(window._sectorBannerTimeout);
+      window._sectorBannerTimeout = setTimeout(() => {
+        banner.classList.remove('visible');
+      }, 3000);
+    }
+  });
+
   window.addEventListener('pixel-prix:finish', (e) => {
     lastRaceResult = e.detail;
 
@@ -785,6 +852,60 @@ function setupGameEventListeners() {
     document.getElementById('go-penalty-time').innerText = `+${(lastRaceResult.penaltyMs / 1000).toFixed(3)}s`;
     document.getElementById('go-final-time').innerText = formatTime(lastRaceResult.totalTimeMs);
     document.getElementById('go-best-lap').innerText = `Best Lap: ${formatTime(lastRaceResult.bestLapMs)}`;
+
+    // Render detailed sector breakdown inside the Game Over screen
+    const breakdownEl = document.getElementById('go-sector-breakdown');
+    if (breakdownEl) {
+      const laps = lastRaceResult.lapSectors || [];
+      const bestSectors = lastRaceResult.bestSectors || [null, null, null];
+      const bestLapMs = lastRaceResult.bestLapMs;
+
+      let html = `
+        <div class="go-sectors-table">
+          <div class="go-sector-header">
+            <span>LAP</span>
+            <span>SECTOR 1</span>
+            <span>SECTOR 2</span>
+            <span>SECTOR 3</span>
+            <span>LAP TIME</span>
+          </div>
+      `;
+
+      laps.forEach((lap, idx) => {
+        const lapSum = lap.reduce((a, b) => a + b, 0);
+        const isBestLap = Math.abs(lapSum - bestLapMs) < 10;
+        const bestLapClass = isBestLap ? ' class="best-lap-row"' : '';
+
+        // Highlight personal fastest sectors
+        const s1Class = lap[0] === bestSectors[0] ? 'class="pb-sector"' : '';
+        const s2Class = lap[1] === bestSectors[1] ? 'class="pb-sector"' : '';
+        const s3Class = lap[2] === bestSectors[2] ? 'class="pb-sector"' : '';
+
+        html += `
+          <div class="go-sector-row"${bestLapClass}>
+            <span class="row-lap-num">L${idx + 1}</span>
+            <span ${s1Class}>${(lap[0] / 1000).toFixed(3)}s</span>
+            <span ${s2Class}>${(lap[1] / 1000).toFixed(3)}s</span>
+            <span ${s3Class}>${(lap[2] / 1000).toFixed(3)}s</span>
+            <span class="row-lap-total">${formatTime(lapSum)}</span>
+          </div>
+        `;
+      });
+
+      // Best sectors row
+      html += `
+          <div class="go-sector-row best-sectors-row">
+            <span class="row-lap-num">BEST</span>
+            <span class="session-best-s1">${bestSectors[0] ? (bestSectors[0] / 1000).toFixed(3) + 's' : 'N/A'}</span>
+            <span class="session-best-s2">${bestSectors[1] ? (bestSectors[1] / 1000).toFixed(3) + 's' : 'N/A'}</span>
+            <span class="session-best-s3">${bestSectors[2] ? (bestSectors[2] / 1000).toFixed(3) + 's' : 'N/A'}</span>
+            <span class="row-lap-total">${formatTime(bestLapMs)}</span>
+          </div>
+        </div>
+      `;
+
+      breakdownEl.innerHTML = html;
+    }
 
     // Stop the race scene
     if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
@@ -937,11 +1058,37 @@ function submitScoreFromDialog() {
 
   setScoreDialogState('loading');
 
+  // Extract sectors of the best lap
+  const bestLapMs = lastRaceResult.bestLapMs;
+  const rawLaps = lastRaceResult.lapSectors || [];
+  let bestLapIndex = 0;
+  let minDiff = Infinity;
+  rawLaps.forEach((lap, idx) => {
+    const sum = lap.reduce((a, b) => a + b, 0);
+    const diff = Math.abs(sum - bestLapMs);
+    if (diff < minDiff) {
+      minDiff = diff;
+      bestLapIndex = idx;
+    }
+  });
+  const bestLapSectors = rawLaps[bestLapIndex] || [null, null, null];
+
+  const metadata = {
+    best_lap_ms: lastRaceResult.bestLapMs,
+    s1_ms: bestLapSectors[0],
+    s2_ms: bestLapSectors[1],
+    s3_ms: bestLapSectors[2],
+    fastest_s1_ms: lastRaceResult.bestSectors ? lastRaceResult.bestSectors[0] : null,
+    fastest_s2_ms: lastRaceResult.bestSectors ? lastRaceResult.bestSectors[1] : null,
+    fastest_s3_ms: lastRaceResult.bestSectors ? lastRaceResult.bestSectors[2] : null
+  };
+
   submitScore({
     playerName: check.name,
     carId: lastRaceResult.carId,
     trackId: lastRaceResult.trackId,
-    timeMs: lastRaceResult.totalTimeMs
+    timeMs: lastRaceResult.totalTimeMs,
+    metadata: metadata
   }).then((result) => {
     // The dialog may have been explicitly closed while the request was in
     // flight; only update UI if it is still open.
@@ -994,6 +1141,30 @@ async function loadLeaderboard(trackId) {
     return;
   }
 
+  // Pre-fill session best sectors based on all leaderboard records
+  if (!sessionBestSectors[trackId]) {
+    sessionBestSectors[trackId] = [null, null, null];
+  }
+  scores.forEach(s => {
+    let meta = null;
+    if (s.metadata) {
+      try {
+        meta = typeof s.metadata === 'string' ? JSON.parse(s.metadata) : s.metadata;
+      } catch (_) {}
+    }
+    if (meta) {
+      if (meta.fastest_s1_ms && (sessionBestSectors[trackId][0] === null || meta.fastest_s1_ms < sessionBestSectors[trackId][0])) {
+        sessionBestSectors[trackId][0] = meta.fastest_s1_ms;
+      }
+      if (meta.fastest_s2_ms && (sessionBestSectors[trackId][1] === null || meta.fastest_s2_ms < sessionBestSectors[trackId][1])) {
+        sessionBestSectors[trackId][1] = meta.fastest_s2_ms;
+      }
+      if (meta.fastest_s3_ms && (sessionBestSectors[trackId][2] === null || meta.fastest_s3_ms < sessionBestSectors[trackId][2])) {
+        sessionBestSectors[trackId][2] = meta.fastest_s3_ms;
+      }
+    }
+  });
+
   container.innerHTML = scores.map((s, idx) => {
     const carName = CARS.find(c => c.id === s.car_id)?.name || s.car_id;
     const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'Today';
@@ -1002,17 +1173,68 @@ async function loadLeaderboard(trackId) {
     const isThird = idx === 2;
     const podiumClass = isFirst ? ' lb-row-first' : isSecond ? ' lb-row-second' : isThird ? ' lb-row-third' : '';
     const posStr = `#${String(idx + 1).padStart(2, '0')}`;
+
+    let meta = null;
+    if (s.metadata) {
+      try {
+        meta = typeof s.metadata === 'string' ? JSON.parse(s.metadata) : s.metadata;
+      } catch (_) {}
+    }
+
+    let expandedHtml = '';
+    if (meta) {
+      const bestLapStr = meta.best_lap_ms ? formatTime(meta.best_lap_ms) : 'N/A';
+      const s1Str = meta.s1_ms ? `${(meta.s1_ms / 1000).toFixed(3)}s` : 'N/A';
+      const s2Str = meta.s2_ms ? `${(meta.s2_ms / 1000).toFixed(3)}s` : 'N/A';
+      const s3Str = meta.s3_ms ? `${(meta.s3_ms / 1000).toFixed(3)}s` : 'N/A';
+
+      const sessionBests = sessionBestSectors[trackId] || [null, null, null];
+      const isS1Fastest = meta.s1_ms && meta.s1_ms === sessionBests[0] ? 'class="session-best-purple"' : '';
+      const isS2Fastest = meta.s2_ms && meta.s2_ms === sessionBests[1] ? 'class="session-best-purple"' : '';
+      const isS3Fastest = meta.s3_ms && meta.s3_ms === sessionBests[2] ? 'class="session-best-purple"' : '';
+
+      expandedHtml = `
+        <div class="lb-row-details">
+          <div class="lb-detail-col">
+            <span class="lb-detail-label">BEST LAP</span>
+            <span class="lb-detail-val">${bestLapStr}</span>
+          </div>
+          <div class="lb-detail-col">
+            <span class="lb-detail-label">SECTOR 1</span>
+            <span class="lb-detail-val" ${isS1Fastest}>${s1Str}</span>
+          </div>
+          <div class="lb-detail-col">
+            <span class="lb-detail-label">SECTOR 2</span>
+            <span class="lb-detail-val" ${isS2Fastest}>${s2Str}</span>
+          </div>
+          <div class="lb-detail-col">
+            <span class="lb-detail-label">SECTOR 3</span>
+            <span class="lb-detail-val" ${isS3Fastest}>${s3Str}</span>
+          </div>
+        </div>
+      `;
+    } else {
+      expandedHtml = `
+        <div class="lb-row-details">
+          <p class="no-telemetry">Telemetry not available for this run</p>
+        </div>
+      `;
+    }
+
     return `
-      <div class="lb-row${podiumClass}">
-        <div class="lb-row-pos">${posStr}</div>
-        <div class="lb-row-pilot">
-          <p class="lb-row-name">${escapeHtml(s.player_name)}</p>
-          <p class="lb-row-constructor">${escapeHtml(carName)}</p>
+      <div class="lb-row-group">
+        <div class="lb-row${podiumClass}" onclick="this.parentElement.classList.toggle('expanded')">
+          <div class="lb-row-pos">${posStr}</div>
+          <div class="lb-row-pilot">
+            <p class="lb-row-name">${escapeHtml(s.player_name)}</p>
+            <p class="lb-row-constructor">${escapeHtml(carName)}</p>
+          </div>
+          <div class="lb-row-time-col">
+            <p class="lb-row-time">${formatTime(s.time_ms)}</p>
+            <p class="lb-row-date">${dateStr}</p>
+          </div>
         </div>
-        <div class="lb-row-time-col">
-          <p class="lb-row-time">${formatTime(s.time_ms)}</p>
-          <p class="lb-row-date">${dateStr}</p>
-        </div>
+        ${expandedHtml}
       </div>
     `;
   }).join('');

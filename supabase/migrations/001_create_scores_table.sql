@@ -5,8 +5,12 @@ CREATE TABLE IF NOT EXISTS public.scores (
     car_id TEXT NOT NULL,
     track_id TEXT NOT NULL,
     time_ms INT NOT NULL CHECK (time_ms > 0),
+    metadata JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Note: If you are upgrading an existing table, run this SQL statement in your SQL editor:
+-- ALTER TABLE public.scores ADD COLUMN IF NOT EXISTS metadata JSONB;
 
 -- Index for fast leaderboard queries per track
 CREATE INDEX IF NOT EXISTS idx_scores_track_time ON public.scores (track_id, time_ms ASC);

@@ -3360,3 +3360,221 @@ body {
     top: max(58px, calc(env(safe-area-inset-top) + 48px));
   }
 }
+
+/* ==========================================================================
+   SECTOR TIMING SYSTEM & TElemetry
+   ========================================================================== */
+
+/* --- Sector completion comparison banner ----------------------------- */
+.hud-sector-banner {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-120%);
+  background: rgba(8, 8, 14, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  padding: 6px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-display);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  z-index: 4;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.hud-sector-banner.visible {
+  transform: translateX(-50%) translateY(0);
+}
+
+.hud-sector-banner .sector-name {
+  color: var(--on-surface-variant);
+}
+
+.hud-sector-banner .sector-time {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.hud-sector-banner .sector-time.purple {
+  color: #d12df2;
+  text-shadow: 0 0 10px rgba(209, 45, 242, 0.6);
+}
+
+.hud-sector-banner .sector-time.green {
+  color: #00e676;
+  text-shadow: 0 0 10px rgba(0, 230, 118, 0.6);
+}
+
+.hud-sector-banner .sector-time.yellow {
+  color: #ffeb3b;
+  text-shadow: 0 0 10px rgba(255, 235, 59, 0.6);
+}
+
+.hud-sector-banner .sector-diff {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+/* --- Game Over Sector breakdown table ---------------------------------- */
+.sector-breakdown-box {
+  margin-top: 16px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.go-sectors-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  font-size: 0.78rem;
+}
+
+.go-sector-header {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr 1.2fr 1.2fr 1.4fr;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--on-surface-variant);
+  letter-spacing: 0.05em;
+  text-align: right;
+}
+
+.go-sector-header span:first-child,
+.go-sector-row span:first-child {
+  text-align: left;
+}
+
+.go-sector-row {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr 1.2fr 1.2fr 1.4fr;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-family: var(--font-mono);
+  color: var(--on-surface);
+  text-align: right;
+  align-items: center;
+}
+
+.go-sector-row:last-child {
+  border-bottom: none;
+}
+
+.go-sector-row.best-lap-row {
+  background: rgba(232, 0, 45, 0.06);
+  border-left: 3px solid var(--accent-red);
+}
+
+.go-sector-row.best-lap-row .row-lap-total {
+  color: var(--accent-red);
+  font-weight: 700;
+  text-shadow: 0 0 8px var(--accent-red-glow);
+}
+
+.go-sector-row.best-sectors-row {
+  background: rgba(0, 210, 255, 0.04);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+}
+
+.go-sector-row.best-sectors-row .row-lap-num {
+  color: var(--accent-cyan);
+  text-shadow: 0 0 6px var(--accent-cyan-glow);
+}
+
+.go-sector-row span.pb-sector {
+  color: #00e676; /* Personal Best Sector in Green */
+  font-weight: 600;
+  text-shadow: 0 0 6px rgba(0, 230, 118, 0.4);
+}
+
+.go-sector-row .session-best-s1,
+.go-sector-row .session-best-s2,
+.go-sector-row .session-best-s3 {
+  color: #d12df2; /* Session Best Sector in Purple */
+  text-shadow: 0 0 6px rgba(209, 45, 242, 0.4);
+}
+
+/* --- Expandable Leaderboard row group ----------------------------------- */
+.lb-row-group {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background-color 0.25s ease;
+}
+
+.lb-row-group:hover {
+  background-color: rgba(255, 255, 255, 0.01);
+}
+
+.lb-row-group .lb-row {
+  border-bottom: none !important;
+  cursor: pointer;
+}
+
+/* Expandable details panel */
+.lb-row-details {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+  background: rgba(8, 8, 14, 0.4);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 0 16px;
+  font-size: 0.72rem;
+  border-top: 1px solid transparent;
+}
+
+.lb-row-group.expanded .lb-row-details {
+  max-height: 60px; /* expand slider */
+  padding: 8px 16px 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.lb-detail-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.lb-detail-label {
+  color: var(--on-surface-variant);
+  font-family: var(--font-display);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.lb-detail-val {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--on-surface);
+}
+
+.lb-detail-val.session-best-purple {
+  color: #d12df2; /* Purple highlighting overall fastest sector */
+  font-weight: 700;
+  text-shadow: 0 0 6px rgba(209, 45, 242, 0.5);
+}
+
+.lb-row-details .no-telemetry {
+  grid-column: span 4;
+  text-align: center;
+  color: var(--on-surface-variant);
+  font-style: italic;
+  padding: 4px 0;
+}
