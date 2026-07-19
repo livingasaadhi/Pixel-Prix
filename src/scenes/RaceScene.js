@@ -442,14 +442,6 @@ export class RaceScene extends Phaser.Scene {
           this.penaltyMs += 3000;
           this.advantageAlertActive = false;
           this.showStewardsNotification('STEWARDS: +3.0s PENALTY (CORNER CUTTING)');
-        } else {
-          const remainingSec = Math.ceil(this.advantageTimerMs / 1000);
-          const el = document.getElementById('hud-notification');
-          if (el) {
-            el.innerText = `YIELD ADVANTAGE (<180 KM/H) OR +3s PENALTY IN ${remainingSec}s`;
-            el.classList.remove('hidden');
-            el.classList.add('stewards-warning');
-          }
         }
       }
     }
