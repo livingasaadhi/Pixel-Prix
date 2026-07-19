@@ -99,15 +99,36 @@ export async function submitScore({ playerName, carId, trackId, timeMs, metadata
     return { success: true, backend: 'LocalStorage', data: [record] };
   }
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('scores')
     .insert(scoreData)
     .select()
     .single();
 
   if (error) {
-    console.warn('Supabase score submission failed:', error.message);
-    return { success: false, error: error.message };
+    // Check if the error is due to a missing 'metadata' column on the remote table
+    if (metadata && (error.code === '42703' || error.message.includes('column "metadata"'))) {
+      console.warn('⚠️ Supabase metadata column missing. Retrying score submission without metadata...');
+      const fallbackData = { ...scoreData };
+      delete fallbackData.metadata;
+
+      const retryResult = await supabase
+        .from('scores')
+        .insert(fallbackData)
+        .select()
+        .single();
+
+      if (retryResult.error) {
+        console.warn('Supabase score submission failed on retry:', retryResult.error.message);
+        return { success: false, error: retryResult.error.message };
+      }
+
+      data = retryResult.data;
+      error = null;
+    } else {
+      console.warn('Supabase score submission failed:', error.message);
+      return { success: false, error: error.message };
+    }
   }
 
   connectionVerified = true;
