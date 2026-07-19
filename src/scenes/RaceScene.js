@@ -274,31 +274,12 @@ export class RaceScene extends Phaser.Scene {
   }
 
   startCountdown() {
-    let count = 3;
-    const el = document.getElementById('hud-countdown');
-    const textEl = document.getElementById('hud-countdown-text');
-    if (el && textEl) {
-      el.classList.remove('hidden');
-      textEl.classList.remove('green-glow');
-      textEl.innerText = '3';
-    }
-
-    this.time.addEvent({
-      delay: 800,
-      repeat: 3,
-      callback: () => {
-        count--;
-        if (count > 0) {
-          if (textEl) textEl.innerText = count;
-        } else if (count === 0) {
-          if (el) el.classList.add('hidden');
-          this.raceStarted = true;
-          this.startTime = this.time.now;
-          this.lapStartTime = this.time.now;
-          this.sectorStartTime = this.time.now;
-          startEngineSound();
-        }
-      }
+    this.time.delayedCall(1000, () => {
+      this.raceStarted = true;
+      this.startTime = this.time.now;
+      this.lapStartTime = this.time.now;
+      this.sectorStartTime = this.time.now;
+      startEngineSound();
     });
   }
 

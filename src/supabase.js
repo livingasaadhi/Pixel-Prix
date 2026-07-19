@@ -137,8 +137,12 @@ export async function submitScore({ playerName, carId, trackId, timeMs, metadata
     connectionVerified = true;
     return { success: true, backend: 'Supabase', data: [data] };
   } catch (error) {
-    console.error('❌ All Supabase score submission attempts failed:', error.message);
-    return { success: false, error: error.message };
+    console.warn('⚠️ Supabase upload failed after retries. Storing score in LocalStorage fallback:', error.message);
+    const scores = loadLocalScores(trackId);
+    const record = { ...scoreData, id: Date.now(), created_at: new Date().toISOString() };
+    scores.push(record);
+    saveLocalScores(trackId, scores);
+    return { success: true, backend: 'LocalStorage', data: [record] };
   }
 }
 
@@ -146,29 +150,29 @@ export async function submitScore({ playerName, carId, trackId, timeMs, metadata
  * Fetches top 10 fastest times for a given track_id.
  */
 export async function fetchTopScores(trackId) {
-  if (!supabase) {
-    // Offline fallback: read from LocalStorage, sorted fastest-first.
-    const scores = loadLocalScores(trackId)
-      .slice()
-      .sort((a, b) => a.time_ms - b.time_ms)
-      .slice(0, 10);
-    return { scores, backend: 'LocalStorage' };
+  let remoteScores = [];
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('scores')
+      .select('*')
+      .eq('track_id', trackId)
+      .order('time_ms', { ascending: true })
+      .limit(20);
+    if (!error && data) {
+      remoteScores = data;
+      connectionVerified = true;
+    }
   }
 
-  const { data, error } = await supabase
-    .from('scores')
-    .select('*')
-    .eq('track_id', trackId)
-    .order('time_ms', { ascending: true })
-    .limit(10);
-
-  if (error) {
-    console.warn('Supabase leaderboard fetch failed:', error.message);
-    return { scores: [], backend: 'Unavailable', error: error.message };
-  }
-
-  connectionVerified = true;
-  return { scores: data || [], backend: 'Supabase' };
+  const localScores = loadLocalScores(trackId);
+  const combined = [...remoteScores];
+  localScores.forEach(ls => {
+    if (!combined.some(s => s.player_name === ls.player_name && s.time_ms === ls.time_ms)) {
+      combined.push(ls);
+    }
+  });
+  combined.sort((a, b) => a.time_ms - b.time_ms);
+  return { scores: combined.slice(0, 10), backend: remoteScores.length > 0 ? 'Hybrid' : 'LocalStorage' };
 }
 
 export function subscribeToScores(trackId, onChange) {
