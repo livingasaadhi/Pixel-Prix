@@ -33,8 +33,8 @@ export class RaceScene extends Phaser.Scene {
     this.advantageAlertActive = false;
     this.advantageTimerMs = 0;
     this.offRoadGraceMs = 0; // Grace period when returning to track
-    this.warningThresholdMs = 3000; // First warning at 3s off-road
-    this.penaltyThresholdMs = 6000; // Penalty at 6s off-road
+    this.warningThresholdMs = 6000; // 6s off-road before warning
+    this.penaltyThresholdMs = 12000; // 12s off-road before penalty
 
     // Timer state
     this.startTime = 0;
@@ -303,8 +303,8 @@ export class RaceScene extends Phaser.Scene {
 
       if (isTryingToDrive && !this.hasFalseStartPenalty) {
         this.hasFalseStartPenalty = true;
-        this.penaltyMs += 5000;
-        this.showStewardsNotification('STEWARDS: +5.0s PENALTY (FALSE START / JUMP START!)');
+        this.penaltyMs += 2000;
+        this.showStewardsNotification('STEWARDS: +2.0s PENALTY (FALSE START)');
         this.emitHUDUpdate();
       }
       return;
@@ -400,54 +400,53 @@ export class RaceScene extends Phaser.Scene {
 
     const grassCheck = getNearestSegmentIndex(this.player.x, this.player.y, this.curvePoints, this.nearestSegmentIndex);
     this.nearestSegmentIndex = grassCheck.nearestIndex;
-    const effectiveHalfWidth = (this.roadWidth / 2) + 35;
+    const effectiveHalfWidth = (this.roadWidth / 2) + 65;
     this.onGrass = grassCheck.minDistanceSq > (effectiveHalfWidth * effectiveHalfWidth);
 
-    if (this.onGrass && Math.abs(this.currentSpeed) > 60) {
+    if (this.onGrass && Math.abs(this.currentSpeed) > 140) {
       this.offRoadDurationMs += delta;
       this.offRoadGraceMs = 0; // Reset grace when actively off-road
 
       // Progressive warning system based on off-road duration
-      // Warning at 3s, penalty at 6s (with 1 warning threshold)
       if (this.offRoadDurationMs > this.penaltyThresholdMs) {
         this.handleTrackLimitsViolation();
         this.offRoadDurationMs = 0; // Reset after penalty
       } else if (this.offRoadDurationMs > this.warningThresholdMs && this.trackLimitsCount === 0) {
         this.trackLimitsCount = 1;
-        this.showStewardsNotification('STEWARDS: TRACK LIMITS WARNING (3s)');
+        this.showStewardsNotification('STEWARDS: TRACK LIMITS WARNING 1/3');
       }
 
-      // Advantage alert at lower speed threshold (180 km/h instead of ~300 km/h)
-      if (Math.abs(this.currentSpeed) / 2.4 > 180 && !this.advantageAlertActive) {
+      // Advantage alert at high speed threshold (>260 km/h)
+      if (Math.abs(this.currentSpeed) / 2.4 > 260 && !this.advantageAlertActive) {
         this.advantageAlertActive = true;
-        this.advantageTimerMs = 4000;
+        this.advantageTimerMs = 5000;
         this.showStewardsNotification('STEWARDS: SLOW DOWN OR YIELD ADVANTAGE!');
       }
     } else {
-      // Grace period when returning to track - slowly decrease timers
+      // Grace period when returning to track - rapidly decrease off-road accumulation
       this.offRoadGraceMs += delta;
-      if (this.offRoadGraceMs > 1000) {
-        this.offRoadDurationMs = Math.max(0, this.offRoadDurationMs - delta * 3);
+      if (this.offRoadGraceMs > 500) {
+        this.offRoadDurationMs = Math.max(0, this.offRoadDurationMs - delta * 5);
         this.offRoadGraceMs = 0;
       }
     }
 
     if (this.advantageAlertActive) {
-      if (Math.abs(this.currentSpeed) / 2.4 < 100) {
+      if (Math.abs(this.currentSpeed) / 2.4 < 180) {
         this.advantageAlertActive = false;
         this.advantageTimerMs = 0;
         this.showStewardsNotification('STEWARDS: ADVANTAGE YIELDED - WARNING CLEARED');
       } else {
         this.advantageTimerMs -= delta;
         if (this.advantageTimerMs <= 0) {
-          this.penaltyMs += 10000;
+          this.penaltyMs += 3000;
           this.advantageAlertActive = false;
-          this.showStewardsNotification('STEWARDS: +10.0s PENALTY (CORNER CUTTING)');
+          this.showStewardsNotification('STEWARDS: +3.0s PENALTY (CORNER CUTTING)');
         } else {
           const remainingSec = Math.ceil(this.advantageTimerMs / 1000);
           const el = document.getElementById('hud-notification');
           if (el) {
-            el.innerText = `YIELD ADVANTAGE (<100 KM/H) OR +10s PENALTY IN ${remainingSec}s`;
+            el.innerText = `YIELD ADVANTAGE (<180 KM/H) OR +3s PENALTY IN ${remainingSec}s`;
             el.classList.remove('hidden');
             el.classList.add('stewards-warning');
           }
@@ -536,7 +535,9 @@ export class RaceScene extends Phaser.Scene {
       const currentDrag = this.onGrass ? (this.drag * 3.5) : this.drag;
       if (this.currentSpeed > targetMaxSpeed) {
         this.currentSpeed -= currentDrag * dt;
-        if (this.currentSpeed < targetMaxSpeed) this.currentSpeed = targetMaxSpeed;
+        if (this.currentSpeed < targetMaxSpeed) {
+          this.currentSpeed = targetMaxSpeed;
+        }
       } else if (this.currentSpeed > 0) {
         this.currentSpeed -= currentDrag * dt;
         if (this.currentSpeed < 0) this.currentSpeed = 0;
@@ -602,13 +603,14 @@ export class RaceScene extends Phaser.Scene {
   handleTrackLimitsViolation() {
     this.trackLimitsCount++;
     if (this.trackLimitsCount === 1) {
-      this.showStewardsNotification('STEWARDS: TRACK LIMITS WARNING 1/2');
+      this.showStewardsNotification('STEWARDS: TRACK LIMITS WARNING 1/3');
     } else if (this.trackLimitsCount === 2) {
-      this.showStewardsNotification('STEWARDS: FINAL WARNING - +5.0s PENALTY!');
-      this.penaltyMs += 5000;
+      this.showStewardsNotification('STEWARDS: TRACK LIMITS WARNING 2/3');
+    } else if (this.trackLimitsCount === 3) {
+      this.showStewardsNotification('STEWARDS: FINAL WARNING 3/3!');
     } else {
-      this.penaltyMs += 5000;
-      this.showStewardsNotification('STEWARDS: +5.0s TIME PENALTY (TRACK LIMITS)');
+      this.penaltyMs += 2000;
+      this.showStewardsNotification('STEWARDS: +2.0s TIME PENALTY (TRACK LIMITS)');
     }
     // Reset off-road duration after violation to give driver a chance to recover
     this.offRoadDurationMs = 0;
