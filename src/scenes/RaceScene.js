@@ -744,6 +744,7 @@ export class RaceScene extends Phaser.Scene {
         totalLaps: this.totalLaps,
         timeMs: this.elapsedMs,
         penaltyMs: this.penaltyMs,
+        stewardInvestigation: this.trackLimitsCount > 0 || this.advantageAlertActive,
         boostEnergy: this.boostEnergy,
         boostActive: this.boostActive,
         speedRatio: Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275)),

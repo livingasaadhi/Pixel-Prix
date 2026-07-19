@@ -1360,6 +1360,35 @@ body {
   color: rgba(255, 77, 109, 0.75);
 }
 
+/* Neutral state: driver is clean, no investigation pending. Drop the
+   alarming red pulse so the bar no longer implies an active probe. */
+.hud-warning-bar.clean {
+  border-color: rgba(70, 200, 140, 0.45);
+  background: rgba(70, 200, 140, 0.10);
+  animation: none;
+  box-shadow: 0 4px 20px rgba(70, 200, 140, 0.10);
+}
+.hud-warning-bar.clean .hud-warning-icon,
+.hud-warning-bar.clean .hud-warning-left,
+.hud-warning-bar.clean .hud-warning-right {
+  color: rgba(70, 200, 140, 0.85);
+}
+.hud-warning-bar.clean .hud-warning-icon {
+  display: none;
+}
+
+/* Active investigation state: a real warning/alert is in progress. */
+.hud-warning-bar.investigating {
+  border-color: rgba(255, 196, 0, 0.7);
+  background: rgba(255, 196, 0, 0.12);
+  animation: none;
+  box-shadow: 0 4px 20px rgba(255, 196, 0, 0.15);
+}
+.hud-warning-bar.investigating .hud-warning-left,
+.hud-warning-bar.investigating .hud-warning-right {
+  color: rgba(255, 196, 0, 0.9);
+}
+
 /* --- HUD bottom layout -------------------------------------------------- */
 #screen-hud .hud-bottom {
   display: contents;

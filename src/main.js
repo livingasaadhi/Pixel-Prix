@@ -611,7 +611,7 @@ function setupTouchControls() {
 // ----------------------------------------------------------------------------
 function setupGameEventListeners() {
   window.addEventListener('pixel-prix:hud', (e) => {
-    const { speed, isReverse, lap, totalLaps, timeMs, penaltyMs, boostEnergy, boostActive, speedRatio, currentSector, sectorTimeMs } = e.detail;
+    const { speed, isReverse, lap, totalLaps, timeMs, penaltyMs, stewardInvestigation, boostEnergy, boostActive, speedRatio, currentSector, sectorTimeMs } = e.detail;
 
     // Speed: number only (KM/H is the label)
     const speedEl = document.getElementById('hud-speed-text');
@@ -632,7 +632,21 @@ function setupGameEventListeners() {
 
     // Warning bar penalty
     const penaltyVal = (penaltyMs / 1000).toFixed(1);
-    document.getElementById('hud-penalty-text').innerText = penaltyMs > 0 ? `+${penaltyVal}s PENALTY` : 'STEWARD INVESTIGATION';
+    const penaltyChip = document.getElementById('hud-penalty-chip');
+    const penaltyTextEl = document.getElementById('hud-penalty-text');
+    if (penaltyTextEl) {
+      if (penaltyMs > 0) {
+        penaltyTextEl.innerText = `+${penaltyVal}s PENALTY`;
+      } else if (stewardInvestigation) {
+        penaltyTextEl.innerText = 'STEWARD INVESTIGATION';
+      } else {
+        penaltyTextEl.innerText = 'CLEAN';
+      }
+    }
+    if (penaltyChip) {
+      penaltyChip.classList.toggle('investigating', stewardInvestigation === true && penaltyMs <= 0);
+      penaltyChip.classList.toggle('clean', !stewardInvestigation && penaltyMs <= 0);
+    }
 
     // Update unified boost meter fill
     const fillPercent = `${Math.max(0, Math.min(100, boostEnergy))}%`;
