@@ -1588,6 +1588,11 @@ function playCountdownLights() {
   const lights = [1, 2, 3, 4, 5].map(i => document.getElementById(`cl-${i}`));
   if (!overlay || lights.some(l => !l)) return;
 
+  if (countdownLightsTimer) {
+    clearTimeout(countdownLightsTimer);
+    countdownLightsTimer = null;
+  }
+
   // Reset
   lights.forEach(l => l.className = 'countdown-light');
   overlay.classList.add('visible');
@@ -1597,16 +1602,18 @@ function playCountdownLights() {
     if (i < lights.length) {
       lights[i].classList.add('red');
       i++;
-      countdownLightsTimer = setTimeout(step, 650);
+      countdownLightsTimer = setTimeout(step, 550);
     } else {
-      // All red — go!
+      // All 5 red lights lit — pause then GO (green lights)
       countdownLightsTimer = setTimeout(() => {
         lights.forEach(l => { l.classList.remove('red'); l.classList.add('green'); });
+        window.dispatchEvent(new CustomEvent('pixel-prix:lights-green'));
+
         countdownLightsTimer = setTimeout(() => {
           lights.forEach(l => l.className = 'countdown-light');
           overlay.classList.remove('visible');
-        }, 700);
-      }, 900);
+        }, 800);
+      }, 800);
     }
   };
   step();

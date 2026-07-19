@@ -23,6 +23,8 @@ export class RaceScene extends Phaser.Scene {
     this.totalCheckpointsHit = 0;
     this.raceStarted = false;
     this.raceFinished = false;
+    this.lightsGreen = false;
+    this.hasFalseStartPenalty = false;
 
     // Penalty state
     this.trackLimitsCount = 0;
@@ -218,6 +220,16 @@ export class RaceScene extends Phaser.Scene {
     };
     window.addEventListener('keydown', this._preventScrollHandler);
 
+    this._lightsGreenHandler = () => {
+      this.raceStarted = true;
+      this.lightsGreen = true;
+      this.startTime = this.time.now;
+      this.lapStartTime = this.time.now;
+      this.sectorStartTime = this.time.now;
+      startEngineSound();
+    };
+    window.addEventListener('pixel-prix:lights-green', this._lightsGreenHandler);
+
     // 7. Register shutdown handler
     this.events.once('shutdown', this.cleanup, this);
 
@@ -274,13 +286,7 @@ export class RaceScene extends Phaser.Scene {
   }
 
   startCountdown() {
-    this.time.delayedCall(1000, () => {
-      this.raceStarted = true;
-      this.startTime = this.time.now;
-      this.lapStartTime = this.time.now;
-      this.sectorStartTime = this.time.now;
-      startEngineSound();
-    });
+    // RaceScene waits for the pixel-prix:lights-green event from F1 countdown lights
   }
 
   update(time, delta) {
@@ -289,7 +295,22 @@ export class RaceScene extends Phaser.Scene {
 
     this.centerCameraOnPlayer();
 
-    if (!this.raceStarted || this.raceFinished) return;
+    if (!this.lightsGreen) {
+      const isTryingToDrive = this.isAccelerating || this.touchGas > 0.1 ||
+                              (this.cursors && this.cursors.up && this.cursors.up.isDown) ||
+                              (this.wasd && this.wasd.up && this.wasd.up.isDown) ||
+                              (this._kb && this._kb.up);
+
+      if (isTryingToDrive && !this.hasFalseStartPenalty) {
+        this.hasFalseStartPenalty = true;
+        this.penaltyMs += 5000;
+        this.showStewardsNotification('STEWARDS: +5.0s PENALTY (FALSE START / JUMP START!)');
+        this.emitHUDUpdate();
+      }
+      return;
+    }
+
+    if (this.raceFinished) return;
 
     this.elapsedMs = this.time.now - this.startTime;
     if (this.time.now - this.lastHUDUpdate > 33) {
@@ -759,6 +780,10 @@ export class RaceScene extends Phaser.Scene {
 
   cleanup() {
     stopEngineSound();
+    if (this._lightsGreenHandler) {
+      window.removeEventListener('pixel-prix:lights-green', this._lightsGreenHandler);
+      this._lightsGreenHandler = null;
+    }
     const countdownEl = document.getElementById('hud-countdown');
     if (countdownEl) countdownEl.classList.add('hidden');
     if (this._notifEvent) {
