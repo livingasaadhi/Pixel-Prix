@@ -2536,3 +2536,204 @@ html, body {
   z-index: 0;
   opacity: 0.6;
 }
+
+/* ==========================================================================
+   MOBILE CONTROLS REFINEMENT (Joystick, Combined Pedal Slider, Carousel Transition)
+   ========================================================================== */
+
+/* Carousel selection slide-in animation */
+.carousel-slide {
+  animation: selection-slide-in 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes selection-slide-in {
+  from {
+    opacity: 0.4;
+    transform: scale(0.975) translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Selection card hover highlights */
+.car-select-card, .track-select-card {
+  transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+.car-select-card:hover, .track-select-card:hover {
+  border-color: rgba(0, 210, 255, 0.25) !important;
+  box-shadow: 0 8px 32px rgba(0, 210, 255, 0.05), inset 0 0 12px rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Joystick Styles */
+.hud-joystick-container {
+  position: absolute;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  right: max(24px, env(safe-area-inset-right));
+  z-index: 10;
+  pointer-events: auto;
+  display: none;
+}
+
+.touch-device .hud-joystick-container {
+  display: block !important;
+}
+
+.touch-device #hud-steer-left-group {
+  display: none !important;
+}
+
+.hud-joystick-base {
+  position: relative;
+  width: clamp(100px, 18vw, 120px);
+  height: clamp(100px, 18vw, 120px);
+  border-radius: 50%;
+  background: rgba(12, 11, 18, 0.72);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 10px 25px rgba(0,0,0,0.6),
+    inset 0 0 12px rgba(0,0,0,0.8),
+    0 0 0 1px rgba(255,255,255,0.03);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hud-joystick-handle {
+  position: absolute;
+  width: clamp(42px, 8vw, 50px);
+  height: clamp(42px, 8vw, 50px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #2a2936 20%, #15141c 70%, #08080c 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 16px rgba(0,0,0,0.5), 
+    inset 0 0 8px rgba(255,255,255,0.06),
+    0 0 0 1px rgba(0,0,0,0.6);
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* Touch combined pedal styles */
+#hud-drive-left-group {
+  display: none !important;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.touch-device #hud-drive-left-group {
+  display: flex !important;
+  position: absolute;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  left: max(24px, env(safe-area-inset-left));
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.touch-device #hud-drive-right-group {
+  display: none !important;
+}
+
+.hud-combined-pedals-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.hud-pedal-slider {
+  position: relative;
+  width: 64px;
+  height: 140px;
+  background: rgba(12, 11, 18, 0.72);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  box-shadow: 
+    0 8px 24px rgba(0,0,0,0.5),
+    inset 0 0 10px rgba(0,0,0,0.8);
+  touch-action: none;
+  cursor: ns-resize;
+  user-select: none;
+  -webkit-user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pedal-slider-track {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  width: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.pedal-slider-handle {
+  position: absolute;
+  width: 48px;
+  height: 26px;
+  background: linear-gradient(180deg, #302f3a, #1a1820);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 5px;
+  box-shadow: 
+    0 4px 10px rgba(0,0,0,0.6),
+    inset 0 1px 1px rgba(255,255,255,0.1);
+  will-change: transform;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pedal-slider-handle::after {
+  content: '|||';
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 1px;
+}
+
+.slider-track-labels {
+  position: absolute;
+  inset: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.45rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.25);
+  z-index: 1;
+}
+
+.slider-track-labels .label-gas {
+  color: rgba(0, 210, 255, 0.4);
+}
+
+.slider-track-labels .label-brake {
+  color: rgba(255, 77, 109, 0.4);
+}
+
+/* Mobile Boost Button Conditional Visibility */
+#btn-touch-boost-left {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#btn-touch-boost-left.visible-boost {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+

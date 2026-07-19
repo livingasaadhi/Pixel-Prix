@@ -52,6 +52,8 @@ export class RaceScene extends Phaser.Scene {
     this.boostActive = false;       // toggle-style active boost state
     this.boostWasPressed = false;   // rising-edge detection for keypresses
     this.touchSteerValue = 0;       // analog touch steering wheel input (-1 to 1)
+    this.touchGas = 0;              // analog touch gas input (0 to 1)
+    this.touchBrake = 0;            // analog touch brake input (0 to 1)
 
     // Tunable physics parameters (scaled by 2.4x for high-speed AAA racing feel)
     const VEL_MULT = 2.4;
@@ -290,7 +292,8 @@ export class RaceScene extends Phaser.Scene {
     if (this.isSteeringRight || this.cursors.right.isDown || this.wasd.right.isDown || this._kb.right) steerDir += 1;
 
     if (this.touchSteerValue !== 0) {
-      steerDir = this.touchSteerValue;
+      // Map to an exponential response curve (power of 1.6) for smooth analog control and no snap jump
+      steerDir = Math.sign(this.touchSteerValue) * Math.pow(Math.abs(this.touchSteerValue), 1.6);
     }
 
     const carTexBase = 'car_' + this.carData.id + '_';
@@ -317,8 +320,24 @@ export class RaceScene extends Phaser.Scene {
     }
 
     const boostActive = this.boostActive;
-    const gasOn = this.isAccelerating || this.cursors.up.isDown || this.wasd.up.isDown || this._kb.up;
-    const brakeOn = this.isBraking || this.cursors.down.isDown || this.wasd.down.isDown || this._kb.down;
+    
+    // Proportional analog inputs mapping
+    let gasValue = 0;
+    if (this.isAccelerating || this.cursors.up.isDown || this.wasd.up.isDown || this._kb.up) {
+      gasValue = 1.0;
+    } else if (this.touchGas > 0) {
+      gasValue = this.touchGas;
+    }
+
+    let brakeValue = 0;
+    if (this.isBraking || this.cursors.down.isDown || this.wasd.down.isDown || this._kb.down) {
+      brakeValue = 1.0;
+    } else if (this.touchBrake > 0) {
+      brakeValue = this.touchBrake;
+    }
+
+    const gasOn = gasValue > 0;
+    const brakeOn = brakeValue > 0;
 
     setEngineActive(gasOn || boostActive);
 
@@ -420,7 +439,7 @@ export class RaceScene extends Phaser.Scene {
       } else if (this.currentSpeed < targetMaxSpeed) {
         const ratio = Math.max(0, this.currentSpeed / targetMaxSpeed);
         const launchAccel = currentAccel * (1.75 - 0.95 * Math.pow(ratio, 1.3));
-        this.currentSpeed += launchAccel * dt;
+        this.currentSpeed += launchAccel * gasValue * dt;
         if (this.currentSpeed > targetMaxSpeed) {
           this.currentSpeed = targetMaxSpeed;
         }
@@ -439,11 +458,11 @@ export class RaceScene extends Phaser.Scene {
       }
     } else if (brakeOn) {
       if (this.currentSpeed > 0) {
-        this.currentSpeed -= this.brakeForce * dt;
+        this.currentSpeed -= this.brakeForce * brakeValue * dt;
         if (this.currentSpeed < 0) this.currentSpeed = 0;
       } else {
         if (this.currentSpeed > -85 * 2.4) {
-          this.currentSpeed -= this.acceleration * 0.8 * dt;
+          this.currentSpeed -= this.acceleration * 0.8 * brakeValue * dt;
         }
       }
     } else {
@@ -607,6 +626,8 @@ export class RaceScene extends Phaser.Scene {
   setBrake(v) { this.isBraking = v; }
   setBoost(v) { this.isBoosting = v; }
   setSteeringValue(v) { this.touchSteerValue = v; }
+  setTouchGas(v) { this.touchGas = v; }
+  setTouchBrake(v) { this.touchBrake = v; }
 
   cleanup() {
     stopEngineSound();
@@ -615,6 +636,8 @@ export class RaceScene extends Phaser.Scene {
     // Remove speed vignette on cleanup
     this.updateSpeedVignette(0);
     this.touchSteerValue = 0;
+    this.touchGas = 0;
+    this.touchBrake = 0;
     if (this._preventScrollHandler) {
       window.removeEventListener('keydown', this._preventScrollHandler);
       this._preventScrollHandler = null;

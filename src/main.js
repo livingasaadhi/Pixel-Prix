@@ -297,8 +297,23 @@ function drawCarPreview(canvas, color, accentColor) {
 
 function updateCarSelection() {
   const car = CARS[selectedCarIndex];
+  
+  const content = document.querySelector('.car-select-card .carousel-content');
+  if (content) {
+    content.classList.remove('carousel-slide');
+    void content.offsetWidth; // trigger reflow
+    content.classList.add('carousel-slide');
+  }
+
   document.getElementById('car-name').innerText = car.name;
   document.getElementById('car-desc').innerText = car.description;
+
+  // Update dots
+  const dots = document.querySelectorAll('#car-selection-dots .dot');
+  dots.forEach((dot, idx) => {
+    if (idx === selectedCarIndex) dot.classList.add('active');
+    else dot.classList.remove('active');
+  });
 
   const previewCanvas = document.getElementById('car-preview-canvas');
   drawCarPreview(previewCanvas, car.color, car.accentColor);
@@ -323,8 +338,23 @@ function updateCarSelection() {
 
 function updateTrackSelection() {
   const track = TRACKS[selectedTrackIndex];
+
+  const content = document.querySelector('.track-select-card .track-content');
+  if (content) {
+    content.classList.remove('carousel-slide');
+    void content.offsetWidth; // trigger reflow
+    content.classList.add('carousel-slide');
+  }
+
   document.getElementById('track-name').innerText = track.name;
   document.getElementById('track-desc').innerText = track.description;
+
+  // Update dots
+  const dots = document.querySelectorAll('#track-selection-dots .dot');
+  dots.forEach((dot, idx) => {
+    if (idx === selectedTrackIndex) dot.classList.add('active');
+    else dot.classList.remove('active');
+  });
 
   // Set difficulty with color coding
   const diffEl = document.getElementById('track-difficulty');
@@ -401,95 +431,108 @@ function setupTouchControls() {
   bindButton('btn-touch-right', s => s.setSteerRight(true), s => s.setSteerRight(false));
   bindButton('btn-touch-brake', s => s.setBrake(true), s => s.setBrake(false));
   bindButton('btn-touch-boost', s => s.setBoost(true), s => s.setBoost(false));
+  bindButton('btn-touch-boost-left', s => s.setBoost(true), s => s.setBoost(false));
 
-  // Steering wheel control for mobile / touch devices
-  const wheelEl = document.getElementById('hud-steering-wheel');
-  if (wheelEl) {
-    let isSteering = false;
-    let currentWheelAngle = 0;
-    const maxWheelAngle = 120 * Math.PI / 180; // 120 degrees max lock
-    const deadzone = 4 * Math.PI / 180; // 4 degrees deadzone
-    let startTouchAngle = 0;
-    let startWheelAngle = 0;
+  // Joystick control for mobile / touch devices (Steering)
+  const joystickBaseEl = document.getElementById('hud-joystick-base');
+  const joystickHandleEl = document.getElementById('hud-joystick-handle');
+  
+  if (joystickBaseEl && joystickHandleEl) {
+    let isDraggingJoystick = false;
     let recenterInterval = null;
+    const deadzone = 0.08; // 8% center deadzone
 
-    const getTouchAngle = (clientX, clientY) => {
-      const rect = wheelEl.getBoundingClientRect();
+    const updateJoystick = (clientX, clientY) => {
+      const rect = joystickBaseEl.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
-      return Math.atan2(clientY - cy, clientX - cx);
-    };
+      const maxRadius = rect.width / 2;
+      const limit = maxRadius * 0.7; // Limit handle to 70% of base radius
 
-    const startDrag = (e) => {
-      e.preventDefault();
-      isSteering = true;
-      if (recenterInterval) {
-        cancelAnimationFrame(recenterInterval);
-        recenterInterval = null;
+      let dx = clientX - cx;
+      let dy = clientY - cy;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > limit) {
+        dx = (dx / distance) * limit;
+        dy = (dy / distance) * limit;
       }
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      startTouchAngle = getTouchAngle(clientX, clientY);
-      startWheelAngle = currentWheelAngle;
-    };
 
-    const drag = (e) => {
-      if (!isSteering) return;
-      if (e.cancelable) e.preventDefault();
+      joystickHandleEl.style.transform = `translate(${dx}px, ${dy}px)`;
 
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const touchAngle = getTouchAngle(clientX, clientY);
-      let deltaAngle = touchAngle - startTouchAngle;
-      
-      // Wrap around angle deltas
-      if (deltaAngle > Math.PI) deltaAngle -= Math.PI * 2;
-      if (deltaAngle < -Math.PI) deltaAngle += Math.PI * 2;
-
-      currentWheelAngle = startWheelAngle + deltaAngle;
-      currentWheelAngle = Math.max(-maxWheelAngle, Math.min(maxWheelAngle, currentWheelAngle));
-
-      wheelEl.style.transform = `rotate(${currentWheelAngle * 180 / Math.PI}deg)`;
-
-      // Map to steering value with deadzone
+      // Proportional analog steering value based on horizontal displacement (-1 to 1)
+      const normalizedX = dx / limit;
       let steeringValue = 0;
-      if (Math.abs(currentWheelAngle) > deadzone) {
-        const sign = Math.sign(currentWheelAngle);
-        steeringValue = sign * ((Math.abs(currentWheelAngle) - deadzone) / (maxWheelAngle - deadzone));
+      if (Math.abs(normalizedX) > deadzone) {
+        const sign = Math.sign(normalizedX);
+        steeringValue = sign * ((Math.abs(normalizedX) - deadzone) / (1.0 - deadzone));
       }
 
       const sc = raceScene();
       if (sc) sc.setSteeringValue(steeringValue);
     };
 
-    const endDrag = (e) => {
-      if (!isSteering) return;
-      isSteering = false;
+    const startDrag = (e) => {
+      e.preventDefault();
+      isDraggingJoystick = true;
+      if (recenterInterval) {
+        cancelAnimationFrame(recenterInterval);
+        recenterInterval = null;
+      }
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      updateJoystick(clientX, clientY);
+    };
 
-      // Start auto-recentering with smooth easing
+    const drag = (e) => {
+      if (!isDraggingJoystick) return;
+      if (e.cancelable) e.preventDefault();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      updateJoystick(clientX, clientY);
+    };
+
+    const endDrag = (e) => {
+      if (!isDraggingJoystick) return;
+      isDraggingJoystick = false;
+
+      // Smoothly ease joystick handle back to center
+      let rect = joystickBaseEl.getBoundingClientRect();
+      let maxRadius = rect.width / 2;
+      let limit = maxRadius * 0.7;
+      
+      const style = window.getComputedStyle(joystickHandleEl);
+      const matrix = new DOMMatrix(style.transform);
+      let curDx = matrix.m41;
+      let curDy = matrix.m42;
+
       const step = () => {
-        if (isSteering) {
+        if (isDraggingJoystick) {
           recenterInterval = null;
           return;
         }
 
-        currentWheelAngle *= 0.82; // quick auto-recenter decay
-        if (Math.abs(currentWheelAngle) < 0.005) {
-          currentWheelAngle = 0;
+        curDx *= 0.8; // Easing decay rate
+        curDy *= 0.8;
+
+        if (Math.abs(curDx) < 0.1 && Math.abs(curDy) < 0.1) {
+          curDx = 0;
+          curDy = 0;
         }
 
-        wheelEl.style.transform = `rotate(${currentWheelAngle * 180 / Math.PI}deg)`;
+        joystickHandleEl.style.transform = `translate(${curDx}px, ${curDy}px)`;
 
+        const normalizedX = curDx / limit;
         let steeringValue = 0;
-        if (Math.abs(currentWheelAngle) > deadzone) {
-          const sign = Math.sign(currentWheelAngle);
-          steeringValue = sign * ((Math.abs(currentWheelAngle) - deadzone) / (maxWheelAngle - deadzone));
+        if (Math.abs(normalizedX) > deadzone) {
+          const sign = Math.sign(normalizedX);
+          steeringValue = sign * ((Math.abs(normalizedX) - deadzone) / (1.0 - deadzone));
         }
 
         const sc = raceScene();
         if (sc) sc.setSteeringValue(steeringValue);
 
-        if (currentWheelAngle !== 0) {
+        if (curDx !== 0 || curDy !== 0) {
           recenterInterval = requestAnimationFrame(step);
         } else {
           recenterInterval = null;
@@ -499,15 +542,125 @@ function setupTouchControls() {
       recenterInterval = requestAnimationFrame(step);
     };
 
-    wheelEl.addEventListener('touchstart', startDrag, { passive: false });
+    joystickBaseEl.addEventListener('touchstart', startDrag, { passive: false });
     window.addEventListener('touchmove', drag, { passive: false });
     window.addEventListener('touchend', endDrag);
     window.addEventListener('touchcancel', endDrag);
 
-    wheelEl.addEventListener('mousedown', startDrag);
+    joystickBaseEl.addEventListener('mousedown', startDrag);
     window.addEventListener('mousemove', drag);
     window.addEventListener('mouseup', endDrag);
   }
+
+  // Combined Pedals Vertical Slider (Accelerator/Brake/Reverse)
+  const pedalSliderEl = document.getElementById('hud-pedal-slider');
+  const pedalHandleEl = document.getElementById('pedal-slider-handle');
+
+  if (pedalSliderEl && pedalHandleEl) {
+    let isDraggingPedal = false;
+    let recenterInterval = null;
+    const maxLimit = 55; // Max vertical travel from center in pixels
+    const deadzone = 0.08; // 8% center deadzone
+
+    const updateSlider = (clientY) => {
+      const rect = pedalSliderEl.getBoundingClientRect();
+      const centerY = rect.top + rect.height / 2;
+      
+      let offsetY = clientY - centerY;
+      offsetY = Math.max(-maxLimit, Math.min(maxLimit, offsetY));
+
+      pedalHandleEl.style.transform = `translateY(${offsetY}px)`;
+
+      // Map to normalized input: -1.0 (Brake/Reverse bottom) to 1.0 (Gas top)
+      const val = -offsetY / maxLimit;
+      
+      let gas = 0;
+      let brake = 0;
+
+      if (val > deadzone) {
+        gas = (val - deadzone) / (1.0 - deadzone);
+      } else if (val < -deadzone) {
+        brake = (-val - deadzone) / (1.0 - deadzone);
+      }
+
+      const sc = raceScene();
+      if (sc) {
+        sc.setTouchGas(gas);
+        sc.setTouchBrake(brake);
+      }
+    };
+
+    const startDrag = (e) => {
+      e.preventDefault();
+      isDraggingPedal = true;
+      if (recenterInterval) {
+        cancelAnimationFrame(recenterInterval);
+        recenterInterval = null;
+      }
+      const clientY = e.touches ? e.touches[0].clientX : e.clientY;
+      updateSlider(clientY);
+    };
+
+    const drag = (e) => {
+      if (!isDraggingPedal) return;
+      if (e.cancelable) e.preventDefault();
+      const clientY = e.touches ? e.touches[0].clientX : e.clientY;
+      updateSlider(clientY);
+    };
+
+    const endDrag = (e) => {
+      if (!isDraggingPedal) return;
+      isDraggingPedal = false;
+
+      const style = window.getComputedStyle(pedalHandleEl);
+      const matrix = new DOMMatrix(style.transform);
+      let curOffsetY = matrix.m42;
+
+      const step = () => {
+        if (isDraggingPedal) {
+          recenterInterval = null;
+          return;
+        }
+
+        curOffsetY *= 0.8; // Smooth auto-recenter decay
+
+        if (Math.abs(curOffsetY) < 0.1) {
+          curOffsetY = 0;
+        }
+
+        pedalHandleEl.style.transform = `translateY(${curOffsetY}px)`;
+
+        const val = -curOffsetY / maxLimit;
+        let gas = 0;
+        let brake = 0;
+
+        if (val > deadzone) gas = (val - deadzone) / (1.0 - deadzone);
+        else if (val < -deadzone) brake = (-val - deadzone) / (1.0 - deadzone);
+
+        const sc = raceScene();
+        if (sc) {
+          sc.setTouchGas(gas);
+          sc.setTouchBrake(brake);
+        }
+
+        if (curOffsetY !== 0) {
+          recenterInterval = requestAnimationFrame(step);
+        } else {
+          recenterInterval = null;
+        }
+      };
+
+      recenterInterval = requestAnimationFrame(step);
+    };
+
+    pedalSliderEl.addEventListener('touchstart', startDrag, { passive: false });
+    window.addEventListener('touchmove', drag, { passive: false });
+    window.addEventListener('touchend', endDrag);
+    window.addEventListener('touchcancel', endDrag);
+
+    pedalSliderEl.addEventListener('mousedown', startDrag);
+    window.addEventListener('mousemove', drag);
+}
 }
 
 // ----------------------------------------------------------------------------
@@ -525,7 +678,25 @@ function setupGameEventListeners() {
     // Warning bar penalty
     const penaltyVal = (penaltyMs / 1000).toFixed(1);
     document.getElementById('hud-penalty-text').innerText = penaltyMs > 0 ? `+${penaltyVal}s PENALTY` : 'STEWARD INVESTIGATION';
-    document.getElementById('hud-boost-fill').style.width = `${Math.max(0, Math.min(100, boostEnergy))}%`;
+    
+    // Update both boost meter fills (desktop and mobile)
+    const fillPercent = `${Math.max(0, Math.min(100, boostEnergy))}%`;
+    const fillRight = document.getElementById('hud-boost-fill');
+    if (fillRight) fillRight.style.width = fillPercent;
+    const fillLeft = document.getElementById('hud-boost-fill-left');
+    if (fillLeft) fillLeft.style.width = fillPercent;
+
+    // Boost button conditional visibility (mobile only)
+    const boostBtnLeft = document.getElementById('btn-touch-boost-left');
+    if (boostBtnLeft) {
+      const sc = raceScene();
+      const isBoostActive = sc ? sc.boostActive : false;
+      if (isBoostActive || boostEnergy >= 100) {
+        boostBtnLeft.classList.add('visible-boost');
+      } else {
+        boostBtnLeft.classList.remove('visible-boost');
+      }
+    }
   });
 
   window.addEventListener('pixel-prix:finish', (e) => {
@@ -549,21 +720,31 @@ function setupGameEventListeners() {
 
   window.addEventListener('pixel-prix:boost-state', (e) => {
     const active = e.detail.active;
-    const btn = document.getElementById('btn-touch-boost');
-    if (btn) {
-      if (active) {
-        btn.classList.add('engaged');
-      } else {
-        btn.classList.remove('engaged');
-      }
+    
+    // Desktop boost btn
+    const btnRight = document.getElementById('btn-touch-boost');
+    if (btnRight) {
+      if (active) btnRight.classList.add('engaged');
+      else btnRight.classList.remove('engaged');
     }
-    const fill = document.getElementById('hud-boost-fill');
-    if (fill) {
-      if (active) {
-        fill.classList.add('active-boost');
-      } else {
-        fill.classList.remove('active-boost');
-      }
+    
+    // Mobile boost btn
+    const btnLeft = document.getElementById('btn-touch-boost-left');
+    if (btnLeft) {
+      if (active) btnLeft.classList.add('engaged');
+      else btnLeft.classList.remove('engaged');
+    }
+
+    // Fills
+    const fillRight = document.getElementById('hud-boost-fill');
+    if (fillRight) {
+      if (active) fillRight.classList.add('active-boost');
+      else fillRight.classList.remove('active-boost');
+    }
+    const fillLeft = document.getElementById('hud-boost-fill-left');
+    if (fillLeft) {
+      if (active) fillLeft.classList.add('active-boost');
+      else fillLeft.classList.remove('active-boost');
     }
   });
 }
