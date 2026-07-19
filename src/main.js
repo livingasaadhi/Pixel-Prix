@@ -440,7 +440,16 @@ function setupTouchControls() {
   if (joystickBaseEl && joystickHandleEl) {
     let isDraggingJoystick = false;
     let recenterInterval = null;
+    let joystickTouchId = null; // multi-touch: track specific touch identifier
     const deadzone = 0.08; // 8% center deadzone
+
+    const getJoystickTouch = (e) => {
+      if (!e.touches) return null;
+      if (joystickTouchId !== null) {
+        return Array.from(e.touches).find(t => t.identifier === joystickTouchId) || null;
+      }
+      return e.touches[0] || null;
+    };
 
     const updateJoystick = (clientX, clientY) => {
       const rect = joystickBaseEl.getBoundingClientRect();
@@ -479,6 +488,10 @@ function setupTouchControls() {
         cancelAnimationFrame(recenterInterval);
         recenterInterval = null;
       }
+      // Store the touch identifier for multi-touch tracking
+      if (e.touches && e.touches[0]) {
+        joystickTouchId = e.touches[0].identifier;
+      }
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       updateJoystick(clientX, clientY);
@@ -487,14 +500,24 @@ function setupTouchControls() {
     const drag = (e) => {
       if (!isDraggingJoystick) return;
       if (e.cancelable) e.preventDefault();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      updateJoystick(clientX, clientY);
+      let touch;
+      if (e.touches && (touch = getJoystickTouch(e))) {
+        updateJoystick(touch.clientX, touch.clientY);
+      } else if (!e.touches) {
+        // Mouse fallback
+        updateJoystick(e.clientX, e.clientY);
+      }
     };
 
     const endDrag = (e) => {
+      // Check if the released touch matches our tracked joystick touch
+      if (joystickTouchId !== null && e.changedTouches) {
+        const released = Array.from(e.changedTouches).find(t => t.identifier === joystickTouchId);
+        if (!released) return; // not our touch
+      }
       if (!isDraggingJoystick) return;
       isDraggingJoystick = false;
+      joystickTouchId = null;
 
       // Immediately clear joystick heading so car stops turning toward last target
       const scImmediate = raceScene();
@@ -563,8 +586,24 @@ function setupTouchControls() {
   if (pedalSliderEl && pedalHandleEl) {
     let isDraggingPedal = false;
     let recenterInterval = null;
+    let pedalTouchId = null; // multi-touch: track specific touch identifier
     const maxLimit = 55; // Max vertical travel from center in pixels
     const deadzone = 0.08; // 8% center deadzone
+    const PROGRESSIVE_EXP = 1.8; // exponent for progressive pedal curve (>1 = progressive near center, aggressive at edge)
+
+    const getPedalTouch = (e) => {
+      if (!e.touches) return null;
+      if (pedalTouchId !== null) {
+        return Array.from(e.touches).find(t => t.identifier === pedalTouchId) || null;
+      }
+      return e.touches[0] || null;
+    };
+
+    const computePedalValue = (raw) => {
+      // Progressive curve: small movements near center give less power,
+      // movements toward the edge give exponentially more
+      return Math.sign(raw) * Math.pow(Math.abs(raw), PROGRESSIVE_EXP);
+    };
 
     const updateSlider = (clientY) => {
       const rect = pedalSliderEl.getBoundingClientRect();
@@ -582,9 +621,11 @@ function setupTouchControls() {
       let brake = 0;
 
       if (val > deadzone) {
-        gas = (val - deadzone) / (1.0 - deadzone);
+        let normalized = (val - deadzone) / (1.0 - deadzone);
+        gas = computePedalValue(normalized);
       } else if (val < -deadzone) {
-        brake = (-val - deadzone) / (1.0 - deadzone);
+        let normalized = (-val - deadzone) / (1.0 - deadzone);
+        brake = computePedalValue(normalized);
       }
 
       const sc = raceScene();
@@ -601,6 +642,10 @@ function setupTouchControls() {
         cancelAnimationFrame(recenterInterval);
         recenterInterval = null;
       }
+      // Store the touch identifier for multi-touch tracking
+      if (e.touches && e.touches[0]) {
+        pedalTouchId = e.touches[0].identifier;
+      }
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       updateSlider(clientY);
     };
@@ -608,13 +653,24 @@ function setupTouchControls() {
     const drag = (e) => {
       if (!isDraggingPedal) return;
       if (e.cancelable) e.preventDefault();
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      updateSlider(clientY);
+      let touch;
+      if (e.touches && (touch = getPedalTouch(e))) {
+        updateSlider(touch.clientY);
+      } else if (!e.touches) {
+        // Mouse fallback
+        updateSlider(e.clientY);
+      }
     };
 
     const endDrag = (e) => {
+      // Check if the released touch matches our tracked pedal touch
+      if (pedalTouchId !== null && e.changedTouches) {
+        const released = Array.from(e.changedTouches).find(t => t.identifier === pedalTouchId);
+        if (!released) return; // not our touch
+      }
       if (!isDraggingPedal) return;
       isDraggingPedal = false;
+      pedalTouchId = null;
 
       const style = window.getComputedStyle(pedalHandleEl);
       const matrix = new DOMMatrix(style.transform);
