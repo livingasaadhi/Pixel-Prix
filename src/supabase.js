@@ -9,8 +9,15 @@ import { createClient } from '@supabase/supabase-js';
 const ENV_URL = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
 const ENV_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const SUPABASE_URL = ENV_URL && !ENV_URL.includes('YOUR_SUPABASE_PROJECT_ID') ? ENV_URL : 'https://vtnezkwpauvxgfnktjbf.supabase.co';
-const SUPABASE_ANON_KEY = ENV_KEY && !ENV_KEY.includes('YOUR_SUPABASE_ANON_KEY') ? ENV_KEY : 'sb_publishable_rCP0G5TWK69ak7WjWpVGYQ_U0kYl5hm';
+// Only treat the connection as configured when the user supplied real
+// credentials. Previously a real key was hard-coded as a fallback, which
+// leaked data to a third-party project and meant offline (LocalStorage) mode
+// was never reachable without editing the source.
+const ENV_URL_VALID = typeof ENV_URL === 'string' && ENV_URL.length > 0 && !ENV_URL.includes('YOUR_SUPABASE_PROJECT_ID');
+const ENV_KEY_VALID = typeof ENV_KEY === 'string' && ENV_KEY.length > 0 && !ENV_KEY.includes('YOUR_SUPABASE_ANON_KEY') && !ENV_KEY.includes('YOUR_SUPABASE_PUBLISHABLE_KEY');
+
+const SUPABASE_URL = ENV_URL_VALID ? ENV_URL : null;
+const SUPABASE_ANON_KEY = ENV_KEY_VALID ? ENV_KEY : null;
 
 // Check if credentials have been updated by the user
 const isConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
@@ -41,6 +48,31 @@ if (isConfigured) {
   console.log('ℹ️ Supabase credentials not set. Operating in offline LocalStorage mode.');
 }
 
+// ----------------------------------------------------------------------------
+// OFFLINE FALLBACK (LocalStorage)
+// When Supabase is not configured, scores are persisted per-track in the
+// browser so the game remains fully playable and the leaderboard still works.
+// ----------------------------------------------------------------------------
+const LB_STORAGE_PREFIX = 'pixel-prix:scores:';
+
+function loadLocalScores(trackId) {
+  try {
+    const raw = localStorage.getItem(LB_STORAGE_PREFIX + trackId);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalScores(trackId, scores) {
+  try {
+    localStorage.setItem(LB_STORAGE_PREFIX + trackId, JSON.stringify(scores));
+  } catch {
+    // Storage may be unavailable (private mode / quota) — ignore.
+  }
+}
+
 /**
  * Submits a new race score to the global Supabase leaderboard.
  */
@@ -58,7 +90,12 @@ export async function submitScore({ playerName, carId, trackId, timeMs }) {
   };
 
   if (!supabase) {
-    return { success: false, error: 'Global leaderboard is unavailable.' };
+    // Offline fallback: store in LocalStorage.
+    const scores = loadLocalScores(trackId);
+    const record = { ...scoreData, id: Date.now(), created_at: new Date().toISOString() };
+    scores.push(record);
+    saveLocalScores(trackId, scores);
+    return { success: true, backend: 'LocalStorage', data: [record] };
   }
 
   const { data, error } = await supabase
@@ -81,7 +118,12 @@ export async function submitScore({ playerName, carId, trackId, timeMs }) {
  */
 export async function fetchTopScores(trackId) {
   if (!supabase) {
-    return { scores: [], backend: 'Unavailable', error: 'Global leaderboard is unavailable.' };
+    // Offline fallback: read from LocalStorage, sorted fastest-first.
+    const scores = loadLocalScores(trackId)
+      .slice()
+      .sort((a, b) => a.time_ms - b.time_ms)
+      .slice(0, 10);
+    return { scores, backend: 'LocalStorage' };
   }
 
   const { data, error } = await supabase

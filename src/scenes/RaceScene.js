@@ -11,7 +11,7 @@ export class RaceScene extends Phaser.Scene {
   }
 
   init(data) {
-    const carId = (data && data.carId) ? data.carId : 'apex-phantom';
+    const carId = (data && data.carId) ? data.carId : '';
     const trackId = (data && data.trackId) ? data.trackId : 'monaco-oval';
     this.carData = getCarById(carId);
     this.trackData = getTrackById(trackId);
@@ -30,6 +30,9 @@ export class RaceScene extends Phaser.Scene {
     this.offRoadDurationMs = 0;
     this.advantageAlertActive = false;
     this.advantageTimerMs = 0;
+    this.offRoadGraceMs = 0; // Grace period when returning to track
+    this.warningThresholdMs = 3000; // First warning at 3s off-road
+    this.penaltyThresholdMs = 6000; // Penalty at 6s off-road
 
     // Timer state
     this.startTime = 0;
@@ -367,19 +370,31 @@ export class RaceScene extends Phaser.Scene {
 
     if (this.onGrass && Math.abs(this.currentSpeed) > 60) {
       this.offRoadDurationMs += delta;
+      this.offRoadGraceMs = 0; // Reset grace when actively off-road
 
-      if (this.offRoadDurationMs > 1500) {
+      // Progressive warning system based on off-road duration
+      // Warning at 3s, penalty at 6s (with 1 warning threshold)
+      if (this.offRoadDurationMs > this.penaltyThresholdMs) {
         this.handleTrackLimitsViolation();
-        this.offRoadDurationMs = 0;
+        this.offRoadDurationMs = 0; // Reset after penalty
+      } else if (this.offRoadDurationMs > this.warningThresholdMs && this.trackLimitsCount === 0) {
+        this.trackLimitsCount = 1;
+        this.showStewardsNotification('STEWARDS: TRACK LIMITS WARNING (3s)');
       }
 
-      if (Math.abs(this.currentSpeed) > 125 * 2.4 && !this.advantageAlertActive) {
+      // Advantage alert at lower speed threshold (180 km/h instead of ~300 km/h)
+      if (Math.abs(this.currentSpeed) / 2.4 > 180 && !this.advantageAlertActive) {
         this.advantageAlertActive = true;
-        this.advantageTimerMs = 3000;
-        this.showStewardsNotification('STEWARDS: SLOW DOWN BELOW 100 KM/H TO YIELD ADVANTAGE!');
+        this.advantageTimerMs = 4000;
+        this.showStewardsNotification('STEWARDS: SLOW DOWN OR YIELD ADVANTAGE!');
       }
     } else {
-      this.offRoadDurationMs = Math.max(0, this.offRoadDurationMs - delta * 2);
+      // Grace period when returning to track - slowly decrease timers
+      this.offRoadGraceMs += delta;
+      if (this.offRoadGraceMs > 1000) {
+        this.offRoadDurationMs = Math.max(0, this.offRoadDurationMs - delta * 3);
+        this.offRoadGraceMs = 0;
+      }
     }
 
     if (this.advantageAlertActive) {
@@ -442,9 +457,12 @@ export class RaceScene extends Phaser.Scene {
       this.smokeEmitter.setPosition(rx, ry);
     }
 
+    // Apply car-specific off-road behavior based on handling characteristic
+    // offRoadFactor: higher = better grip on grass (handling cars), lower = struggles more (speed cars)
+    const offRoadFactor = (this.carData.offRoadFactor ?? 0.55);
     if (this.onGrass) {
-      targetMaxSpeed *= 0.55;
-      currentAccel *= 0.6;
+      targetMaxSpeed *= offRoadFactor;
+      currentAccel *= 0.6 + (offRoadFactor - 0.55) * 0.5; // More handling = slightly better acceleration on grass
     }
 
     if (gasOn) {
@@ -535,13 +553,16 @@ export class RaceScene extends Phaser.Scene {
   handleTrackLimitsViolation() {
     this.trackLimitsCount++;
     if (this.trackLimitsCount === 1) {
-      this.showStewardsNotification('STEWARDS: TRACK LIMITS WARNING 1/3');
+      this.showStewardsNotification('STEWARDS: TRACK LIMITS WARNING 1/2');
     } else if (this.trackLimitsCount === 2) {
-      this.showStewardsNotification('STEWARDS: BLACK & WHITE FLAG - FINAL WARNING');
+      this.showStewardsNotification('STEWARDS: FINAL WARNING - +5.0s PENALTY!');
+      this.penaltyMs += 5000;
     } else {
       this.penaltyMs += 5000;
       this.showStewardsNotification('STEWARDS: +5.0s TIME PENALTY (TRACK LIMITS)');
     }
+    // Reset off-road duration after violation to give driver a chance to recover
+    this.offRoadDurationMs = 0;
   }
 
   checkCheckpoints() {

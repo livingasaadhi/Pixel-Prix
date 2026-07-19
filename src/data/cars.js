@@ -15,7 +15,8 @@ export const CARS = [
     handling: 4.4,
     steeringSensitivity: 4.4,
     highSpeedSteeringMultiplier: 0.48,
-    boostPower: 1.45
+    boostPower: 1.45,
+    offRoadFactor: 0.55 // Balanced - moderate grip on grass
   },
   {
     id: 'blue-bull',
@@ -33,7 +34,8 @@ export const CARS = [
     handling: 3.8,
     steeringSensitivity: 3.8,
     highSpeedSteeringMultiplier: 0.42,
-    boostPower: 1.6
+    boostPower: 1.6,
+    offRoadFactor: 0.42 // Drag-focused - struggles more on grass
   },
   {
     id: 'silver-arrows',
@@ -51,7 +53,8 @@ export const CARS = [
     handling: 5.0,
     steeringSensitivity: 5.0,
     highSpeedSteeringMultiplier: 0.55,
-    boostPower: 1.35
+    boostPower: 1.35,
+    offRoadFactor: 0.75 // Handling-focused - better grip on grass
   },
   {
     id: 'papaya-express',
@@ -69,7 +72,8 @@ export const CARS = [
     handling: 4.6,
     steeringSensitivity: 4.6,
     highSpeedSteeringMultiplier: 0.50,
-    boostPower: 1.5
+    boostPower: 1.5,
+    offRoadFactor: 0.58 // Balanced - slight better recovery on grass
   },
   {
     id: 'green-emerald',
@@ -87,7 +91,8 @@ export const CARS = [
     handling: 3.4,
     steeringSensitivity: 3.4,
     highSpeedSteeringMultiplier: 0.38,
-    boostPower: 1.55
+    boostPower: 1.55,
+    offRoadFactor: 0.38 // Speed-focused - struggles most on grass
   },
   {
     id: 'alpen-glow',
@@ -105,7 +110,8 @@ export const CARS = [
     handling: 4.8,
     steeringSensitivity: 4.8,
     highSpeedSteeringMultiplier: 0.52,
-    boostPower: 1.4
+    boostPower: 1.4,
+    offRoadFactor: 0.72 // Handling-focused - excellent grip on grass
   }
 ];
 
