@@ -1372,6 +1372,23 @@ function initUI() {
 
   setupTouchControls();
   setupGameEventListeners();
+
+  // Desktop: ESC toggles the pause menu during a race
+  window.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const hud = document.getElementById('screen-hud');
+    const pause = document.getElementById('screen-pause');
+    if (!hud || !pause) return;
+    const onHud = !hud.classList.contains('hidden');
+    const onPause = !pause.classList.contains('hidden');
+    if (onHud && !onPause) {
+      e.preventDefault();
+      showScreen('screen-pause');
+    } else if (onPause && !onHud) {
+      e.preventDefault();
+      showScreen('screen-hud');
+    }
+  });
 }
 
 // ----------------------------------------------------------------------------

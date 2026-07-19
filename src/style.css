@@ -3312,18 +3312,17 @@ body {
   color: rgba(255, 77, 109, 0.4);
 }
 
-/* Mobile Boost Button Conditional Visibility */
+/* Mobile Boost (ERS) Button — always visible; .visible-boost marks the ready/active glow */
 #btn-touch-boost-left {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.8);
-  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#btn-touch-boost-left.visible-boost {
   opacity: 1;
   pointer-events: auto;
   transform: scale(1);
+  transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.06s ease, box-shadow 0.06s ease;
+}
+
+#btn-touch-boost-left.visible-boost {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 20px var(--accent-cyan-glow), inset 0 0 14px rgba(0, 210, 255, 0.18);
 }
 
 /* Position HUD Back/Pause buttons below the chip bar on narrow screens to prevent overlapping */
