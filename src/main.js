@@ -572,6 +572,8 @@ function setupTouchControls() {
     joystickBaseEl.addEventListener('mousedown', startDrag);
     window.addEventListener('mousemove', drag);
     window.addEventListener('mouseup', endDrag);
+    window.addEventListener('mouseleave', endDrag);
+    window.addEventListener('blur', endDrag);
   }
 
   // Combined Pedals Vertical Slider (Accelerator/Brake/Reverse)
@@ -712,6 +714,9 @@ function setupTouchControls() {
 
     pedalSliderEl.addEventListener('mousedown', startDrag);
     window.addEventListener('mousemove', drag);
+    window.addEventListener('mouseup', endDrag);
+    window.addEventListener('mouseleave', endDrag);
+    window.addEventListener('blur', endDrag);
   }
 }
 
