@@ -356,12 +356,15 @@ body {
   cursor: pointer;
   font-family: 'Material Symbols Outlined';
   font-size: 20px;
-  transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
 
 .icon-btn-circle:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(232, 0, 45, 0.18);
+  border-color: var(--accent-red);
+  color: #ffffff;
+  box-shadow: 0 0 12px var(--accent-red-glow);
+  transform: scale(1.06);
 }
 
 .icon-btn-circle:active {
@@ -409,16 +412,24 @@ body {
 
 .nav-tab:hover {
   color: var(--primary);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
 }
 
 .nav-tab:active {
-  transform: scale(0.88);
+  transform: scale(0.90);
 }
 
 .nav-tab.active {
   background: var(--accent-red);
   color: #fff;
   box-shadow: 0 0 20px var(--accent-red-glow), 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.nav-tab.active:hover {
+  background: #ff1843;
+  box-shadow: 0 0 28px rgba(232, 0, 45, 0.65), 0 4px 16px rgba(0, 0, 0, 0.6);
+  transform: translateY(-2px) scale(1.05);
 }
 
 /* ==========================================================================
@@ -694,25 +705,34 @@ body {
 }
 
 @keyframes logo-aberration {
-
   0%,
   85%,
   100% {
     text-shadow:
       -2px 0 0 rgba(232, 0, 45, 0.5),
       2px 0 0 rgba(0, 210, 255, 0.5);
+    transform: scale(1) skewX(0deg);
   }
 
   88% {
     text-shadow:
       -5px 0 0 rgba(232, 0, 45, 0.8),
       5px 0 0 rgba(0, 210, 255, 0.8);
+    transform: scale(1.03) skewX(-1.5deg);
   }
 
   90% {
     text-shadow:
       0px 0 0 rgba(232, 0, 45, 0),
       0px 0 0 rgba(0, 210, 255, 0);
+    transform: scale(0.98) skewX(1.5deg);
+  }
+
+  92% {
+    text-shadow:
+      -2px 0 0 rgba(232, 0, 45, 0.5),
+      2px 0 0 rgba(0, 210, 255, 0.5);
+    transform: scale(1) skewX(0deg);
   }
 }
 
@@ -899,7 +919,10 @@ body {
 
 .nav-arrow:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.28);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 12px var(--accent-cyan-glow);
+  transform: scale(1.06);
 }
 
 .nav-arrow:active {
@@ -1005,12 +1028,15 @@ body {
 }
 
 .track-carousel-nav:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--primary);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 12px var(--accent-cyan-glow);
+  transform: scale(1.06);
 }
 
 .track-carousel-nav:active {
-  transform: scale(0.92);
+  transform: scale(0.90);
 }
 
 .track-content {
@@ -1131,16 +1157,14 @@ body {
 .hud-action-btns {
   position: absolute;
   top: max(14px, env(safe-area-inset-top));
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 560px;
-  padding: 0 var(--margin);
+  left: 0;
+  right: 0;
+  padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
   display: flex;
   justify-content: space-between;
   gap: 8px;
   z-index: 10;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .hud-circle-btn {
@@ -1157,13 +1181,21 @@ body {
   cursor: pointer;
   font-family: 'Material Symbols Outlined';
   font-size: 20px;
-  transition: background 0.12s ease, transform 0.08s ease;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
   touch-action: manipulation;
 }
 
+.hud-circle-btn:hover {
+  background: rgba(232, 0, 45, 0.18);
+  border-color: var(--accent-red);
+  color: #ffffff;
+  box-shadow: 0 0 12px var(--accent-red-glow);
+  transform: scale(1.08);
+}
+
 .hud-circle-btn:active {
-  transform: scale(0.90);
-  background: rgba(255, 255, 255, 0.12);
+  transform: scale(0.92);
+  background: rgba(232, 0, 45, 0.3);
 }
 
 /* --- Connected chip bar ------------------------------------------------- */
@@ -1240,6 +1272,19 @@ body {
 }
 
 /* --- Warning / penalty bar ---------------------------------------------- */
+@keyframes penalty-pulse {
+  0% {
+    background: rgba(255, 77, 109, 0.08);
+    border-bottom-color: rgba(255, 77, 109, 0.45);
+    box-shadow: 0 2px 10px rgba(255, 77, 109, 0.05);
+  }
+  100% {
+    background: rgba(255, 77, 109, 0.22);
+    border-bottom-color: rgba(255, 77, 109, 0.85);
+    box-shadow: 0 2px 24px rgba(255, 77, 109, 0.25);
+  }
+}
+
 .hud-warning-bar {
   position: absolute;
   top: 48px;
@@ -1256,6 +1301,7 @@ body {
   backdrop-filter: blur(8px);
   pointer-events: none;
   z-index: 5;
+  animation: penalty-pulse 1s infinite alternate ease-in-out;
 }
 
 .hud-warning-left {
@@ -1685,6 +1731,8 @@ body {
   gap: 20px;
   box-shadow: var(--shadow-card);
   backdrop-filter: blur(16px);
+  transform: scale(0.94);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .wide-card {
@@ -2262,13 +2310,26 @@ body {
 }
 
 /* Loading / empty state */
+@keyframes telemetry-sync {
+  0% {
+    opacity: 0.42;
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+}
+
 .loading-cell {
   text-align: center;
-  color: var(--on-surface-variant);
+  color: var(--accent-cyan);
   padding: 2.5rem !important;
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px var(--accent-cyan-glow);
+  animation: telemetry-sync 0.8s infinite alternate ease-in-out;
 }
 
 /* ==========================================================================
@@ -2301,14 +2362,16 @@ body {
   padding: 16px;
 }
 
-.control-box h4 {
+.control-box h4,
+.rules-box h4 {
   font-family: var(--font-display);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--primary);
+  color: var(--accent-red);
   margin-bottom: 10px;
+  text-shadow: 0 0 8px var(--accent-red-glow);
 }
 
 .control-box ul {
@@ -2323,6 +2386,11 @@ body {
   font-family: var(--font-body);
 }
 
+.control-box strong {
+  color: var(--accent-cyan);
+  text-shadow: 0 0 6px var(--accent-cyan-glow);
+}
+
 .rules-box {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -2334,16 +2402,6 @@ body {
   -webkit-user-select: text;
   user-select: text;
   font-family: var(--font-body);
-}
-
-.rules-box h4 {
-  font-family: var(--font-display);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--primary);
-  margin-bottom: 8px;
 }
 
 /* ==========================================================================
@@ -2370,6 +2428,14 @@ body {
   flex-direction: column;
   gap: 24px;
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.7), var(--shadow-red);
+  transform: scale(0.94);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Activate springy zoom-in when screens become visible */
+.ui-screen:not(.hidden) .pause-card,
+.ui-screen:not(.hidden) .modal-card {
+  transform: scale(1);
 }
 
 .pause-header {
@@ -2903,7 +2969,8 @@ body {
   font-size: 0.52rem;
   font-weight: 700;
   letter-spacing: 0.16em;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--accent-cyan);
+  text-shadow: 0 0 8px var(--accent-cyan-glow);
 }
 
 .pulse-dot {
@@ -3083,13 +3150,14 @@ body {
 /* Selection card hover highlights */
 .car-select-card,
 .track-select-card {
-  transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease !important;
 }
 
 .car-select-card:hover,
 .track-select-card:hover {
-  border-color: rgba(0, 210, 255, 0.25) !important;
-  box-shadow: 0 8px 32px rgba(0, 210, 255, 0.05), inset 0 0 12px rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(0, 210, 255, 0.35) !important;
+  box-shadow: 0 12px 40px rgba(0, 210, 255, 0.08), inset 0 0 16px rgba(255, 255, 255, 0.03) !important;
+  transform: translateY(-4px);
 }
 
 /* Joystick Styles */
@@ -3260,4 +3328,11 @@ body {
   opacity: 1;
   pointer-events: auto;
   transform: scale(1);
+}
+
+/* Position HUD Back/Pause buttons below the chip bar on narrow screens to prevent overlapping */
+@media (max-width: 768px) {
+  .hud-action-btns {
+    top: max(58px, calc(env(safe-area-inset-top) + 48px));
+  }
 }

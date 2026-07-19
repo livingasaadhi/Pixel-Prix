@@ -30,6 +30,45 @@ function distToSegmentSq(px, py, ax, ay, bx, by) {
 }
 
 /**
+ * Finds the nearest track segment index to the point (px, py).
+ * Performs a stateful local search window (+/- 10 segments around prevIndex)
+ * to avoid scan loops over all track divisions on every frame.
+ */
+export function getNearestSegmentIndex(px, py, curvePoints, prevIndex = -1) {
+  const n = curvePoints.length;
+  if (n < 2) return { nearestIndex: 0, minDistanceSq: Infinity };
+
+  const searchIndices = [];
+  if (prevIndex === -1 || prevIndex >= n) {
+    // Full search on start or reset
+    for (let i = 0; i < n; i++) {
+      searchIndices.push(i);
+    }
+  } else {
+    // Local search window of +/- 10 segments around previous nearest index
+    const windowSize = 10;
+    for (let i = -windowSize; i <= windowSize; i++) {
+      searchIndices.push((prevIndex + i + n) % n);
+    }
+  }
+
+  let minDistanceSq = Infinity;
+  let nearestIndex = 0;
+
+  for (const idx of searchIndices) {
+    const a = curvePoints[idx];
+    const b = curvePoints[(idx + 1) % n];
+    const distSq = distToSegmentSq(px, py, a.x, a.y, b.x, b.y);
+    if (distSq < minDistanceSq) {
+      minDistanceSq = distSq;
+      nearestIndex = idx;
+    }
+  }
+
+  return { nearestIndex, minDistanceSq };
+}
+
+/**
  * Checks if a position (px, py) is significantly off the track road surface.
  * Measures distance to the track centerline (nearest segment), not just the
  * nearest sample vertex, so accuracy is consistent along the whole loop.
@@ -37,35 +76,9 @@ function distToSegmentSq(px, py, ax, ay, bx, by) {
  * does NOT count as off-road.
  */
 export function isOffRoad(px, py, curvePoints, roadWidth) {
-  let minDistanceSq = Infinity;
-
-  // Add 35px generous margin to road width - more forgiving track limits
+  const { minDistanceSq } = getNearestSegmentIndex(px, py, curvePoints, -1);
   const effectiveHalfWidth = (roadWidth / 2) + 35;
-  const halfWidthSq = effectiveHalfWidth * effectiveHalfWidth;
-
-  if (curvePoints.length < 2) return false;
-
-  // The centerline is a closed loop: test every consecutive segment.
-  for (let i = 0; i < curvePoints.length - 1; i++) {
-    const a = curvePoints[i];
-    const b = curvePoints[i + 1];
-    const distSq = distToSegmentSq(px, py, a.x, a.y, b.x, b.y);
-    if (distSq < minDistanceSq) {
-      minDistanceSq = distSq;
-    }
-  }
-
-  // Also test the wrap-around segment that closes the loop.
-  const first = curvePoints[0];
-  const last = curvePoints[curvePoints.length - 1];
-  if (first.x !== last.x || first.y !== last.y) {
-    const closeSq = distToSegmentSq(px, py, last.x, last.y, first.x, first.y);
-    if (closeSq < minDistanceSq) {
-      minDistanceSq = closeSq;
-    }
-  }
-
-  return minDistanceSq > halfWidthSq;
+  return minDistanceSq > (effectiveHalfWidth * effectiveHalfWidth);
 }
 
 /**

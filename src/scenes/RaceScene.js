@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { getCarById } from '../data/cars.js';
 import { getTrackById } from '../data/tracks.js';
 import { renderTrackGraphics } from '../utils/trackRenderer.js';
-import { isOffRoad, checkCheckpointProximity } from '../utils/trackPhysics.js';
+import { getNearestSegmentIndex, checkCheckpointProximity } from '../utils/trackPhysics.js';
 import { startEngineSound, updateEnginePitch, stopEngineSound, setEngineActive, playBoostSound, playCheckpointSound, playFinishSound } from '../utils/audio.js';
 
 export class RaceScene extends Phaser.Scene {
@@ -59,7 +59,7 @@ export class RaceScene extends Phaser.Scene {
     this.touchBrake = 0;            // analog touch brake input (0 to 1)
     this.joystickHeading = 0;       // absolute target heading from joystick (radians)
     this.joystickActive = false;    // whether joystick is currently engaged
-    this.turnRate = 3.2;            // max rotation per second toward target heading
+    this.turnRate = 4.8;            // max rotation per second toward target heading
 
     // Tunable physics parameters (scaled by 2.4x for high-speed AAA racing feel)
     const VEL_MULT = 2.4;
@@ -77,9 +77,12 @@ export class RaceScene extends Phaser.Scene {
     this.vy = 0;
 
     // Cleanup refs
-    this._notifTimeout = null;
     this._preventScrollHandler = null;
     this._kbHandler = null;
+    this._notifEvent = null;
+    this.nearestSegmentIndex = -1;
+    this.lastHUDUpdate = 0;
+    this.sparkDuration = 0;
   }
 
   create() {
@@ -283,7 +286,10 @@ export class RaceScene extends Phaser.Scene {
     if (!this.raceStarted || this.raceFinished) return;
 
     this.elapsedMs = this.time.now - this.startTime;
-    this.emitHUDUpdate();
+    if (this.time.now - this.lastHUDUpdate > 33) {
+      this.emitHUDUpdate();
+      this.lastHUDUpdate = this.time.now;
+    }
 
     this.prevSpeed = this.currentSpeed;
 
@@ -365,7 +371,10 @@ export class RaceScene extends Phaser.Scene {
       }
     }
 
-    this.onGrass = isOffRoad(this.player.x, this.player.y, this.curvePoints, this.roadWidth);
+    const grassCheck = getNearestSegmentIndex(this.player.x, this.player.y, this.curvePoints, this.nearestSegmentIndex);
+    this.nearestSegmentIndex = grassCheck.nearestIndex;
+    const effectiveHalfWidth = (this.roadWidth / 2) + 35;
+    this.onGrass = grassCheck.minDistanceSq > (effectiveHalfWidth * effectiveHalfWidth);
 
     if (this.onGrass && Math.abs(this.currentSpeed) > 60) {
       this.offRoadDurationMs += delta;
@@ -516,6 +525,14 @@ export class RaceScene extends Phaser.Scene {
     this.vx = Phaser.Math.Linear(this.vx, targetVx, grip);
     this.vy = Phaser.Math.Linear(this.vy, targetVy, grip);
 
+    // Spark emitter countdown timer to avoid setTimeout GC allocations
+    if (this.sparkDuration > 0) {
+      this.sparkDuration -= dt;
+      if (this.sparkDuration <= 0) {
+        this.sparkEmitter.emitting = false;
+      }
+    }
+
     // Smoke and sparks on lateral slide
     const lateralSlip = Math.abs(this.vx - targetVx) + Math.abs(this.vy - targetVy);
     const hardBraking = brakeOn && Math.abs(this.currentSpeed) > 100 * 2.4;
@@ -523,7 +540,7 @@ export class RaceScene extends Phaser.Scene {
       this.smokeEmitter.emitting = true;
       if (Math.random() < 0.15) {
         this.sparkEmitter.emitting = true;
-        setTimeout(() => { if (this.sparkEmitter) this.sparkEmitter.emitting = false; }, 80);
+        this.sparkDuration = 0.08;
       }
     } else if (!boostActive) {
       this.smokeEmitter.emitting = false;
@@ -532,7 +549,7 @@ export class RaceScene extends Phaser.Scene {
     if (hardBraking && Math.abs(this.currentSpeed) > 120 * 2.4) {
       if (Math.random() < 0.2) {
         this.sparkEmitter.emitting = true;
-        setTimeout(() => { if (this.sparkEmitter) this.sparkEmitter.emitting = false; }, 60);
+        this.sparkDuration = 0.06;
       }
     }
 
@@ -603,6 +620,7 @@ export class RaceScene extends Phaser.Scene {
     this.boostActive = false;
     if (this.smokeEmitter) this.smokeEmitter.emitting = false;
     if (this.boostEmitter) this.boostEmitter.emitting = false;
+    this.emitHUDUpdate();
     window.dispatchEvent(new CustomEvent('pixel-prix:boost-state', { detail: { active: false } }));
 
     const bestLapMs = this.lapTimes.length > 0 ? Math.min(...this.lapTimes) : this.elapsedMs;
@@ -625,8 +643,8 @@ export class RaceScene extends Phaser.Scene {
     if (!el) return;
     el.innerText = msg;
     el.classList.remove('hidden', 'stewards-warning');
-    clearTimeout(this._notifTimeout);
-    this._notifTimeout = setTimeout(() => el.classList.add('hidden'), 1500);
+    if (this._notifEvent) this._notifEvent.destroy();
+    this._notifEvent = this.time.delayedCall(1500, () => el.classList.add('hidden'), [], this);
   }
 
   showStewardsNotification(msg) {
@@ -635,8 +653,8 @@ export class RaceScene extends Phaser.Scene {
     el.innerText = msg;
     el.classList.remove('hidden');
     el.classList.add('stewards-warning');
-    clearTimeout(this._notifTimeout);
-    this._notifTimeout = setTimeout(() => el.classList.add('hidden'), 2200);
+    if (this._notifEvent) this._notifEvent.destroy();
+    this._notifEvent = this.time.delayedCall(2200, () => el.classList.add('hidden'), [], this);
   }
 
   emitHUDUpdate() {
@@ -674,7 +692,10 @@ export class RaceScene extends Phaser.Scene {
 
   cleanup() {
     stopEngineSound();
-    clearTimeout(this._notifTimeout);
+    if (this._notifEvent) {
+      this._notifEvent.destroy();
+      this._notifEvent = null;
+    }
     this.scale.off('resize', this.frameCamera, this);
     // Remove speed vignette on cleanup
     this.updateSpeedVignette(0);

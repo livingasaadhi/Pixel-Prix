@@ -116,6 +116,13 @@ function initGame() {
     width: window.innerWidth,
     height: window.innerHeight,
     backgroundColor: '#050505',
+    roundPixels: true,
+    fps: {
+      min: 10,
+      target: 120,
+      forceSetTimeOut: false,
+      smoothStep: true
+    },
     scale: {
       mode: Phaser.Scale.RESIZE,
       autoCenter: Phaser.Scale.CENTER_BOTH
@@ -124,7 +131,8 @@ function initGame() {
       default: 'arcade',
       arcade: {
         gravity: { y: 0 },
-        debug: false
+        debug: false,
+        fixedStep: false
       }
     },
     scene: [BootScene, RaceScene]
