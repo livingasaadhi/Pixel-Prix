@@ -327,27 +327,19 @@
             </div>
           </div>
 
-          <!-- LEFT: Combined Pedals & Boost for touch devices -->
+          <!-- LEFT: Reverse + Boost for touch devices (joystick handles steering + acceleration) -->
           <div class="hud-drive-group" id="hud-drive-left-group">
-            <div class="hud-combined-pedals-row">
-              <!-- Combined Vertical Slider -->
-              <div id="hud-pedal-slider" class="hud-pedal-slider" aria-label="Combined accelerator and brake slider">
-                <div class="slider-track-labels">
-                  <span class="label-gas">GAS</span>
-                  <span class="label-neutral">N</span>
-                  <span class="label-brake">BRAKE</span>
-                </div>
-                <div class="pedal-slider-track"></div>
-                <div id="pedal-slider-handle" class="pedal-slider-handle"></div>
-              </div>
+            <button id="btn-touch-reverse" class="hud-ctrl-btn hud-ctrl-tri-brake" aria-label="Reverse">
+              <span class="material-symbols-outlined hud-icon-error">eject</span>
+              <span class="hud-ctrl-label hud-ctrl-label-error">REVERSE</span>
+              <span class="hud-key-badge">S</span>
+            </button>
 
-              <!-- Boost Button (Conditional Visibility) -->
-              <button id="btn-touch-boost-left" class="hud-ctrl-btn hud-ctrl-tri-boost" aria-label="Boost">
-                <span class="material-symbols-outlined hud-icon-primary">bolt</span>
-                <span class="hud-ctrl-label">BOOST</span>
-                <span class="hud-key-badge">SPACE</span>
-              </button>
-            </div>
+            <button id="btn-touch-boost-left" class="hud-ctrl-btn hud-ctrl-tri-boost" aria-label="Boost">
+              <span class="material-symbols-outlined hud-icon-primary">bolt</span>
+              <span class="hud-ctrl-label">BOOST</span>
+              <span class="hud-key-badge">SPACE</span>
+            </button>
           </div>
 
           <!-- RIGHT: KERS meter + Triangular Controls (Boost top, Brake bottom-left, Gas bottom-right) -->

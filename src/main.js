@@ -444,7 +444,7 @@ function setupTouchControls() {
     btn.addEventListener('mouseleave', end);
   };
 
-  bindButton('btn-touch-accel', s => s.setAccelerate(true), s => s.setAccelerate(false));
+  bindButton('btn-touch-reverse', s => s.setBrake(true), s => s.setBrake(false));
   bindButton('btn-touch-left', s => s.setSteerLeft(true), s => s.setSteerLeft(false));
   bindButton('btn-touch-right', s => s.setSteerRight(true), s => s.setSteerRight(false));
   bindButton('btn-touch-brake', s => s.setBrake(true), s => s.setBrake(false));
@@ -488,13 +488,22 @@ function setupTouchControls() {
 
       joystickHandleEl.style.transform = `translate(${dx}px, ${dy}px)`;
 
-      // Compute absolute heading angle from joystick direction (screen-space)
+      // Compute absolute heading angle from joystick direction (screen-space).
+      // The joystick also drives acceleration: push amount (magnitude) maps to
+      // progressive throttle so the car accelerates harder the further it is pushed,
+      // toward the direction it is pointing.
       const sc = raceScene();
-      if (distance > deadzone * limit) {
-        const angle = Math.atan2(dy, dx);
-        if (sc) sc.setJoystickHeading(angle, true);
-      } else {
-        if (sc) sc.setJoystickHeading(0, false);
+      const mag = Math.min(1, distance / limit);
+      if (sc) {
+        if (mag > deadzone) {
+          const angle = Math.atan2(dy, dx);
+          sc.setJoystickHeading(angle, true);
+          // Progressive (eased) curve: small pushes = gentle, full push = full gas.
+          sc.setTouchGas(Math.pow(mag, 1.6));
+        } else {
+          sc.setJoystickHeading(0, false);
+          sc.setTouchGas(0);
+        }
       }
     };
 
@@ -544,6 +553,7 @@ function setupTouchControls() {
       if (scImmediate) {
         scImmediate.setJoystickHeading(0, false);
         scImmediate.setSteeringValue(0);
+        scImmediate.setTouchGas(0);
       }
 
       // Smoothly ease joystick handle back to center (VISUAL ONLY — no game input)
@@ -594,148 +604,6 @@ function setupTouchControls() {
     window.addEventListener('blur', endDrag);
   }
 
-  // Combined Pedals Vertical Slider (Accelerator/Brake/Reverse)
-  const pedalSliderEl = document.getElementById('hud-pedal-slider');
-  const pedalHandleEl = document.getElementById('pedal-slider-handle');
-
-  if (pedalSliderEl && pedalHandleEl) {
-    let isDraggingPedal = false;
-    let recenterInterval = null;
-    let pedalTouchId = null; // multi-touch: track specific touch identifier
-    const maxLimit = 55; // Max vertical travel from center in pixels
-    const deadzone = 0.08; // 8% center deadzone
-    const PROGRESSIVE_EXP = 1.8; // exponent for progressive pedal curve (>1 = progressive near center, aggressive at edge)
-
-    const getPedalTouch = (e) => {
-      if (!e.touches) return null;
-      if (pedalTouchId !== null) {
-        return Array.from(e.touches).find(t => t.identifier === pedalTouchId) || null;
-      }
-      return null;
-    };
-
-    const computePedalValue = (raw) => {
-      // Progressive curve: small movements near center give less power,
-      // movements toward the edge give exponentially more
-      return Math.sign(raw) * Math.pow(Math.abs(raw), PROGRESSIVE_EXP);
-    };
-
-    const updateSlider = (clientY) => {
-      const rect = pedalSliderEl.getBoundingClientRect();
-      const centerY = rect.top + rect.height / 2;
-
-      let offsetY = clientY - centerY;
-      offsetY = Math.max(-maxLimit, Math.min(maxLimit, offsetY));
-
-      pedalHandleEl.style.transform = `translateY(${offsetY}px)`;
-
-      // Map to normalized input: -1.0 (Brake/Reverse bottom) to 1.0 (Gas top)
-      const val = -offsetY / maxLimit;
-
-      let gas = 0;
-      let brake = 0;
-
-      if (val > deadzone) {
-        let normalized = (val - deadzone) / (1.0 - deadzone);
-        gas = computePedalValue(normalized);
-      } else if (val < -deadzone) {
-        let normalized = (-val - deadzone) / (1.0 - deadzone);
-        brake = computePedalValue(normalized);
-      }
-
-      const sc = raceScene();
-      if (sc) {
-        sc.setTouchGas(gas);
-        sc.setTouchBrake(brake);
-      }
-    };
-
-    const startDrag = (e) => {
-      // Guard: ignore synthesized mouse events that follow touch events
-      if (e.type === 'mousedown' && pedalTouchId !== null) return;
-      e.preventDefault();
-      isDraggingPedal = true;
-      if (recenterInterval) {
-        cancelAnimationFrame(recenterInterval);
-        recenterInterval = null;
-      }
-      // Store the touch identifier for multi-touch tracking using changedTouches
-      if (e.touches && e.changedTouches && e.changedTouches[0]) {
-        pedalTouchId = e.changedTouches[0].identifier;
-      }
-      const touch = e.changedTouches ? e.changedTouches[0] : e;
-      updateSlider(touch.clientY);
-    };
-
-    const drag = (e) => {
-      if (!isDraggingPedal) return;
-      if (e.cancelable) e.preventDefault();
-      let touch;
-      if (e.touches && (touch = getPedalTouch(e))) {
-        updateSlider(touch.clientY);
-      } else if (!e.touches) {
-        // Mouse fallback (only for real mouse, not synthesized)
-        updateSlider(e.clientY);
-      }
-    };
-
-    const endDrag = (e) => {
-      // Check if the released touch matches our tracked pedal touch
-      if (pedalTouchId !== null && e.changedTouches) {
-        const released = Array.from(e.changedTouches).find(t => t.identifier === pedalTouchId);
-        if (!released) return; // not our touch
-      }
-      if (!isDraggingPedal) return;
-      isDraggingPedal = false;
-      pedalTouchId = null;
-
-      // Immediately reset ALL pedal state in the game scene
-      const scImmediate = raceScene();
-      if (scImmediate) {
-        scImmediate.setTouchGas(0);
-        scImmediate.setTouchBrake(0);
-      }
-
-      // Smoothly ease pedal handle back to center (VISUAL ONLY — no game input)
-      const style = window.getComputedStyle(pedalHandleEl);
-      const matrix = new DOMMatrix(style.transform);
-      let curOffsetY = matrix.m42;
-
-      const step = () => {
-        if (isDraggingPedal) {
-          recenterInterval = null;
-          return;
-        }
-
-        curOffsetY *= 0.8; // Smooth auto-recenter decay
-
-        if (Math.abs(curOffsetY) < 0.1) {
-          curOffsetY = 0;
-        }
-
-        pedalHandleEl.style.transform = `translateY(${curOffsetY}px)`;
-
-        if (curOffsetY !== 0) {
-          recenterInterval = requestAnimationFrame(step);
-        } else {
-          recenterInterval = null;
-        }
-      };
-
-      recenterInterval = requestAnimationFrame(step);
-    };
-
-    pedalSliderEl.addEventListener('touchstart', startDrag, { passive: false });
-    window.addEventListener('touchmove', drag, { passive: false });
-    window.addEventListener('touchend', endDrag);
-    window.addEventListener('touchcancel', endDrag);
-
-    pedalSliderEl.addEventListener('mousedown', startDrag);
-    window.addEventListener('mousemove', drag);
-    window.addEventListener('mouseup', endDrag);
-    window.addEventListener('mouseleave', endDrag);
-    window.addEventListener('blur', endDrag);
-  }
 }
 
 // ----------------------------------------------------------------------------

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { getCarById } from '../data/cars.js';
 import { getTrackById } from '../data/tracks.js';
 import { renderTrackGraphics } from '../utils/trackRenderer.js';
-import { getNearestSegmentIndex, checkCheckpointProximity } from '../utils/trackPhysics.js';
+import { getNearestSegmentIndex, checkCheckpointProximity, isOffRoad } from '../utils/trackPhysics.js';
 import { startEngineSound, updateEnginePitch, stopEngineSound, setEngineActive, playBoostSound, playCheckpointSound, playFinishSound } from '../utils/audio.js';
 
 export class RaceScene extends Phaser.Scene {
@@ -400,8 +400,8 @@ export class RaceScene extends Phaser.Scene {
 
     const grassCheck = getNearestSegmentIndex(this.player.x, this.player.y, this.curvePoints, this.nearestSegmentIndex);
     this.nearestSegmentIndex = grassCheck.nearestIndex;
-    const effectiveHalfWidth = (this.roadWidth / 2) + 65;
-    this.onGrass = grassCheck.minDistanceSq > (effectiveHalfWidth * effectiveHalfWidth);
+    // Use the updated track tolerance (+35) as the single source of truth for off-road.
+    this.onGrass = isOffRoad(this.player.x, this.player.y, this.curvePoints, this.roadWidth);
 
     if (this.onGrass && Math.abs(this.currentSpeed) > 140) {
       this.offRoadDurationMs += delta;
