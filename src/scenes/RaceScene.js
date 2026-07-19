@@ -291,21 +291,12 @@ export class RaceScene extends Phaser.Scene {
         if (count > 0) {
           if (textEl) textEl.innerText = count;
         } else if (count === 0) {
-          if (textEl) {
-            textEl.innerText = 'LIGHTS OUT!';
-            textEl.classList.add('green-glow');
-          }
+          if (el) el.classList.add('hidden');
           this.raceStarted = true;
           this.startTime = this.time.now;
           this.lapStartTime = this.time.now;
           this.sectorStartTime = this.time.now;
           startEngineSound();
-
-          // Auto-hide the countdown overlay 1 second after LIGHTS OUT!
-          this.time.delayedCall(1000, () => {
-            if (el) el.classList.add('hidden');
-            if (textEl) textEl.classList.remove('green-glow');
-          });
         }
       }
     });

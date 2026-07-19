@@ -249,12 +249,6 @@
       </div>
 
       <div id="screen-hud" class="ui-screen hidden pointer-through">
-        <!-- Sector completion comparison banner -->
-        <div id="hud-sector-banner" class="hud-sector-banner" aria-live="polite">
-          <span class="sector-name">SECTOR 1</span>
-          <span class="sector-time">00.000s</span>
-          <span class="sector-diff">--</span>
-        </div>
 
         <!-- Top HUD: Back + Pause buttons (pointer-events re-enabled) -->
         <div class="hud-action-btns">
@@ -297,6 +291,13 @@
             TRACK LIMITS
           </span>
           <span class="hud-warning-right" id="hud-penalty-text">+0.0s</span>
+        </div>
+
+        <!-- Sector completion comparison banner -->
+        <div id="hud-sector-banner" class="hud-sector-banner" aria-live="polite">
+          <span class="sector-name">SECTOR 1</span>
+          <span class="sector-time">00.000s</span>
+          <span class="sector-diff">--</span>
         </div>
 
         <!-- Cinematic center countdown overlay -->
