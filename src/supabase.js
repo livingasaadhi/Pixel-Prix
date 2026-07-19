@@ -99,40 +99,47 @@ export async function submitScore({ playerName, carId, trackId, timeMs, metadata
     return { success: true, backend: 'LocalStorage', data: [record] };
   }
 
-  let { data, error } = await supabase
-    .from('scores')
-    .insert(scoreData)
-    .select()
-    .single();
+  // Define the core insertion attempt
+  const insertAttempt = async (payload) => {
+    const { data, error } = await supabase
+      .from('scores')
+      .insert(payload)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  };
 
-  if (error) {
-    // Check if the error is due to a missing 'metadata' column on the remote table
-    if (metadata && (error.code === '42703' || error.message.includes('column "metadata"'))) {
-      console.warn('⚠️ Supabase metadata column missing. Retrying score submission without metadata...');
-      const fallbackData = { ...scoreData };
-      delete fallbackData.metadata;
-
-      const retryResult = await supabase
-        .from('scores')
-        .insert(fallbackData)
-        .select()
-        .single();
-
-      if (retryResult.error) {
-        console.warn('Supabase score submission failed on retry:', retryResult.error.message);
-        return { success: false, error: retryResult.error.message };
+  // Helper for exponential backoff retrying
+  const executeWithRetry = async (payload, retries = 3, delay = 500) => {
+    try {
+      return await insertAttempt(payload);
+    } catch (error) {
+      // If error is undefined column (e.g. metadata column missing), do not retry with backoff on same payload
+      if (payload.metadata && (error.code === '42703' || error.message.includes('column "metadata"'))) {
+        console.warn('⚠️ Supabase metadata column missing. Retrying fallback payload without metadata...');
+        const fallbackPayload = { ...payload };
+        delete fallbackPayload.metadata;
+        return executeWithRetry(fallbackPayload, retries, delay);
       }
 
-      data = retryResult.data;
-      error = null;
-    } else {
-      console.warn('Supabase score submission failed:', error.message);
-      return { success: false, error: error.message };
+      if (retries <= 1) {
+        throw error;
+      }
+      console.warn(`⚠️ Supabase score upload failed: "${error.message}". Retrying in ${delay}ms... (${retries - 1} attempts left)`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return executeWithRetry(payload, retries - 1, delay * 2);
     }
-  }
+  };
 
-  connectionVerified = true;
-  return { success: true, backend: 'Supabase', data: [data] };
+  try {
+    const data = await executeWithRetry(scoreData, 3, 500);
+    connectionVerified = true;
+    return { success: true, backend: 'Supabase', data: [data] };
+  } catch (error) {
+    console.error('❌ All Supabase score submission attempts failed:', error.message);
+    return { success: false, error: error.message };
+  }
 }
 
 /**

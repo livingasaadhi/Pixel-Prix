@@ -766,12 +766,10 @@ function setupGameEventListeners() {
     const penaltyVal = (penaltyMs / 1000).toFixed(1);
     document.getElementById('hud-penalty-text').innerText = penaltyMs > 0 ? `+${penaltyVal}s PENALTY` : 'STEWARD INVESTIGATION';
 
-    // Update both boost meter fills (desktop and mobile)
+    // Update unified boost meter fill
     const fillPercent = `${Math.max(0, Math.min(100, boostEnergy))}%`;
     const fillRight = document.getElementById('hud-boost-fill');
     if (fillRight) fillRight.style.width = fillPercent;
-    const fillLeft = document.getElementById('hud-boost-fill-left');
-    if (fillLeft) fillLeft.style.width = fillPercent;
 
     // Boost button conditional visibility (mobile only)
     const boostBtnLeft = document.getElementById('btn-touch-boost-left');
@@ -784,6 +782,31 @@ function setupGameEventListeners() {
         boostBtnLeft.classList.remove('visible-boost');
       }
     }
+  });
+
+  window.addEventListener('pixel-prix:notify', (e) => {
+    const { text, type } = e.detail;
+    const container = document.getElementById('hud-notif-container');
+    if (!container) return;
+
+    const pill = document.createElement('div');
+    pill.className = `hud-notif-pill ${type || 'normal'}`;
+    pill.innerText = text;
+
+    container.appendChild(pill);
+
+    // Trigger slide-in animation
+    requestAnimationFrame(() => {
+      pill.classList.add('slide-in');
+    });
+
+    // Fade out and auto-remove after 2.5 seconds
+    setTimeout(() => {
+      pill.classList.add('fade-out');
+      setTimeout(() => {
+        pill.remove();
+      }, 300);
+    }, 2500);
   });
 
   window.addEventListener('pixel-prix:sector-complete', (e) => {
@@ -1042,6 +1065,11 @@ function closeScoreDialog() {
 
 function submitScoreFromDialog() {
   if (!scoreDialogOpen) return;
+
+  const form = document.getElementById('score-form');
+  if (form && (form.classList.contains('is-loading') || form.classList.contains('is-success'))) {
+    return;
+  }
 
   const nameInput = document.getElementById('player-name-input');
   const statusMsg = document.getElementById('submit-status');

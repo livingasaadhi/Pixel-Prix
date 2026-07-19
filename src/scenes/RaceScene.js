@@ -275,10 +275,12 @@ export class RaceScene extends Phaser.Scene {
 
   startCountdown() {
     let count = 3;
-    const el = document.getElementById('hud-notification');
-    if (el) {
-      el.classList.remove('hidden', 'stewards-warning');
-      el.innerText = 'GET READY: 3';
+    const el = document.getElementById('hud-countdown');
+    const textEl = document.getElementById('hud-countdown-text');
+    if (el && textEl) {
+      el.classList.remove('hidden');
+      textEl.classList.remove('green-glow');
+      textEl.innerText = '3';
     }
 
     this.time.addEvent({
@@ -286,18 +288,21 @@ export class RaceScene extends Phaser.Scene {
       repeat: 3,
       callback: () => {
         count--;
-        if (!el) return;
         if (count > 0) {
-          el.innerText = 'GET READY: ' + count;
+          if (textEl) textEl.innerText = count;
         } else if (count === 0) {
-          el.innerText = 'LIGHTS OUT AND AWAY WE GO!';
+          if (textEl) {
+            textEl.innerText = 'LIGHTS OUT!';
+            textEl.classList.add('green-glow');
+          }
           this.raceStarted = true;
           this.startTime = this.time.now;
           this.lapStartTime = this.time.now;
           this.sectorStartTime = this.time.now;
           startEngineSound();
         } else {
-          el.classList.add('hidden');
+          if (el) el.classList.add('hidden');
+          if (textEl) textEl.classList.remove('green-glow');
         }
       }
     });
@@ -730,23 +735,14 @@ export class RaceScene extends Phaser.Scene {
     }));
   }
 
-  showNotification(msg) {
-    const el = document.getElementById('hud-notification');
-    if (!el) return;
-    el.innerText = msg;
-    el.classList.remove('hidden', 'stewards-warning');
-    if (this._notifEvent) this._notifEvent.destroy();
-    this._notifEvent = this.time.delayedCall(1500, () => el.classList.add('hidden'), [], this);
+  showNotification(msg, type = 'normal') {
+    window.dispatchEvent(new CustomEvent('pixel-prix:notify', {
+      detail: { text: msg, type }
+    }));
   }
 
   showStewardsNotification(msg) {
-    const el = document.getElementById('hud-notification');
-    if (!el) return;
-    el.innerText = msg;
-    el.classList.remove('hidden');
-    el.classList.add('stewards-warning');
-    if (this._notifEvent) this._notifEvent.destroy();
-    this._notifEvent = this.time.delayedCall(2200, () => el.classList.add('hidden'), [], this);
+    this.showNotification(msg, 'stewards');
   }
 
   emitHUDUpdate() {
