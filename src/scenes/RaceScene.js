@@ -320,7 +320,6 @@ export class RaceScene extends Phaser.Scene {
 
     if (boostJustPressed && !this.boostActive && this.boostEnergy >= 30) {
       this.boostActive = true;
-      this.cameras.main.flash(200, 0, 210, 255, false); // Cyan flash
       this.cameras.main.shake(200, 0.006); // Camera shake
       playBoostSound();
       window.dispatchEvent(new CustomEvent('pixel-prix:boost-state', { detail: { active: true } }));
@@ -442,7 +441,6 @@ export class RaceScene extends Phaser.Scene {
         this.boostActive = false;
         this.smokeEmitter.emitting = false;
         this.boostEmitter.emitting = false;
-        this.cameras.main.flash(150, 255, 77, 109, false); // Red warning flash
         window.dispatchEvent(new CustomEvent('pixel-prix:boost-state', { detail: { active: false } }));
       }
     } else {
