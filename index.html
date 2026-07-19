@@ -11,8 +11,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <!-- Fonts: Inter (UI) + JetBrains Mono (telemetry data) -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <!-- Fonts: Orbitron (display) + Rajdhani (body) + Inter (UI) + JetBrains Mono (telemetry) -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 
   <!-- Material Symbols (icon font) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
@@ -20,6 +20,9 @@
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
+  <!-- Scanline CRT overlay -->
+  <div id="scanline-overlay" aria-hidden="true"></div>
+
   <div id="app">
 
     <!-- ================================================================ -->
@@ -63,6 +66,8 @@
       <!-- MAIN MENU SCREEN                                               -->
       <!-- ============================================================== -->
       <div id="screen-menu" class="ui-screen active">
+        <!-- Ambient particle canvas -->
+        <canvas id="ambient-canvas" aria-hidden="true"></canvas>
 
         <div class="brand-header">
           <div class="logo-badge">Formula 2D</div>
@@ -120,7 +125,7 @@
 
                 <div class="carousel-content">
                   <div class="car-preview-area">
-                    <canvas id="car-preview-canvas" width="96" height="56"></canvas>
+                    <canvas id="car-preview-canvas" width="192" height="112"></canvas>
                   </div>
                   <h3 id="car-name">Apex Phantom</h3>
                   <p id="car-desc">Balanced speed and precision handling.</p>
@@ -216,6 +221,15 @@
       <!-- ============================================================== -->
       <!-- RACE HUD (TOP + BOTTOM OVERLAYS — transparent over Phaser)    -->
       <!-- ============================================================== -->
+      <!-- F1 Countdown Lights -->
+      <div id="countdown-overlay" aria-hidden="true">
+        <div class="countdown-light" id="cl-1"></div>
+        <div class="countdown-light" id="cl-2"></div>
+        <div class="countdown-light" id="cl-3"></div>
+        <div class="countdown-light" id="cl-4"></div>
+        <div class="countdown-light" id="cl-5"></div>
+      </div>
+
       <div id="screen-hud" class="ui-screen hidden pointer-through">
 
         <!-- Top HUD: Back + Pause buttons (pointer-events re-enabled) -->
@@ -274,6 +288,16 @@
               <span class="material-symbols-outlined">arrow_forward</span>
               <span class="hud-key-badge">D</span>
             </button>
+          </div>
+
+          <!-- RIGHT: Steering wheel control (mobile/touch only) -->
+          <div class="hud-steering-wheel-container" id="hud-steering-wheel-container">
+            <div id="hud-steering-wheel" class="hud-steering-wheel" aria-label="Steering wheel">
+              <div class="wheel-rim"></div>
+              <div class="wheel-spoke wheel-spoke-h"></div>
+              <div class="wheel-spoke wheel-spoke-v"></div>
+              <div class="wheel-hub"></div>
+            </div>
           </div>
 
           <!-- RIGHT: KERS meter + Triangular Controls (Boost top, Brake bottom-left, Gas bottom-right) -->

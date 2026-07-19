@@ -13,6 +13,8 @@ let lastRaceResult = null;
 let phaserGame = null;
 let leaderboardUnsubscribe = null;
 let leaderboardTrackId = null;
+let ambientAnimId = null;      // requestAnimationFrame for menu particles
+let countdownLightsTimer = null; // F1 countdown lights timeout chain
 
 // Helper to convert milliseconds to MM:SS.mmm format
 function formatTime(ms) {
@@ -51,7 +53,12 @@ function showScreen(screenId) {
 
   // Nav chrome hidden during active race (HUD or Pause)
   const isRaceActive = screenId === 'screen-hud' || screenId === 'screen-pause';
-  if (!isRaceActive) setRaceMode(false);
+  if (!isRaceActive) {
+    setRaceMode(false);
+    // Clear KERS boost styles
+    document.getElementById('btn-touch-boost')?.classList.remove('engaged');
+    document.getElementById('hud-boost-fill')?.classList.remove('active-boost');
+  }
 }
 
 function updateNavTabStates(screenId) {
@@ -131,12 +138,24 @@ function initGame() {
 // ----------------------------------------------------------------------------
 // CAR & TRACK SELECTION CAROUSELS
 // ----------------------------------------------------------------------------
+
+/**
+ * Draws the AAA-quality car preview for the selection screen.
+ * Uses the same 2x-resolution offscreen canvas approach as BootScene,
+ * with a per-car body color glow and matching livery.
+ */
 function drawCarPreview(canvas, color, accentColor) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
+
+  // Work at 2x scale (canvas is 192×112, logical 96×56)
+  ctx.save();
+  ctx.scale(2, 2);
+  ctx.translate(24, 14); // Center the 48x28 car perfectly in the 96x56 space
+  // Logical dimensions: 96×56
 
   const roundRect = (c, x, y, width, height, radius) => {
     c.beginPath();
@@ -153,95 +172,125 @@ function drawCarPreview(canvas, color, accentColor) {
     c.fill();
   };
 
-  ctx.save();
-  ctx.scale(2, 2);
+  // 1. Rear tires
+  ctx.fillStyle = '#0d0c10';
+  roundRect(ctx, 32, 0, 10, 6, 1.5);
+  roundRect(ctx, 32, 22, 10, 6, 1.5);
+  ctx.fillStyle = '#c8c4d4';
+  roundRect(ctx, 35, 1, 5, 4, 0.5);
+  roundRect(ctx, 35, 23, 5, 4, 0.5);
+  ctx.fillStyle = '#ff6b00';
+  ctx.fillRect(33, 2, 1.5, 2);
+  ctx.fillRect(33, 24, 1.5, 2);
 
-  // 1. Rear suspension arms
-  ctx.strokeStyle = '#525252';
+  // 2. Rear suspension arms
+  ctx.strokeStyle = '#5a5875';
   ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(36, 4); ctx.lineTo(34, 9);
   ctx.moveTo(36, 24); ctx.lineTo(34, 19);
   ctx.stroke();
 
-  // 2. Rear tires
-  ctx.fillStyle = '#0a0a0a';
-  roundRect(ctx, 32, 0, 10, 6, 1);
-  roundRect(ctx, 32, 22, 10, 6, 1);
-  ctx.fillStyle = '#d4d4d4';
-  ctx.fillRect(36, 2, 2, 2);
-  ctx.fillRect(36, 24, 2, 2);
-
   // 3. Front tires
-  ctx.fillStyle = '#0a0a0a';
-  roundRect(ctx, 8, 1, 9, 5, 1);
-  roundRect(ctx, 8, 22, 9, 5, 1);
-  ctx.fillStyle = '#d4d4d4';
-  ctx.fillRect(12, 3, 2, 2);
-  ctx.fillRect(12, 24, 2, 2);
+  ctx.fillStyle = '#0d0c10';
+  roundRect(ctx, 8, 2, 9, 5, 1.5);
+  roundRect(ctx, 8, 21, 9, 5, 1.5);
+  ctx.fillStyle = '#c8c4d4';
+  ctx.fillRect(11, 3, 4, 3);
+  ctx.fillRect(11, 22, 4, 3);
+  ctx.fillStyle = '#ff6b00';
+  ctx.fillRect(8, 3, 1.5, 3);
+  ctx.fillRect(8, 22, 1.5, 3);
 
   // 4. Front suspension arms
-  ctx.strokeStyle = '#525252';
+  ctx.strokeStyle = '#5a5875';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(12, 3); ctx.lineTo(18, 9);
-  ctx.moveTo(12, 25); ctx.lineTo(18, 19);
+  ctx.moveTo(12, 4); ctx.lineTo(18, 9);
+  ctx.moveTo(12, 24); ctx.lineTo(18, 19);
   ctx.stroke();
 
   // 5. Front wing
-  ctx.fillStyle = '#d4d4d4';
-  ctx.fillRect(4, 2, 2, 24);
-  ctx.fillStyle = '#171717';
-  ctx.fillRect(1, 1, 5, 2);
-  ctx.fillRect(1, 25, 5, 2);
+  ctx.fillStyle = '#e8e8f0';
+  ctx.fillRect(3, 1, 3, 26);
+  ctx.fillStyle = color;
+  ctx.fillRect(4, 3, 2, 22);
+  ctx.fillStyle = '#1e1c28';
+  ctx.fillRect(1, 1, 4, 2);
+  ctx.fillRect(1, 25, 4, 2);
+  ctx.fillStyle = accentColor;
+  ctx.fillRect(2, 2, 1, 2);
+  ctx.fillRect(2, 24, 1, 2);
 
   // 6. Nose cone
   ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.moveTo(6, 14);
-  ctx.lineTo(20, 9);
-  ctx.lineTo(20, 19);
+  ctx.moveTo(5, 14);
+  ctx.lineTo(20, 8);
+  ctx.lineTo(20, 20);
   ctx.closePath();
   ctx.fill();
 
-  // 7. Chassis & sidepods
+  // 7. Chassis
   ctx.fillStyle = color;
   roundRect(ctx, 18, 8, 20, 12, 3);
-  ctx.fillStyle = '#171717';
-  ctx.fillRect(20, 8, 5, 2);
-  ctx.fillRect(20, 18, 5, 2);
+  // Sidepod vents
+  ctx.fillStyle = '#0d0c10';
+  roundRect(ctx, 20, 8, 6, 3, 1);
+  roundRect(ctx, 20, 17, 6, 3, 1);
+  // Gloss highlight
+  const gloss = ctx.createLinearGradient(18, 8, 18, 20);
+  gloss.addColorStop(0, 'rgba(255,255,255,0.18)');
+  gloss.addColorStop(0.4, 'rgba(255,255,255,0.04)');
+  gloss.addColorStop(1, 'rgba(0,0,0,0.1)');
+  ctx.fillStyle = gloss;
+  roundRect(ctx, 18, 8, 20, 12, 3);
 
   // 8. Cockpit & helmet
-  ctx.fillStyle = '#0a0a0a';
+  ctx.fillStyle = '#0a0810';
   ctx.beginPath();
   ctx.arc(26, 14, 4.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = accentColor;
   ctx.beginPath();
-  ctx.arc(25, 14, 3, 0, Math.PI * 2);
+  ctx.arc(25, 14, 3.2, 0, Math.PI * 2);
+  ctx.fill();
+  // Visor shine
+  const visorGloss = ctx.createLinearGradient(22, 11, 26, 14);
+  visorGloss.addColorStop(0, 'rgba(255,255,255,0.35)');
+  visorGloss.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = visorGloss;
+  ctx.beginPath();
+  ctx.arc(24, 12, 2.5, 0, Math.PI * 2);
   ctx.fill();
 
   // Halo
-  ctx.strokeStyle = '#737373';
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#8a8898';
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(26, 14, 4, 0, Math.PI * 2);
+  ctx.arc(26, 14, 4.8, Math.PI * 0.8, Math.PI * 2.2);
   ctx.stroke();
 
   // 9. Spine
   ctx.fillStyle = accentColor;
-  ctx.fillRect(29, 13, 8, 2);
+  ctx.fillRect(29, 12.5, 8, 3);
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.fillRect(29, 12.5, 8, 1);
 
   // 10. Rear wing
-  ctx.fillStyle = '#0a0a0a';
-  ctx.fillRect(38, 5, 4, 18);
+  ctx.fillStyle = '#0d0c10';
+  ctx.fillRect(38, 4, 5, 20);
   ctx.fillStyle = color;
-  ctx.fillRect(36, 4, 7, 2);
-  ctx.fillRect(36, 22, 7, 2);
+  ctx.fillRect(36, 3, 8, 3);
+  ctx.fillRect(36, 22, 8, 3);
+  ctx.fillStyle = accentColor;
+  ctx.fillRect(40, 4, 2, 2);
+  ctx.fillRect(40, 22, 2, 2);
 
-  // Safety light
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(42, 13, 2, 2);
+  // 11. Safety light
+  ctx.fillStyle = '#ff0000';
+  ctx.fillRect(42, 12, 2, 2);
 
   ctx.restore();
 }
@@ -276,8 +325,16 @@ function updateTrackSelection() {
   const track = TRACKS[selectedTrackIndex];
   document.getElementById('track-name').innerText = track.name;
   document.getElementById('track-desc').innerText = track.description;
-  document.getElementById('track-difficulty').innerText = track.difficulty;
+
+  // Set difficulty with color coding
+  const diffEl = document.getElementById('track-difficulty');
+  diffEl.innerText = track.difficulty;
+  diffEl.dataset.level = track.difficulty;
+
   document.getElementById('track-laps').innerText = `${track.laps} LAPS`;
+  
+  const lengthEl = document.getElementById('track-length');
+  if (lengthEl) lengthEl.innerText = track.length || "1.2 KM";
 
   const canvas = document.getElementById('track-minimap');
   drawTrackMinimap(canvas, track);
@@ -286,6 +343,8 @@ function updateTrackSelection() {
 function launchSelectedRace() {
   setRaceMode(true);
   showScreen('screen-hud');
+  // Trigger F1 lights-out animation
+  playCountdownLights();
 
   if (phaserGame) {
     phaserGame.scale.refresh();
@@ -342,6 +401,113 @@ function setupTouchControls() {
   bindButton('btn-touch-right', s => s.setSteerRight(true), s => s.setSteerRight(false));
   bindButton('btn-touch-brake', s => s.setBrake(true), s => s.setBrake(false));
   bindButton('btn-touch-boost', s => s.setBoost(true), s => s.setBoost(false));
+
+  // Steering wheel control for mobile / touch devices
+  const wheelEl = document.getElementById('hud-steering-wheel');
+  if (wheelEl) {
+    let isSteering = false;
+    let currentWheelAngle = 0;
+    const maxWheelAngle = 120 * Math.PI / 180; // 120 degrees max lock
+    const deadzone = 4 * Math.PI / 180; // 4 degrees deadzone
+    let startTouchAngle = 0;
+    let startWheelAngle = 0;
+    let recenterInterval = null;
+
+    const getTouchAngle = (clientX, clientY) => {
+      const rect = wheelEl.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      return Math.atan2(clientY - cy, clientX - cx);
+    };
+
+    const startDrag = (e) => {
+      e.preventDefault();
+      isSteering = true;
+      if (recenterInterval) {
+        cancelAnimationFrame(recenterInterval);
+        recenterInterval = null;
+      }
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      startTouchAngle = getTouchAngle(clientX, clientY);
+      startWheelAngle = currentWheelAngle;
+    };
+
+    const drag = (e) => {
+      if (!isSteering) return;
+      if (e.cancelable) e.preventDefault();
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const touchAngle = getTouchAngle(clientX, clientY);
+      let deltaAngle = touchAngle - startTouchAngle;
+      
+      // Wrap around angle deltas
+      if (deltaAngle > Math.PI) deltaAngle -= Math.PI * 2;
+      if (deltaAngle < -Math.PI) deltaAngle += Math.PI * 2;
+
+      currentWheelAngle = startWheelAngle + deltaAngle;
+      currentWheelAngle = Math.max(-maxWheelAngle, Math.min(maxWheelAngle, currentWheelAngle));
+
+      wheelEl.style.transform = `rotate(${currentWheelAngle * 180 / Math.PI}deg)`;
+
+      // Map to steering value with deadzone
+      let steeringValue = 0;
+      if (Math.abs(currentWheelAngle) > deadzone) {
+        const sign = Math.sign(currentWheelAngle);
+        steeringValue = sign * ((Math.abs(currentWheelAngle) - deadzone) / (maxWheelAngle - deadzone));
+      }
+
+      const sc = raceScene();
+      if (sc) sc.setSteeringValue(steeringValue);
+    };
+
+    const endDrag = (e) => {
+      if (!isSteering) return;
+      isSteering = false;
+
+      // Start auto-recentering with smooth easing
+      const step = () => {
+        if (isSteering) {
+          recenterInterval = null;
+          return;
+        }
+
+        currentWheelAngle *= 0.82; // quick auto-recenter decay
+        if (Math.abs(currentWheelAngle) < 0.005) {
+          currentWheelAngle = 0;
+        }
+
+        wheelEl.style.transform = `rotate(${currentWheelAngle * 180 / Math.PI}deg)`;
+
+        let steeringValue = 0;
+        if (Math.abs(currentWheelAngle) > deadzone) {
+          const sign = Math.sign(currentWheelAngle);
+          steeringValue = sign * ((Math.abs(currentWheelAngle) - deadzone) / (maxWheelAngle - deadzone));
+        }
+
+        const sc = raceScene();
+        if (sc) sc.setSteeringValue(steeringValue);
+
+        if (currentWheelAngle !== 0) {
+          recenterInterval = requestAnimationFrame(step);
+        } else {
+          recenterInterval = null;
+        }
+      };
+
+      recenterInterval = requestAnimationFrame(step);
+    };
+
+    wheelEl.addEventListener('touchstart', startDrag, { passive: false });
+    window.addEventListener('touchmove', drag, { passive: false });
+    window.addEventListener('touchend', endDrag);
+    window.addEventListener('touchcancel', endDrag);
+
+    wheelEl.addEventListener('mousedown', startDrag);
+    window.addEventListener('mousemove', drag);
+    window.addEventListener('mouseup', endDrag);
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -370,15 +536,35 @@ function setupGameEventListeners() {
     document.getElementById('go-final-time').innerText = formatTime(lastRaceResult.totalTimeMs);
     document.getElementById('go-best-lap').innerText = `Best Lap: ${formatTime(lastRaceResult.bestLapMs)}`;
 
-    // Stop the race scene's input/update loop now that the race is over. This
-    // prevents stray game-loop events (camera, resize, keyboard capture) from
-    // interfering with the username dialog that we are about to show.
+    // Stop the race scene
     if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
       phaserGame.scene.stop('RaceScene');
     }
 
+    // Trigger finish celebration
+    fireCelebrationEffect();
     openScoreDialog();
     showScreen('screen-gameover');
+  });
+
+  window.addEventListener('pixel-prix:boost-state', (e) => {
+    const active = e.detail.active;
+    const btn = document.getElementById('btn-touch-boost');
+    if (btn) {
+      if (active) {
+        btn.classList.add('engaged');
+      } else {
+        btn.classList.remove('engaged');
+      }
+    }
+    const fill = document.getElementById('hud-boost-fill');
+    if (fill) {
+      if (active) {
+        fill.classList.add('active-boost');
+      } else {
+        fill.classList.remove('active-boost');
+      }
+    }
   });
 }
 
@@ -551,10 +737,14 @@ async function loadLeaderboard(trackId) {
   container.innerHTML = scores.map((s, idx) => {
     const carName = CARS.find(c => c.id === s.car_id)?.name || s.car_id;
     const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'Today';
-    const isFirst = idx === 0;
+    const isFirst  = idx === 0;
+    const isSecond = idx === 1;
+    const isThird  = idx === 2;
+    const podiumClass = isFirst ? ' lb-row-first' : isSecond ? ' lb-row-second' : isThird ? ' lb-row-third' : '';
+    const posStr = `#${String(idx + 1).padStart(2, '0')}`;
     return `
-      <div class="lb-row${isFirst ? ' lb-row-first' : ''}">
-        <div class="lb-row-pos">#${String(idx + 1).padStart(2, '0')}</div>
+      <div class="lb-row${podiumClass}">
+        <div class="lb-row-pos">${posStr}</div>
         <div class="lb-row-pilot">
           <p class="lb-row-name">${escapeHtml(s.player_name)}</p>
           <p class="lb-row-constructor">${escapeHtml(carName)}</p>
@@ -807,11 +997,148 @@ function initUI() {
 }
 
 // ----------------------------------------------------------------------------
+// AMBIENT PARTICLE SYSTEM (Main Menu background effect)
+// ----------------------------------------------------------------------------
+function startAmbientParticles() {
+  const canvas = document.getElementById('ambient-canvas');
+  if (!canvas) return;
+
+  const resize = () => {
+    canvas.width  = canvas.offsetWidth  || window.innerWidth;
+    canvas.height = canvas.offsetHeight || window.innerHeight;
+  };
+  resize();
+  window.addEventListener('resize', resize);
+
+  const ctx = canvas.getContext('2d');
+  const particles = [];
+  const NUM = 45;
+
+  for (let i = 0; i < NUM; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: -0.2 - Math.random() * 0.55,
+      size: 1 + Math.random() * 2.5,
+      alpha: 0.1 + Math.random() * 0.5,
+      hue: Math.random() < 0.15 ? 350 : (Math.random() < 0.3 ? 190 : 0),  // red, cyan, or white
+      life: Math.random(),
+      decay: 0.002 + Math.random() * 0.004
+    });
+  }
+
+  function tick() {
+    ambientAnimId = requestAnimationFrame(tick);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= p.decay;
+
+      if (p.life <= 0 || p.y < -5 || p.x < -5 || p.x > canvas.width + 5) {
+        p.x = Math.random() * canvas.width;
+        p.y = canvas.height + 5;
+        p.vx = (Math.random() - 0.5) * 0.35;
+        p.vy = -0.2 - Math.random() * 0.55;
+        p.life = 0.6 + Math.random() * 0.4;
+        p.alpha = 0.1 + Math.random() * 0.5;
+        p.hue = Math.random() < 0.15 ? 350 : (Math.random() < 0.3 ? 190 : 0);
+      }
+
+      const a = p.life * p.alpha;
+      const color = p.hue === 350
+        ? `rgba(232, 0, 45, ${a})`
+        : p.hue === 190
+          ? `rgba(0, 210, 255, ${a})`
+          : `rgba(255, 255, 255, ${a})`;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+  }
+  tick();
+}
+
+function stopAmbientParticles() {
+  if (ambientAnimId) {
+    cancelAnimationFrame(ambientAnimId);
+    ambientAnimId = null;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// F1 COUNTDOWN LIGHTS ANIMATION
+// ----------------------------------------------------------------------------
+function playCountdownLights() {
+  const overlay = document.getElementById('countdown-overlay');
+  const lights  = [1, 2, 3, 4, 5].map(i => document.getElementById(`cl-${i}`));
+  if (!overlay || lights.some(l => !l)) return;
+
+  // Reset
+  lights.forEach(l => l.className = 'countdown-light');
+  overlay.classList.add('visible');
+
+  let i = 0;
+  const step = () => {
+    if (i < lights.length) {
+      lights[i].classList.add('red');
+      i++;
+      countdownLightsTimer = setTimeout(step, 650);
+    } else {
+      // All red — go!
+      countdownLightsTimer = setTimeout(() => {
+        lights.forEach(l => { l.classList.remove('red'); l.classList.add('green'); });
+        countdownLightsTimer = setTimeout(() => {
+          lights.forEach(l => l.className = 'countdown-light');
+          overlay.classList.remove('visible');
+        }, 700);
+      }, 900);
+    }
+  };
+  step();
+}
+
+// ----------------------------------------------------------------------------
+// CELEBRATION EFFECT (game over — spark burst)
+// ----------------------------------------------------------------------------
+function fireCelebrationEffect() {
+  const el = document.getElementById('screen-gameover');
+  if (!el) return;
+
+  // Create a quick flash overlay
+  const flash = document.createElement('div');
+  flash.setAttribute('aria-hidden', 'true');
+  Object.assign(flash.style, {
+    position: 'fixed', inset: '0', pointerEvents: 'none', zIndex: '999',
+    background: 'radial-gradient(ellipse at 50% 40%, rgba(232,0,45,0.25) 0%, transparent 60%)',
+    opacity: '0', transition: 'opacity 0.3s ease'
+  });
+  document.body.appendChild(flash);
+  requestAnimationFrame(() => { flash.style.opacity = '1'; });
+  setTimeout(() => { flash.style.opacity = '0'; }, 400);
+  setTimeout(() => { if (flash.parentNode) flash.parentNode.removeChild(flash); }, 800);
+}
+
+// ----------------------------------------------------------------------------
 // ENTRY POINT
 // ----------------------------------------------------------------------------
 function startApp() {
   initGame();
   initUI();
+  
+  // Detect touch support and add corresponding CSS helper class
+  const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  if (hasTouch) {
+    document.documentElement.classList.add('touch-device');
+  } else {
+    document.documentElement.classList.add('desktop-device');
+  }
+
+  startAmbientParticles();
 }
 
 if (document.readyState === 'loading') {

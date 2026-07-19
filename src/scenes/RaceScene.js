@@ -30,7 +30,6 @@ export class RaceScene extends Phaser.Scene {
     this.offRoadDurationMs = 0;
     this.advantageAlertActive = false;
     this.advantageTimerMs = 0;
-    this.isBoostFiring = false;
 
     // Timer state
     this.startTime = 0;
@@ -47,15 +46,22 @@ export class RaceScene extends Phaser.Scene {
     this.isSteeringLeft = false;
     this.isSteeringRight = false;
     this.onGrass = false;
+    this.wasBoostActive = false;    // track boost state change
+    this.prevSpeed = 0;             // track speed for camera shake on hit
+    this.hardBrakeCount = 0;        // spark trigger counter
+    this.boostActive = false;       // toggle-style active boost state
+    this.boostWasPressed = false;   // rising-edge detection for keypresses
+    this.touchSteerValue = 0;       // analog touch steering wheel input (-1 to 1)
 
-    // Tunable physics parameters
-    this.maxSpeed = this.carData.maxSpeed || this.carData.topSpeed || 275;
-    this.boostMaxSpeed = this.carData.boostMaxSpeed || (this.maxSpeed * (this.carData.boostPower || 1.45));
-    this.acceleration = this.carData.acceleration || 180;
-    this.boostAcceleration = this.carData.boostAcceleration || 380;
-    this.brakeForce = this.carData.brakeForce || 450;
-    this.drag = this.carData.drag || 25.0;
-    this.steeringSensitivity = this.carData.steeringSensitivity || this.carData.handling || 4.4;
+    // Tunable physics parameters (scaled by 2.4x for high-speed AAA racing feel)
+    const VEL_MULT = 2.4;
+    this.maxSpeed = (this.carData.maxSpeed || this.carData.topSpeed || 275) * VEL_MULT;
+    this.boostMaxSpeed = (this.carData.boostMaxSpeed || (this.maxSpeed * (this.carData.boostPower || 1.45))) * VEL_MULT;
+    this.acceleration = (this.carData.acceleration || 180) * VEL_MULT;
+    this.boostAcceleration = (this.carData.boostAcceleration || 380) * VEL_MULT;
+    this.brakeForce = (this.carData.brakeForce || 450) * VEL_MULT;
+    this.drag = (this.carData.drag || 25.0) * VEL_MULT;
+    this.steeringSensitivity = (this.carData.steeringSensitivity || this.carData.handling || 4.4) * 1.48;
     this.highSpeedSteeringMultiplier = this.carData.highSpeedSteeringMultiplier || 0.48;
 
     // Lateral drift physics
@@ -69,10 +75,7 @@ export class RaceScene extends Phaser.Scene {
   }
 
   create() {
-    // Re-enable keyboard driving: finishRace() disables the per-scene
-    // KeyboardPlugin so the name-input field can receive keys. That disabled
-    // state can survive scene.stop -> scene.start, so restore it here BEFORE
-    // re-creating cursor/key objects.
+    // Re-enable keyboard driving
     if (this.input && this.input.keyboard) this.input.keyboard.enabled = true;
 
     // Guard against any control 'active' state leaking across races.
@@ -100,16 +103,43 @@ export class RaceScene extends Phaser.Scene {
     this.frameCamera();
     this.scale.on('resize', this.frameCamera, this);
 
-    // 5. Particles (smoke)
+    // 5. Particles
+    // Smoke emitter
     this.smokeEmitter = this.add.particles(0, 0, 'smoke_particle', {
-      speed: { min: 20, max: 60 },
-      scale: { start: 0.8, end: 0 },
-      alpha: { start: 0.6, end: 0 },
-      lifespan: 350,
-      blendMode: 'ADD',
+      speed: { min: 15, max: 45 },
+      scale: { start: 0.7, end: 0 },
+      alpha: { start: 0.55, end: 0 },
+      lifespan: 380,
+      blendMode: 'NORMAL',
       emitting: false
     });
-    this.smokeEmitter.startFollow(this.player);
+    this.smokeEmitter.startFollow(this.player, -14, 0);
+
+    // Boost exhaust emitter (cyan)
+    this.boostEmitter = this.add.particles(0, 0, 'boost_particle', {
+      speed: { min: 80, max: 160 },
+      scale: { start: 0.9, end: 0 },
+      alpha: { start: 0.9, end: 0 },
+      lifespan: 220,
+      blendMode: 'ADD',
+      emitting: false,
+      angle: { min: 160, max: 200 },
+      frequency: 25
+    });
+    this.boostEmitter.startFollow(this.player, -16, 0);
+
+    // Spark emitter — braking / collision
+    this.sparkEmitter = this.add.particles(0, 0, 'spark_particle', {
+      speed: { min: 60, max: 180 },
+      scale: { start: 0.5, end: 0 },
+      alpha: { start: 1, end: 0 },
+      lifespan: 280,
+      blendMode: 'ADD',
+      emitting: false,
+      quantity: 6,
+      angle: { min: 120, max: 240 }
+    });
+    this.sparkEmitter.startFollow(this.player, -12, 0);
 
     // 6. Keyboard inputs
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -124,9 +154,7 @@ export class RaceScene extends Phaser.Scene {
     this.boostKeyZ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
     this.boostKeyC = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
 
-    // Robust keyboard fallback driven by event.code (case- and layout-
-    // independent) so driving works whether the player types a/A, w/W, etc.
-    // Phaser's own key objects are OR-ed with this in update() for redundancy.
+    // Robust keyboard fallback
     this._kb = {
       up: false, down: false, left: false, right: false,
       space: false, shift: false, z: false, c: false
@@ -153,9 +181,6 @@ export class RaceScene extends Phaser.Scene {
     window.addEventListener('keydown', this._kbHandler);
     window.addEventListener('keyup', this._kbHandler);
 
-    // Prevent browser scrolling on game keys, but never while the user is
-    // typing into a text field (e.g. the driver-name input on the results
-    // screen) so those characters remain typeable.
     this._preventScrollHandler = (e) => {
       const t = e.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
@@ -174,8 +199,6 @@ export class RaceScene extends Phaser.Scene {
     this.startCountdown();
   }
 
-  // Frame the camera with a fixed 0° heading, viewport isolation above controls,
-  // and smooth position follow centered on the player.
   frameCamera() {
     const cam = this.cameras.main;
     const pad = (this.roadWidth || 100) + 60;
@@ -194,22 +217,15 @@ export class RaceScene extends Phaser.Scene {
     const vw = this.scale.width || window.innerWidth;
     const vh = this.scale.height || window.innerHeight;
 
-    // Full-screen camera viewport (0, 0, vw, vh) - world renders edge-to-edge behind transparent HUD
     cam.setViewport(0, 0, vw, vh);
 
-    // Zoom level calculation for optimal track visibility across full screen
     const cover = Math.max(vw / trackW, vh / trackH);
-    this.baseZoom = Math.max(0.55, Math.min(cover, 0.85));
+    this.baseZoom = Math.max(0.28, Math.min(cover, 0.85));
     cam.setZoom(this.baseZoom);
 
-    // Lock camera rotation permanently to 0 degrees (no spinning horizon)
     cam.setRotation(0);
     cam.setFollowOffset(0, 0);
-
-    // Remove camera bounds so camera never stops at track edges
     cam.removeBounds();
-
-    // Align camera scroll immediately to player start position
     this.centerCameraOnPlayer();
   }
 
@@ -253,63 +269,59 @@ export class RaceScene extends Phaser.Scene {
     const dt = delta / 1000;
     const cam = this.cameras.main;
 
-    // Permanent 0° rotation and camera scroll lock on player every frame
-    // (runs during countdown and active race so player is ALWAYS centered)
     this.centerCameraOnPlayer();
 
     if (!this.raceStarted || this.raceFinished) return;
 
-    // Timer & HUD
     this.elapsedMs = this.time.now - this.startTime;
     this.emitHUDUpdate();
 
-    // Smooth high-speed zoom out (~8% zoom expansion at top speed)
+    this.prevSpeed = this.currentSpeed;
+
     const speedRatio = Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275));
-    const targetZoom = (this.baseZoom || 0.7) * (1.0 - speedRatio * 0.08);
+    const targetZoom = (this.baseZoom || 0.7) * (1.0 - speedRatio * 0.10);
     cam.zoom = Phaser.Math.Linear(cam.zoom, targetZoom, 2.5 * dt);
+
+    this.updateSpeedVignette(speedRatio);
 
     // Steering
     let steerDir = 0;
     if (this.isSteeringLeft || this.cursors.left.isDown || this.wasd.left.isDown || this._kb.left) steerDir -= 1;
     if (this.isSteeringRight || this.cursors.right.isDown || this.wasd.right.isDown || this._kb.right) steerDir += 1;
 
-    // Swap car texture for visual steering feedback
+    if (this.touchSteerValue !== 0) {
+      steerDir = this.touchSteerValue;
+    }
+
     const carTexBase = 'car_' + this.carData.id + '_';
-    if (steerDir < 0) this.player.setTexture(carTexBase + 'left');
-    else if (steerDir > 0) this.player.setTexture(carTexBase + 'right');
+    if (steerDir < -0.15) this.player.setTexture(carTexBase + 'left');
+    else if (steerDir > 0.15) this.player.setTexture(carTexBase + 'right');
     else this.player.setTexture(carTexBase + 'straight');
 
-    // Invert steering when reversing
     if (this.currentSpeed < -5) steerDir *= -1;
 
-    // Boost activation logic: can only start boosting if energy >= 30%. Can sustain down to 2%.
+    // Boost activation logic: single tap/press toggles boost. Stays active until 0.
     const boostButtonPressed = this.isBoosting || this.wasd.space.isDown || this.wasd.shift.isDown ||
       this.boostKeyZ.isDown || this.boostKeyC.isDown ||
       this._kb.space || this._kb.shift || this._kb.z || this._kb.c;
 
-    if (boostButtonPressed) {
-      if (this.isBoostFiring) {
-        if (this.boostEnergy <= 2) {
-          this.isBoostFiring = false;
-        }
-      } else {
-        if (this.boostEnergy >= 75) {
-          this.isBoostFiring = true;
-        }
-      }
-    } else {
-      this.isBoostFiring = false;
+    const boostJustPressed = boostButtonPressed && !this.boostWasPressed;
+    this.boostWasPressed = boostButtonPressed;
+
+    if (boostJustPressed && !this.boostActive && this.boostEnergy >= 30) {
+      this.boostActive = true;
+      this.cameras.main.flash(200, 0, 210, 255, false); // Cyan flash
+      this.cameras.main.shake(200, 0.006); // Camera shake
+      playBoostSound();
+      window.dispatchEvent(new CustomEvent('pixel-prix:boost-state', { detail: { active: true } }));
     }
 
-    const boostActive = this.isBoostFiring && this.boostEnergy > 2;
+    const boostActive = this.boostActive;
     const gasOn = this.isAccelerating || this.cursors.up.isDown || this.wasd.up.isDown || this._kb.up;
     const brakeOn = this.isBraking || this.cursors.down.isDown || this.wasd.down.isDown || this._kb.down;
 
     setEngineActive(gasOn || boostActive);
 
-    // Realistic speed-dependent steering:
-    // - Steering works while coasting (currentSpeed > 1)
-    // - Responsive at low speeds, stable/dampened at high speeds
     const steerSpeedRatio = Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275));
     const speedDamping = Math.max(this.highSpeedSteeringMultiplier, 1.0 - steerSpeedRatio * 0.55);
     const boostBonus = boostActive ? 1.15 : 1.0;
@@ -317,39 +329,34 @@ export class RaceScene extends Phaser.Scene {
       this.player.rotation += steerDir * this.steeringSensitivity * speedDamping * boostBonus * dt;
     }
 
-    // Off-road check
     this.onGrass = isOffRoad(this.player.x, this.player.y, this.curvePoints, this.roadWidth);
 
-    // Penalty engine (lenient: > 2.5s continuous off-road)
     if (this.onGrass && Math.abs(this.currentSpeed) > 60) {
       this.offRoadDurationMs += delta;
 
-      // Track limits warning: triggered after 1.5 seconds off-road
       if (this.offRoadDurationMs > 1500) {
         this.handleTrackLimitsViolation();
         this.offRoadDurationMs = 0;
       }
 
-      // Corner cutting detection: driving off-road at speed > 125 px/s (100 KM/H in UI) for more than 1.0 seconds
-      if (Math.abs(this.currentSpeed) > 125 && !this.advantageAlertActive) {
+      if (Math.abs(this.currentSpeed) > 125 * 2.4 && !this.advantageAlertActive) {
         this.advantageAlertActive = true;
-        this.advantageTimerMs = 3000; // 3 seconds to yield advantage
+        this.advantageTimerMs = 3000;
         this.showStewardsNotification('STEWARDS: SLOW DOWN BELOW 100 KM/H TO YIELD ADVANTAGE!');
       }
     } else {
       this.offRoadDurationMs = Math.max(0, this.offRoadDurationMs - delta * 2);
     }
 
-    // Gained advantage resolution timer
     if (this.advantageAlertActive) {
-      if (Math.abs(this.currentSpeed) * 0.8 < 100) {
+      if (Math.abs(this.currentSpeed) / 2.4 < 100) {
         this.advantageAlertActive = false;
         this.advantageTimerMs = 0;
         this.showStewardsNotification('STEWARDS: ADVANTAGE YIELDED - WARNING CLEARED');
       } else {
         this.advantageTimerMs -= delta;
         if (this.advantageTimerMs <= 0) {
-          this.penaltyMs += 10000; // +10s penalty
+          this.penaltyMs += 10000;
           this.advantageAlertActive = false;
           this.showStewardsNotification('STEWARDS: +10.0s PENALTY (CORNER CUTTING)');
         } else {
@@ -371,9 +378,34 @@ export class RaceScene extends Phaser.Scene {
     if (boostActive) {
       this.boostEnergy = Math.max(0, this.boostEnergy - 35 * dt);
       this.smokeEmitter.emitting = true;
+      this.boostEmitter.emitting = true;
       if (Math.random() < 0.1) playBoostSound();
+
+      // Exhaust particle position and rotation follow
+      const offsetDist = -16;
+      const rx = this.player.x + Math.cos(this.player.rotation) * offsetDist;
+      const ry = this.player.y + Math.sin(this.player.rotation) * offsetDist;
+      this.boostEmitter.setPosition(rx, ry);
+      const oppositeAngle = Phaser.Math.RadToDeg(this.player.rotation) + 180;
+      this.boostEmitter.setAngle({ min: oppositeAngle - 15, max: oppositeAngle + 15 });
+
+      if (this.boostEnergy <= 0) {
+        this.boostActive = false;
+        this.smokeEmitter.emitting = false;
+        this.boostEmitter.emitting = false;
+        this.cameras.main.flash(150, 255, 77, 109, false); // Red warning flash
+        window.dispatchEvent(new CustomEvent('pixel-prix:boost-state', { detail: { active: false } }));
+      }
     } else {
       this.boostEnergy = Math.min(100, this.boostEnergy + 12 * dt);
+      this.boostEmitter.emitting = false;
+    }
+
+    if (this.smokeEmitter.emitting) {
+      const offsetDist = -14;
+      const rx = this.player.x + Math.cos(this.player.rotation) * offsetDist;
+      const ry = this.player.y + Math.sin(this.player.rotation) * offsetDist;
+      this.smokeEmitter.setPosition(rx, ry);
     }
 
     if (this.onGrass) {
@@ -393,7 +425,6 @@ export class RaceScene extends Phaser.Scene {
           this.currentSpeed = targetMaxSpeed;
         }
       } else if (this.currentSpeed > targetMaxSpeed) {
-        // Exiting boost or going onto grass: coast down smoothly to targetMaxSpeed via drag
         this.currentSpeed -= (this.onGrass ? this.drag * 3.5 : this.drag) * dt;
         if (this.currentSpeed < targetMaxSpeed) {
           this.currentSpeed = targetMaxSpeed;
@@ -411,12 +442,11 @@ export class RaceScene extends Phaser.Scene {
         this.currentSpeed -= this.brakeForce * dt;
         if (this.currentSpeed < 0) this.currentSpeed = 0;
       } else {
-        if (this.currentSpeed > -85) {
+        if (this.currentSpeed > -85 * 2.4) {
           this.currentSpeed -= this.acceleration * 0.8 * dt;
         }
       }
     } else {
-      // Natural momentum coasting under rolling drag
       const currentDrag = this.onGrass ? (this.drag * 3.5) : this.drag;
       if (this.currentSpeed > targetMaxSpeed) {
         this.currentSpeed -= currentDrag * dt;
@@ -430,19 +460,35 @@ export class RaceScene extends Phaser.Scene {
       }
     }
 
-    // Lateral drift physics
     const targetVx = Math.cos(this.player.rotation) * this.currentSpeed;
     const targetVy = Math.sin(this.player.rotation) * this.currentSpeed;
     const grip = (boostActive || steerDir !== 0) ? 0.98 : 0.94;
     this.vx = Phaser.Math.Linear(this.vx, targetVx, grip);
     this.vy = Phaser.Math.Linear(this.vy, targetVy, grip);
 
-    // Smoke on lateral slide
+    // Smoke and sparks on lateral slide
     const lateralSlip = Math.abs(this.vx - targetVx) + Math.abs(this.vy - targetVy);
-    if (lateralSlip > 45 && Math.abs(this.currentSpeed) > 120 && steerDir !== 0) {
+    const hardBraking = brakeOn && Math.abs(this.currentSpeed) > 100 * 2.4;
+    if (lateralSlip > 45 && Math.abs(this.currentSpeed) > 120 * 2.4 && steerDir !== 0) {
       this.smokeEmitter.emitting = true;
+      if (Math.random() < 0.15) {
+        this.sparkEmitter.emitting = true;
+        setTimeout(() => { if (this.sparkEmitter) this.sparkEmitter.emitting = false; }, 80);
+      }
     } else if (!boostActive) {
       this.smokeEmitter.emitting = false;
+    }
+
+    if (hardBraking && Math.abs(this.currentSpeed) > 120 * 2.4) {
+      if (Math.random() < 0.2) {
+        this.sparkEmitter.emitting = true;
+        setTimeout(() => { if (this.sparkEmitter) this.sparkEmitter.emitting = false; }, 60);
+      }
+    }
+
+    const speedLoss = this.prevSpeed - this.currentSpeed;
+    if (speedLoss > 60 * 2.4 && Math.abs(this.currentSpeed) < 20 * 2.4) {
+      this.cameras.main.shake(250, 0.008);
     }
 
     this.player.setVelocity(this.vx, this.vy);
@@ -459,7 +505,7 @@ export class RaceScene extends Phaser.Scene {
     } else if (this.trackLimitsCount === 2) {
       this.showStewardsNotification('STEWARDS: BLACK & WHITE FLAG - FINAL WARNING');
     } else {
-      this.penaltyMs += 5000; // +5.0s penalty
+      this.penaltyMs += 5000;
       this.showStewardsNotification('STEWARDS: +5.0s TIME PENALTY (TRACK LIMITS)');
     }
   }
@@ -496,12 +542,15 @@ export class RaceScene extends Phaser.Scene {
     stopEngineSound();
     playFinishSound();
 
-    // The race is over: release keyboard capture so the driver-name text input
-    // can receive characters that double as in-game controls (W/A/S/D/Space/etc).
     if (this.input && this.input.keyboard) {
       this.input.keyboard.enabled = false;
       this.input.keyboard.clearCaptures();
     }
+
+    this.boostActive = false;
+    if (this.smokeEmitter) this.smokeEmitter.emitting = false;
+    if (this.boostEmitter) this.boostEmitter.emitting = false;
+    window.dispatchEvent(new CustomEvent('pixel-prix:boost-state', { detail: { active: false } }));
 
     const bestLapMs = this.lapTimes.length > 0 ? Math.min(...this.lapTimes) : this.elapsedMs;
     const finalTime = this.elapsedMs + this.penaltyMs;
@@ -540,8 +589,8 @@ export class RaceScene extends Phaser.Scene {
   emitHUDUpdate() {
     window.dispatchEvent(new CustomEvent('pixel-prix:hud', {
       detail: {
-        speed: Math.round(Math.abs(this.currentSpeed) * 0.8),
-        isReverse: this.currentSpeed < -5,
+        speed: Math.round(Math.abs(this.currentSpeed) / 2.4),
+        isReverse: this.currentSpeed < -12,
         lap: this.currentLap,
         totalLaps: this.totalLaps,
         timeMs: this.elapsedMs,
@@ -557,11 +606,15 @@ export class RaceScene extends Phaser.Scene {
   setSteerRight(v) { this.isSteeringRight = v; }
   setBrake(v) { this.isBraking = v; }
   setBoost(v) { this.isBoosting = v; }
+  setSteeringValue(v) { this.touchSteerValue = v; }
 
   cleanup() {
     stopEngineSound();
     clearTimeout(this._notifTimeout);
     this.scale.off('resize', this.frameCamera, this);
+    // Remove speed vignette on cleanup
+    this.updateSpeedVignette(0);
+    this.touchSteerValue = 0;
     if (this._preventScrollHandler) {
       window.removeEventListener('keydown', this._preventScrollHandler);
       this._preventScrollHandler = null;
@@ -571,5 +624,25 @@ export class RaceScene extends Phaser.Scene {
       window.removeEventListener('keyup', this._kbHandler);
       this._kbHandler = null;
     }
+  }
+
+  updateSpeedVignette(ratio) {
+    let el = document.getElementById('hud-speed-vignette');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'hud-speed-vignette';
+      el.setAttribute('aria-hidden', 'true');
+      Object.assign(el.style, {
+        position: 'fixed',
+        inset: '0',
+        pointerEvents: 'none',
+        zIndex: '5',
+        transition: 'opacity 0.3s ease',
+        background:
+          'radial-gradient(ellipse at center, transparent 40%, rgba(232,0,45,0.04) 70%, rgba(10,8,20,0.55) 100%)',
+      });
+      document.body.appendChild(el);
+    }
+    el.style.opacity = Math.max(0, ratio - 0.3) * 1.4;
   }
 }
