@@ -742,10 +742,15 @@ function setupTouchControls() {
 // ----------------------------------------------------------------------------
 function setupGameEventListeners() {
   window.addEventListener('pixel-prix:hud', (e) => {
-    const { speed, isReverse, lap, totalLaps, timeMs, penaltyMs, boostEnergy } = e.detail;
+    const { speed, isReverse, lap, totalLaps, timeMs, penaltyMs, boostEnergy, boostActive, speedRatio } = e.detail;
 
     // Speed: number only (KM/H is the label)
-    document.getElementById('hud-speed-text').innerText = `${speed}`;
+    const speedEl = document.getElementById('hud-speed-text');
+    if (speedEl) {
+      speedEl.innerText = `${speed}`;
+      speedEl.classList.toggle('boosting', boostActive === true);
+      speedEl.classList.toggle('top-speed', speedRatio > 0.95);
+    }
     // Lap: number + sub-text /N
     document.getElementById('hud-lap-text').innerHTML = `${lap}<span class="hud-chip-sub">/${totalLaps}</span>`;
     document.getElementById('hud-timer-text').innerText = formatTime(timeMs);

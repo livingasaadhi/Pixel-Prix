@@ -152,6 +152,14 @@ export class RaceScene extends Phaser.Scene {
     });
     this.sparkEmitter.startFollow(this.player, -12, 0);
 
+    // Skid mark emitter (particles freeze on track during slides/braking)
+    this.skidEmitter = this.add.particles(0, 0, 'skid_mark', {
+      speed: 0,
+      lifespan: 5000,
+      alpha: { start: 0.45, end: 0 },
+      emitting: false
+    });
+
     // 6. Keyboard inputs
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys({
@@ -245,7 +253,17 @@ export class RaceScene extends Phaser.Scene {
     if (!this.player || !this.cameras.main) return;
     const cam = this.cameras.main;
     cam.rotation = 0;
-    cam.centerOn(this.player.x, this.player.y);
+
+    let ox = 0;
+    let oy = 0;
+    if (this.onGrass && Math.abs(this.currentSpeed) > 100) {
+      // Simulate grass off-road vibration based on vehicle speed
+      const intensity = (Math.abs(this.currentSpeed) / this.maxSpeed) * 12;
+      ox = (Math.random() - 0.5) * intensity;
+      oy = (Math.random() - 0.5) * intensity;
+    }
+
+    cam.centerOn(this.player.x + ox, this.player.y + oy);
   }
 
   startCountdown() {
@@ -536,6 +554,13 @@ export class RaceScene extends Phaser.Scene {
     // Smoke and sparks on lateral slide
     const lateralSlip = Math.abs(this.vx - targetVx) + Math.abs(this.vy - targetVy);
     const hardBraking = brakeOn && Math.abs(this.currentSpeed) > 100 * 2.4;
+
+    const needsSkid = (hardBraking && Math.abs(this.currentSpeed) > 100 * 2.4) ||
+                      (lateralSlip > 45 && Math.abs(this.currentSpeed) > 120 * 2.4 && steerDir !== 0);
+    if (needsSkid) {
+      this.skidEmitter.emitParticleAt(this.player.x, this.player.y);
+    }
+
     if (lateralSlip > 45 && Math.abs(this.currentSpeed) > 120 * 2.4 && steerDir !== 0) {
       this.smokeEmitter.emitting = true;
       if (Math.random() < 0.15) {
@@ -666,7 +691,9 @@ export class RaceScene extends Phaser.Scene {
         totalLaps: this.totalLaps,
         timeMs: this.elapsedMs,
         penaltyMs: this.penaltyMs,
-        boostEnergy: this.boostEnergy
+        boostEnergy: this.boostEnergy,
+        boostActive: this.boostActive,
+        speedRatio: Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275))
       }
     }));
   }
@@ -724,12 +751,20 @@ export class RaceScene extends Phaser.Scene {
         inset: '0',
         pointerEvents: 'none',
         zIndex: '5',
-        transition: 'opacity 0.3s ease',
+        transition: 'opacity 0.3s ease, background 0.4s ease',
         background:
           'radial-gradient(ellipse at center, transparent 40%, rgba(232,0,45,0.04) 70%, rgba(10,8,20,0.55) 100%)',
       });
       document.body.appendChild(el);
     }
+
+    // Shift vignette colors if Boost is active (ERS Cyan glow vs F1 Red glow)
+    if (this.boostActive) {
+      el.style.background = 'radial-gradient(ellipse at center, transparent 30%, rgba(0,210,255,0.08) 60%, rgba(8,30,55,0.7) 100%)';
+    } else {
+      el.style.background = 'radial-gradient(ellipse at center, transparent 40%, rgba(232,0,45,0.04) 70%, rgba(10,8,20,0.55) 100%)';
+    }
+
     el.style.opacity = Math.max(0, ratio - 0.3) * 1.4;
   }
 }

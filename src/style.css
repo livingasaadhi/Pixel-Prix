@@ -1259,10 +1259,34 @@ body {
   color: var(--primary);
   line-height: 1;
   letter-spacing: -0.02em;
+  transition: color 0.25s ease, text-shadow 0.25s ease;
 }
 
 .hud-chip-value.digital {
   font-family: var(--font-mono);
+}
+
+/* Speedometer warning redline and active boost telemetry styles */
+.hud-chip-value.boosting {
+  color: var(--accent-cyan);
+  text-shadow: 0 0 10px var(--accent-cyan-glow);
+  animation: speed-flash 0.25s infinite alternate ease-in-out;
+}
+
+.hud-chip-value.top-speed {
+  color: var(--accent-red);
+  text-shadow: 0 0 10px var(--accent-red-glow);
+}
+
+@keyframes speed-flash {
+  0% {
+    opacity: 0.85;
+    filter: brightness(0.95);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1.25);
+  }
 }
 
 .hud-chip-sub {
