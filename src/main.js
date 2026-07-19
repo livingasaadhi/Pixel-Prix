@@ -441,6 +441,7 @@ function setupTouchControls() {
     let isDraggingJoystick = false;
     let recenterInterval = null;
     let joystickTouchId = null; // multi-touch: track specific touch identifier
+    let joystickTouchActive = false; // guard against synthesized mouse events
     const deadzone = 0.08; // 8% center deadzone
 
     const getJoystickTouch = (e) => {
@@ -480,6 +481,8 @@ function setupTouchControls() {
     };
 
     const startDrag = (e) => {
+      // Guard: ignore synthesized mouse events that follow touch events
+      if (e.type === 'mousedown' && joystickTouchActive) return;
       e.preventDefault();
       isDraggingJoystick = true;
       if (recenterInterval) {
@@ -489,6 +492,7 @@ function setupTouchControls() {
       // Store the touch identifier for multi-touch tracking using changedTouches
       if (e.touches && e.changedTouches && e.changedTouches[0]) {
         joystickTouchId = e.changedTouches[0].identifier;
+        joystickTouchActive = true;
       }
       const touch = e.changedTouches ? e.changedTouches[0] : e;
       updateJoystick(touch.clientX, touch.clientY);
@@ -501,7 +505,7 @@ function setupTouchControls() {
       if (e.touches && (touch = getJoystickTouch(e))) {
         updateJoystick(touch.clientX, touch.clientY);
       } else if (!e.touches) {
-        // Mouse fallback
+        // Mouse fallback (only for real mouse, not synthesized)
         updateJoystick(e.clientX, e.clientY);
       }
     };
@@ -515,12 +519,16 @@ function setupTouchControls() {
       if (!isDraggingJoystick) return;
       isDraggingJoystick = false;
       joystickTouchId = null;
+      joystickTouchActive = false;
 
-      // Immediately clear joystick heading so car stops turning toward last target
+      // Immediately clear ALL joystick state in the game scene
       const scImmediate = raceScene();
-      if (scImmediate) scImmediate.setJoystickHeading(0, false);
+      if (scImmediate) {
+        scImmediate.setJoystickHeading(0, false);
+        scImmediate.setSteeringValue(0);
+      }
 
-      // Smoothly ease joystick handle back to center
+      // Smoothly ease joystick handle back to center (VISUAL ONLY — no game input)
       let rect = joystickBaseEl.getBoundingClientRect();
       let maxRadius = rect.width / 2;
       let limit = maxRadius * 0.7;
@@ -545,16 +553,6 @@ function setupTouchControls() {
         }
 
         joystickHandleEl.style.transform = `translate(${curDx}px, ${curDy}px)`;
-
-        const normalizedX = curDx / limit;
-        let steeringValue = 0;
-        if (Math.abs(normalizedX) > deadzone) {
-          const sign = Math.sign(normalizedX);
-          steeringValue = sign * ((Math.abs(normalizedX) - deadzone) / (1.0 - deadzone));
-        }
-
-        const sc = raceScene();
-        if (sc) sc.setSteeringValue(steeringValue);
 
         if (curDx !== 0 || curDy !== 0) {
           recenterInterval = requestAnimationFrame(step);
@@ -633,6 +631,8 @@ function setupTouchControls() {
     };
 
     const startDrag = (e) => {
+      // Guard: ignore synthesized mouse events that follow touch events
+      if (e.type === 'mousedown' && pedalTouchId !== null) return;
       e.preventDefault();
       isDraggingPedal = true;
       if (recenterInterval) {
@@ -654,7 +654,7 @@ function setupTouchControls() {
       if (e.touches && (touch = getPedalTouch(e))) {
         updateSlider(touch.clientY);
       } else if (!e.touches) {
-        // Mouse fallback
+        // Mouse fallback (only for real mouse, not synthesized)
         updateSlider(e.clientY);
       }
     };
@@ -669,6 +669,14 @@ function setupTouchControls() {
       isDraggingPedal = false;
       pedalTouchId = null;
 
+      // Immediately reset ALL pedal state in the game scene
+      const scImmediate = raceScene();
+      if (scImmediate) {
+        scImmediate.setTouchGas(0);
+        scImmediate.setTouchBrake(0);
+      }
+
+      // Smoothly ease pedal handle back to center (VISUAL ONLY — no game input)
       const style = window.getComputedStyle(pedalHandleEl);
       const matrix = new DOMMatrix(style.transform);
       let curOffsetY = matrix.m42;
@@ -686,19 +694,6 @@ function setupTouchControls() {
         }
 
         pedalHandleEl.style.transform = `translateY(${curOffsetY}px)`;
-
-        const val = -curOffsetY / maxLimit;
-        let gas = 0;
-        let brake = 0;
-
-        if (val > deadzone) gas = (val - deadzone) / (1.0 - deadzone);
-        else if (val < -deadzone) brake = (-val - deadzone) / (1.0 - deadzone);
-
-        const sc = raceScene();
-        if (sc) {
-          sc.setTouchGas(gas);
-          sc.setTouchBrake(brake);
-        }
 
         if (curOffsetY !== 0) {
           recenterInterval = requestAnimationFrame(step);
