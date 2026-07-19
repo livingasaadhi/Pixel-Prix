@@ -1474,12 +1474,12 @@ body {
   height: clamp(64px, 18vw, 80px);
 }
 
-/* Boost — top right */
+/* Boost / ERS — top of left column on touch */
 .hud-ctrl-tri-boost {
   grid-area: boost;
-  width: clamp(72px, 20vw, 96px);
-  height: clamp(52px, 14vw, 68px);
-  border-color: rgba(0, 210, 255, 0.35);
+  width: clamp(84px, 24vw, 112px);
+  height: clamp(60px, 16vw, 76px);
+  border-color: rgba(0, 210, 255, 0.45);
 }
 
 .hud-ctrl-tri-boost.active,
@@ -3160,7 +3160,7 @@ body {
 .hud-joystick-container {
   position: absolute;
   bottom: max(24px, env(safe-area-inset-bottom));
-  right: max(24px, env(safe-area-inset-right));
+  right: clamp(60px, 16vw, 150px);
   z-index: 10;
   pointer-events: auto;
   display: none;
@@ -3176,8 +3176,8 @@ body {
 
 .hud-joystick-base {
   position: relative;
-  width: clamp(140px, 24vw, 180px);
-  height: clamp(140px, 24vw, 180px);
+  width: clamp(170px, 30vw, 230px);
+  height: clamp(170px, 30vw, 230px);
   border-radius: 50%;
   background: rgba(12, 11, 18, 0.72);
   border: 2px solid rgba(255, 255, 255, 0.12);

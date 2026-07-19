@@ -327,18 +327,18 @@
             </div>
           </div>
 
-          <!-- LEFT: Reverse + Boost for touch devices (joystick handles steering + acceleration) -->
+          <!-- LEFT: Boost (ERS) + Reverse for touch devices (joystick handles steering + acceleration) -->
           <div class="hud-drive-group" id="hud-drive-left-group">
+            <button id="btn-touch-boost-left" class="hud-ctrl-btn hud-ctrl-tri-boost" aria-label="Boost / ERS">
+              <span class="material-symbols-outlined hud-icon-primary">bolt</span>
+              <span class="hud-ctrl-label">ERS</span>
+              <span class="hud-key-badge">SPACE</span>
+            </button>
+
             <button id="btn-touch-reverse" class="hud-ctrl-btn hud-ctrl-tri-brake" aria-label="Reverse">
               <span class="material-symbols-outlined hud-icon-error">eject</span>
               <span class="hud-ctrl-label hud-ctrl-label-error">REVERSE</span>
               <span class="hud-key-badge">S</span>
-            </button>
-
-            <button id="btn-touch-boost-left" class="hud-ctrl-btn hud-ctrl-tri-boost" aria-label="Boost">
-              <span class="material-symbols-outlined hud-icon-primary">bolt</span>
-              <span class="hud-ctrl-label">BOOST</span>
-              <span class="hud-key-badge">SPACE</span>
             </button>
           </div>
 
