@@ -17,8 +17,8 @@
   <!-- Material Symbols (icon font) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
 
-  <script type="module" crossorigin src="./assets/index-D0O5O2HA.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CUDOqqLq.css">
+  <script type="module" crossorigin src="./assets/index-BuhvjNK7.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-y3b6eBYO.css">
 </head>
 <body>
   <!-- Scanline CRT overlay -->
@@ -300,10 +300,13 @@
           <span class="hud-warning-right" id="hud-penalty-text">+0.0s</span>
         </div>
 
-        <!-- Center countdown / notification -->
-        <div id="hud-notification" class="hud-notification hidden">
-          GET READY: 3
+        <!-- Cinematic center countdown overlay -->
+        <div id="hud-countdown" class="hud-countdown hidden">
+          <div id="hud-countdown-text">3</div>
         </div>
+
+        <!-- Left-side vertical notification stack -->
+        <div id="hud-notif-container" class="hud-notif-container"></div>
 
         <!-- Bottom HUD -->
         <div class="hud-bottom">
@@ -329,14 +332,6 @@
 
           <!-- LEFT: Combined Pedals & Boost for touch devices -->
           <div class="hud-drive-group" id="hud-drive-left-group">
-            <!-- KERS energy bar -->
-            <div class="hud-kers-meter">
-              <div class="hud-kers-bar-bg">
-                <div class="boost-bar-fill" id="hud-boost-fill-left"></div>
-              </div>
-              <span class="hud-kers-label">KERS ENERGY</span>
-            </div>
-
             <div class="hud-combined-pedals-row">
               <!-- Combined Vertical Slider -->
               <div id="hud-pedal-slider" class="hud-pedal-slider" aria-label="Combined accelerator and brake slider">
@@ -360,14 +355,6 @@
 
           <!-- RIGHT: KERS meter + Triangular Controls (Boost top, Brake bottom-left, Gas bottom-right) -->
           <div class="hud-drive-group" id="hud-drive-right-group">
-            <!-- KERS energy bar -->
-            <div class="hud-kers-meter">
-              <div class="hud-kers-bar-bg">
-                <div class="boost-bar-fill" id="hud-boost-fill"></div>
-              </div>
-              <span class="hud-kers-label">KERS ENERGY</span>
-            </div>
-
             <!-- Triangular Control Layout -->
             <div class="hud-drive-triangular">
               <button id="btn-touch-boost" class="hud-ctrl-btn hud-ctrl-tri-boost" aria-label="Boost">
@@ -386,6 +373,14 @@
                 <span class="hud-key-badge">W</span>
               </button>
             </div>
+          </div>
+        </div>
+
+        <!-- Unified bottom-center ERS/KERS bar -->
+        <div class="hud-kers-container">
+          <span class="kers-label">ERS BOOST</span>
+          <div class="kers-bar-bg">
+            <div class="kers-bar-fill" id="hud-boost-fill"></div>
           </div>
         </div>
       </div>
