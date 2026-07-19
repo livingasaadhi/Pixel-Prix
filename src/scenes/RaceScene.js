@@ -300,9 +300,12 @@ export class RaceScene extends Phaser.Scene {
           this.lapStartTime = this.time.now;
           this.sectorStartTime = this.time.now;
           startEngineSound();
-        } else {
-          if (el) el.classList.add('hidden');
-          if (textEl) textEl.classList.remove('green-glow');
+
+          // Auto-hide the countdown overlay 1 second after LIGHTS OUT!
+          this.time.delayedCall(1000, () => {
+            if (el) el.classList.add('hidden');
+            if (textEl) textEl.classList.remove('green-glow');
+          });
         }
       }
     });
@@ -784,6 +787,8 @@ export class RaceScene extends Phaser.Scene {
 
   cleanup() {
     stopEngineSound();
+    const countdownEl = document.getElementById('hud-countdown');
+    if (countdownEl) countdownEl.classList.add('hidden');
     if (this._notifEvent) {
       this._notifEvent.destroy();
       this._notifEvent = null;

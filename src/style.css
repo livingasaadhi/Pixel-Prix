@@ -3340,13 +3340,12 @@ body {
 /* --- Sector completion comparison banner ----------------------------- */
 .hud-sector-banner {
   position: absolute;
-  top: 80px;
+  top: 108px;
   left: 50%;
   transform: translateX(-50%) translateY(-10px);
-  background: rgba(8, 8, 14, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-top: none;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: rgba(8, 8, 14, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-md);
   padding: 6px 20px;
   display: flex;
   align-items: center;
@@ -3355,12 +3354,12 @@ body {
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.06em;
-  z-index: 4;
+  z-index: 7;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), visibility 0.25s;
   pointer-events: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7);
 }
 
 .hud-sector-banner.visible {
