@@ -200,7 +200,8 @@ export class RaceScene extends Phaser.Scene {
     // 7. Register shutdown handler
     this.events.once('shutdown', this.cleanup, this);
 
-    // 8. Start countdown
+    // 8. Start countdown and emit initial HUD values
+    this.emitHUDUpdate();
     this.startCountdown();
   }
 

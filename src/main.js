@@ -448,7 +448,7 @@ function setupTouchControls() {
       if (joystickTouchId !== null) {
         return Array.from(e.touches).find(t => t.identifier === joystickTouchId) || null;
       }
-      return e.touches[0] || null;
+      return null;
     };
 
     const updateJoystick = (clientX, clientY) => {
@@ -470,8 +470,6 @@ function setupTouchControls() {
       joystickHandleEl.style.transform = `translate(${dx}px, ${dy}px)`;
 
       // Compute absolute heading angle from joystick direction (screen-space)
-      // atan2 gives: 0 = right, PI/2 = down, PI = left, -PI/2 = up
-      // This matches Phaser's rotation coordinate system.
       const sc = raceScene();
       if (distance > deadzone * limit) {
         const angle = Math.atan2(dy, dx);
@@ -488,13 +486,12 @@ function setupTouchControls() {
         cancelAnimationFrame(recenterInterval);
         recenterInterval = null;
       }
-      // Store the touch identifier for multi-touch tracking
-      if (e.touches && e.touches[0]) {
-        joystickTouchId = e.touches[0].identifier;
+      // Store the touch identifier for multi-touch tracking using changedTouches
+      if (e.touches && e.changedTouches && e.changedTouches[0]) {
+        joystickTouchId = e.changedTouches[0].identifier;
       }
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      updateJoystick(clientX, clientY);
+      const touch = e.changedTouches ? e.changedTouches[0] : e;
+      updateJoystick(touch.clientX, touch.clientY);
     };
 
     const drag = (e) => {
@@ -596,7 +593,7 @@ function setupTouchControls() {
       if (pedalTouchId !== null) {
         return Array.from(e.touches).find(t => t.identifier === pedalTouchId) || null;
       }
-      return e.touches[0] || null;
+      return null;
     };
 
     const computePedalValue = (raw) => {
@@ -642,12 +639,12 @@ function setupTouchControls() {
         cancelAnimationFrame(recenterInterval);
         recenterInterval = null;
       }
-      // Store the touch identifier for multi-touch tracking
-      if (e.touches && e.touches[0]) {
-        pedalTouchId = e.touches[0].identifier;
+      // Store the touch identifier for multi-touch tracking using changedTouches
+      if (e.touches && e.changedTouches && e.changedTouches[0]) {
+        pedalTouchId = e.changedTouches[0].identifier;
       }
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      updateSlider(clientY);
+      const touch = e.changedTouches ? e.changedTouches[0] : e;
+      updateSlider(touch.clientY);
     };
 
     const drag = (e) => {
@@ -751,7 +748,7 @@ function setupGameEventListeners() {
     if (boostBtnLeft) {
       const sc = raceScene();
       const isBoostActive = sc ? sc.boostActive : false;
-      if (!isBoostActive && boostEnergy >= 100) {
+      if (isBoostActive || boostEnergy >= 99.9) {
         boostBtnLeft.classList.add('visible-boost');
       } else {
         boostBtnLeft.classList.remove('visible-boost');
