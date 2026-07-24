@@ -55,9 +55,16 @@ export function renderTrackGraphics(scene, track) {
   // Generate high-density spline points
   const curvePoints = getClosedSplinePoints(track.points, 280);
   
-  // === BACKGROUND: Stylized vector grid ===
-  graphics.lineStyle(1, 0x1a1828, 0.5);
-  const gridSize = 80;
+  // === BACKGROUND: Broadcast-grade circuit infield ===
+  graphics.fillStyle(0x07090d, 1);
+  graphics.fillRect(0, 0, track.worldWidth, track.worldHeight);
+  graphics.fillStyle(0x0e1317, 0.55);
+  graphics.fillTriangle(0, 0, track.worldWidth * 0.56, 0, 0, track.worldHeight * 0.55);
+  graphics.fillStyle(0x12171b, 0.38);
+  graphics.fillTriangle(track.worldWidth, track.worldHeight, track.worldWidth * 0.46, track.worldHeight, track.worldWidth, track.worldHeight * 0.38);
+
+  graphics.lineStyle(1, 0x273039, 0.22);
+  const gridSize = 96;
   for (let x = 0; x <= track.worldWidth; x += gridSize) {
     graphics.lineBetween(x, 0, x, track.worldHeight);
   }
@@ -78,9 +85,10 @@ export function renderTrackGraphics(scene, track) {
     gfx.strokePath();
   };
 
-  // === RUN-OFF ZONE (green/yellow grass outside curbs) ===
-  drawPath(graphics, roadWidth + 60, 0x1a2e14, 1);  // outer green band
-  drawPath(graphics, roadWidth + 48, 0x152310, 1);  // deeper green
+  // === RUN-OFF ZONE (mown grass and concrete safety apron) ===
+  drawPath(graphics, roadWidth + 76, 0x142718, 1);
+  drawPath(graphics, roadWidth + 62, 0x1b341d, 1);
+  drawPath(graphics, roadWidth + 50, 0x283229, 1);
 
   // === OUTER HAZARD STRIPES (checker pattern edge) ===
   // Alternating wide/narrow gray bands simulate concrete boundary
@@ -113,15 +121,16 @@ export function renderTrackGraphics(scene, track) {
     );
   }
 
-  // === MAIN ASPHALT ROAD — dark charcoal with subtle gradient ===
+  // === MAIN ASPHALT ROAD — layered charcoal, rubber, and lane wear ===
   // Deep shadow layer under road
   drawPath(graphics, roadWidth + 4, 0x0a0810, 1);
   // Main asphalt surface
   drawPath(graphics, roadWidth, 0x100e1a, 1);
   // Very subtle lighter asphalt for surface texture
   drawPath(graphics, roadWidth - 8, 0x121020, 0.6);
-  // Road center highlight (worn rubber line)
-  drawPath(graphics, 2, 0x1e1c2e, 0.8);
+  drawPath(graphics, roadWidth - 26, 0x171922, 0.34);
+  // Worn racing line
+  drawPath(graphics, 4, 0x080a0d, 0.42);
 
   // === CENTER DASHED LINE ===
   const centerDashes = getClosedSplinePoints(track.points, 160);
@@ -134,15 +143,16 @@ export function renderTrackGraphics(scene, track) {
     );
   }
 
-  // === TIRE MARKS (baked into asphalt at corners) ===
+  // === TIRE MARKS (deterministic so a circuit keeps its visual identity) ===
   const tireDivisions = getClosedSplinePoints(track.points, 180);
   for (let i = 0; i < tireDivisions.length - 1; i++) {
-    if (Math.random() < 0.05) {
+    const seeded = ((i * 1103515245 + track.points.length * 12345) >>> 0) / 4294967296;
+    if (seeded < 0.07) {
       const pt = tireDivisions[i];
       const nextPt = tireDivisions[i + 1];
       const angle = Math.atan2(nextPt.y - pt.y, nextPt.x - pt.x) + Math.PI / 2;
-      const offset = (Math.random() - 0.5) * (roadWidth * 0.4);
-      const len = 12 + Math.random() * 20;
+      const offset = (seeded - 0.5) * (roadWidth * 0.75);
+      const len = 18 + seeded * 38;
       graphics.lineStyle(2, 0x0a080e, 0.6);
       graphics.lineBetween(
         pt.x + Math.cos(angle) * offset, pt.y + Math.sin(angle) * offset,
@@ -165,6 +175,64 @@ export function renderTrackGraphics(scene, track) {
     start.x + Math.cos(sfAngle) * halfW, start.y + Math.sin(sfAngle) * halfW,
     start.x - Math.cos(sfAngle) * halfW, start.y - Math.sin(sfAngle) * halfW
   );
+
+  // === TRACKSIDE SET DRESSING ===
+  // Compact grandstands, marshal posts, and floodlights give each circuit a
+  // sense of scale while remaining light enough for mobile browsers.
+  const scenery = scene.add.graphics();
+  for (let i = 12; i < curvePoints.length - 1; i += 24) {
+    const point = curvePoints[i];
+    const nextPoint = curvePoints[i + 1];
+    const tangent = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x);
+    const normal = tangent + Math.PI / 2;
+    const side = (Math.floor(i / 24) % 2 === 0 ? 1 : -1);
+    const offset = roadWidth / 2 + 74 + ((i * 17) % 48);
+    const x = point.x + Math.cos(normal) * offset * side;
+    const y = point.y + Math.sin(normal) * offset * side;
+
+    if (i % 72 === 12) {
+      // Grandstand block with seating stripes.
+      scenery.fillStyle(0x202831, 0.96);
+      scenery.fillRoundedRect(x - 38, y - 16, 76, 32, 4);
+      scenery.fillStyle(0xe4e7e8, 0.3);
+      for (let row = -9; row <= 9; row += 6) {
+        scenery.fillRect(x - 31, y + row, 62, 2);
+      }
+      scenery.lineStyle(2, 0xffd500, 0.76);
+      scenery.strokeRoundedRect(x - 38, y - 16, 76, 32, 4);
+    } else if (i % 48 === 12) {
+      // Floodlight mast and glow pool.
+      scenery.fillStyle(0xffffff, 0.08);
+      scenery.fillCircle(x, y - 22, 20);
+      scenery.lineStyle(3, 0x89929b, 0.9);
+      scenery.lineBetween(x, y + 18, x, y - 18);
+      scenery.fillStyle(0xfff4c9, 0.96);
+      scenery.fillRoundedRect(x - 10, y - 24, 20, 7, 2);
+    } else {
+      // Marshal post / braking board.
+      scenery.fillStyle(0xe21c1c, 0.92);
+      scenery.fillRect(x - 7, y - 12, 14, 24);
+      scenery.fillStyle(0xf7f7f4, 0.92);
+      scenery.fillRect(x - 4, y - 8, 8, 5);
+      scenery.fillRect(x - 4, y + 3, 8, 5);
+    }
+  }
+
+  // Circuit identity board at start/finish.
+  const boardX = start.x + Math.cos(sfAngle) * (halfW + 58);
+  const boardY = start.y + Math.sin(sfAngle) * (halfW + 58);
+  const board = scene.add.text(boardX, boardY, 'PIXEL\nPRIX', {
+    fontFamily: 'monospace',
+    fontSize: '13px',
+    fontStyle: 'bold',
+    color: '#f4f4ef',
+    align: 'center',
+    backgroundColor: '#d91b1b',
+    padding: { x: 8, y: 5 }
+  });
+  board.setOrigin(0.5);
+  board.setRotation(tangentAngle(start, next));
+  board.setDepth(3);
 
   // Checkered segments (black and white)
   const numChecks = 10;
@@ -193,6 +261,10 @@ export function renderTrackGraphics(scene, track) {
   const spline = new Phaser.Curves.Spline(points);
 
   return { curve: spline, roadWidth, curvePoints };
+}
+
+function tangentAngle(start, next) {
+  return Math.atan2(next.y - start.y, next.x - start.x);
 }
 
 /**

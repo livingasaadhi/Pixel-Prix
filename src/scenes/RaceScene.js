@@ -134,6 +134,12 @@ export class RaceScene extends Phaser.Scene {
     this.player.setOrigin(0.5, 0.5);
     this.player.setCollideWorldBounds(true);
     this.player.rotation = baseRot;
+    this.player.setDepth(12);
+
+    // A soft projected shadow keeps the car grounded against the richer track
+    // surface without requiring an image asset or expensive post-processing.
+    this.playerShadow = this.add.ellipse(startX + 7, startY + 9, 50, 18, 0x000000, 0.34);
+    this.playerShadow.setDepth(11);
 
     // Start 10 Hz multiplayer position broadcast
     if (mpState.isMultiplayer) {
@@ -309,6 +315,10 @@ export class RaceScene extends Phaser.Scene {
     cam.setFollowOffset(0, 0);
     cam.removeBounds();
     this.centerCameraOnPlayer();
+    if (this.playerShadow) {
+      this.playerShadow.setPosition(this.player.x + 7, this.player.y + 9);
+      this.playerShadow.rotation = this.player.rotation;
+    }
   }
 
   centerCameraOnPlayer() {

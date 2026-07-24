@@ -6468,3 +6468,108 @@ button[aria-disabled='true']:hover {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* --- Original motorsport broadcast finish ------------------------------ */
+#screen-hud::before {
+  z-index: -1;
+  opacity: 1;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.42), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.42)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.32), transparent 26%, transparent 76%, rgba(0, 0, 0, 0.58));
+  background-size: 100% 100%;
+}
+
+.hud-steering-wheel-display {
+  overflow: visible;
+  border-color: rgba(255, 255, 255, 0.42);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.6), inset 0 1px rgba(255, 255, 255, 0.13);
+}
+
+.hud-steering-wheel-display::before,
+.hud-steering-wheel-display::after {
+  position: absolute;
+  top: -5px;
+  width: 26px;
+  height: 5px;
+  content: '';
+  background: #ffd500;
+}
+
+.hud-steering-wheel-display::before { left: 16px; }
+.hud-steering-wheel-display::after { right: 16px; }
+
+.f1-wheel-core {
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.07), transparent 24%),
+    linear-gradient(180deg, rgba(16, 18, 23, 0.95), rgba(5, 6, 8, 0.98));
+}
+
+.f1-gear-box,
+.f1-speed-box,
+.f1-telemetry-box {
+  position: relative;
+  overflow: hidden;
+}
+
+.f1-gear-box::before,
+.f1-speed-box::before,
+.f1-telemetry-box::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  content: '';
+  background: linear-gradient(90deg, transparent, rgba(255, 213, 0, 0.8), transparent);
+}
+
+.f1-speed-val {
+  text-shadow: 0 0 18px rgba(255, 213, 0, 0.34);
+}
+
+.hud-warning-bar {
+  border-top: 1px solid rgba(0, 0, 0, 0.5);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.hud-kers-container {
+  border-left: 3px solid #ffd500 !important;
+}
+
+.hud-circle-btn {
+  border-radius: 7px;
+}
+
+.hud-ctrl-btn {
+  border-radius: 8px !important;
+}
+
+.car-preview-area,
+.track-minimap-box {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), inset 0 -30px 42px rgba(0, 0, 0, 0.35);
+}
+
+.track-minimap-box::after {
+  position: absolute;
+  right: 7px;
+  bottom: 6px;
+  content: 'LIVE MAP';
+  color: rgba(255, 255, 255, 0.42);
+  font-family: var(--font-mono);
+  font-size: 0.42rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.mp-driver-card,
+.lb-row,
+.go-sector-row {
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.mp-driver-card:hover,
+.lb-row:hover {
+  transform: translateX(3px);
+}
