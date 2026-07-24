@@ -1958,9 +1958,22 @@ function startApp() {
     document.documentElement.classList.add('desktop-device');
   }
 
-  initGame();
+  // The UI must remain available even when a browser cannot initialise the
+  // Phaser renderer (for example after a GPU/WebGL reset).  Initialising the
+  // game first made that failure look like a blank application because none
+  // of the menu handlers or the visible-screen state had been established.
   initUI();
+  setRaceMode(false);
+  showScreen('screen-menu');
   startAmbientParticles();
+
+  try {
+    initGame();
+  } catch (error) {
+    // Keep the garage and non-race screens usable; a later reload can retry
+    // renderer initialisation without trapping the player on a black screen.
+    console.error('Game renderer failed to initialise:', error);
+  }
 }
 
 if (document.readyState === 'loading') {
