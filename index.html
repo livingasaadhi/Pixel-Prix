@@ -77,33 +77,55 @@
       <!-- MAIN MENU SCREEN                                               -->
       <!-- ============================================================== -->
       <div id="screen-menu" class="ui-screen active">
-        <!-- Ambient WebGL / 3D Canvas -->
         <canvas id="ambient-canvas" aria-hidden="true"></canvas>
+        <div class="garage-shell">
+          <div class="garage-heading">
+            <span class="garage-kicker">PIXEL PRIX / SEASON 04</span>
+            <h1>DRIVER HQ</h1>
+            <p>Configure your car, driver profile and championship telemetry.</p>
+          </div>
 
-        <div class="brand-header">
-          <div class="logo-badge">Formula 2D Telemetry</div>
-          <h1 class="logo-title">PIXEL PRIX</h1>
-          <p class="logo-subtitle">Ultra-Luxury Open-Wheel Motorsport Championship</p>
-        </div>
+          <div class="garage-grid">
+            <button id="btn-start-game" class="garage-tile garage-car-tile">
+              <span class="garage-node" aria-hidden="true"></span>
+              <span class="tile-eyebrow">01 / RACE SETUP</span>
+              <span class="tile-title">YOUR<br>RACE CAR</span>
+              <span class="tile-meta">CAR &amp; CIRCUIT CONFIGURATION <span class="tile-key">ENTER</span></span>
+              <span class="garage-car-art" aria-hidden="true">
+                <span class="car-wheel car-wheel-rear"></span>
+                <span class="car-wheel car-wheel-front"></span>
+                <span class="car-chassis"></span>
+                <span class="car-wing"></span>
+              </span>
+            </button>
 
-        <div class="menu-actions">
-          <button id="btn-start-game" class="btn btn-primary btn-large glow-btn f1-main-cta">
-            <span class="btn-glow-layer"></span>
-            <span class="btn-text">ENTER CHAMPIONSHIP</span>
-            <span class="material-symbols-outlined icon-end">sports_motorsports</span>
-          </button>
-          <button id="btn-open-leaderboard" class="btn btn-secondary glass-btn">
-            <span class="material-symbols-outlined icon-start">leaderboard</span>
-            <span>GLOBAL TIMING TOWER</span>
-          </button>
-          <button id="btn-open-settings-menu" class="btn btn-tertiary glass-btn">
-            <span class="material-symbols-outlined icon-start">shield</span>
-            <span>STEWARDS &amp; CONTROLS</span>
-          </button>
-        </div>
+            <button id="btn-open-settings-menu" class="garage-tile garage-driver-tile">
+              <span class="garage-node" aria-hidden="true"></span>
+              <span class="tile-eyebrow">02 / PROFILE</span>
+              <span class="tile-title">DRIVER</span>
+              <span class="tile-meta">CONTROLS, ASSISTS &amp; STEWARDS <span class="tile-key">F6</span></span>
+              <span class="driver-silhouette" aria-hidden="true">
+                <span class="driver-helmet"></span>
+                <span class="driver-body"></span>
+              </span>
+            </button>
 
-        <div class="menu-footer">
-          FIA Telemetry Broadcast v3.4 · Season 04
+            <button id="btn-open-leaderboard" class="garage-tile garage-badge-tile">
+              <span class="garage-node" aria-hidden="true"></span>
+              <span class="tile-eyebrow">03 / LIVE DATA</span>
+              <span class="tile-title">TIMING<br>TOWER</span>
+              <span class="tile-meta">GLOBAL LEADERBOARD &amp; RECORDS <span class="tile-key">F5</span></span>
+              <span class="badge-field" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </span>
+            </button>
+          </div>
+
+          <div class="garage-shortcuts" aria-label="Keyboard shortcuts">
+            <span><kbd>F3</kbd> HELP</span>
+            <span><kbd>↵</kbd> SELECT</span>
+            <span><kbd>ESC</kbd> BACK</span>
+          </div>
         </div>
       </div>
 
