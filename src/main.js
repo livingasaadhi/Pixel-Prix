@@ -344,12 +344,9 @@ function updateCarSelection() {
   document.getElementById('car-name').innerText = car.name;
   document.getElementById('car-desc').innerText = car.description;
 
-  // Update dots
-  const dots = document.querySelectorAll('#car-selection-dots .dot');
-  dots.forEach((dot, idx) => {
-    if (idx === selectedCarIndex) dot.classList.add('active');
-    else dot.classList.remove('active');
-  });
+  updateSelectionDots('car-selection-dots', CARS.length, selectedCarIndex);
+  const carCount = document.getElementById('car-selection-count');
+  if (carCount) carCount.textContent = `GARAGE ${String(selectedCarIndex + 1).padStart(2, '0')} / ${String(CARS.length).padStart(2, '0')}`;
 
   const previewCanvas = document.getElementById('car-preview-canvas');
   drawCarPreview(previewCanvas, car.color, car.accentColor);
@@ -403,12 +400,15 @@ function updateTrackSelection() {
   document.getElementById('track-name').innerText = track.name;
   document.getElementById('track-desc').innerText = track.description;
 
-  // Update dots
-  const dots = document.querySelectorAll('#track-selection-dots .dot');
-  dots.forEach((dot, idx) => {
-    if (idx === selectedTrackIndex) dot.classList.add('active');
-    else dot.classList.remove('active');
-  });
+  updateSelectionDots('track-selection-dots', TRACKS.length, selectedTrackIndex);
+  const trackCount = document.getElementById('track-selection-count');
+  if (trackCount) trackCount.textContent = `CIRCUIT ${String(selectedTrackIndex + 1).padStart(2, '0')} / ${String(TRACKS.length).padStart(2, '0')}`;
+
+  const regionEl = document.getElementById('track-region');
+  if (regionEl) regionEl.textContent = track.region || 'PIXEL PRIX / GRAND PRIX';
+
+  const characterEl = document.getElementById('track-character');
+  if (characterEl) characterEl.textContent = track.character || 'RACE READY';
 
   // Set difficulty with color coding
   const diffEl = document.getElementById('track-difficulty');
@@ -425,19 +425,34 @@ function updateTrackSelection() {
 
   // Circuit telemetry widget details
   const ctLapRecord = document.getElementById('ct-lap-record');
-  if (ctLapRecord) ctLapRecord.innerText = track.difficulty === 'EASY' ? '00:18.117' : track.difficulty === 'MEDIUM' ? '00:24.450' : '00:29.890';
+  if (ctLapRecord) ctLapRecord.innerText = track.record || '01:18.117';
 
   const ctCorners = document.getElementById('ct-corners');
   if (ctCorners) ctCorners.innerText = `${track.points ? track.points.length : 12} TURNS`;
 
   const ctDrs = document.getElementById('ct-drs');
-  if (ctDrs) ctDrs.innerText = `${track.difficulty === 'HARD' ? '3' : '2'} ZONES`;
+  if (ctDrs) ctDrs.innerText = `${track.drsZones ?? 2} ZONES`;
 
   const ctWeather = document.getElementById('ct-weather');
-  if (ctWeather) ctWeather.innerText = 'DRY · 38°C';
+  if (ctWeather) ctWeather.innerText = track.weather || 'DRY · 28°C';
 
   const canvas = document.getElementById('track-minimap');
   drawTrackMinimap(canvas, track);
+  if (canvas) canvas.setAttribute('aria-label', `${track.name} circuit map`);
+}
+
+function updateSelectionDots(containerId, itemCount, activeIndex) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  // The garage is expected to grow. Build the indicators from the data rather
+  // than letting a hard-coded dot count silently fall out of sync.
+  container.replaceChildren(...Array.from({ length: itemCount }, (_, index) => {
+    const dot = document.createElement('span');
+    dot.className = `dot${index === activeIndex ? ' active' : ''}`;
+    dot.setAttribute('aria-hidden', 'true');
+    return dot;
+  }));
 }
 
 function launchSelectedRace() {

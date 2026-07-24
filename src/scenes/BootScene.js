@@ -297,6 +297,39 @@ export class BootScene extends Phaser.Scene {
       ctx.lineTo(x, y + h);
       ctx.closePath();
       ctx.fill();
+    } else if (id === 'violet-vortex') {
+      // Violet Vortex — energetic magenta chevrons
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.moveTo(x + w * 0.15, y);
+      ctx.lineTo(x + w * 0.55, y + h * 0.5);
+      ctx.lineTo(x + w * 0.15, y + h);
+      ctx.lineTo(x + w * 0.34, y + h);
+      ctx.lineTo(x + w * 0.73, y + h * 0.5);
+      ctx.lineTo(x + w * 0.34, y);
+      ctx.closePath();
+      ctx.fill();
+    } else if (id === 'obsidian-works') {
+      // Obsidian Works — disciplined white centre line
+      ctx.fillStyle = accent;
+      ctx.fillRect(x + w * 0.43, y, w * 0.14, h);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillRect(x + w * 0.1, y + h * 0.46, w * 0.8, h * 0.08);
+    } else if (id === 'solar-flare') {
+      // Solar Flare — hot orange rising slash
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.moveTo(x, y + h);
+      ctx.lineTo(x + w * 0.18, y + h);
+      ctx.lineTo(x + w, y + h * 0.1);
+      ctx.lineTo(x + w, y + h * 0.3);
+      ctx.closePath();
+      ctx.fill();
+    } else if (id === 'arctic-pulse') {
+      // Arctic Pulse — twin blue flow lines
+      ctx.fillStyle = accent;
+      ctx.fillRect(x, y + h * 0.22, w, h * 0.12);
+      ctx.fillRect(x, y + h * 0.66, w, h * 0.12);
     }
   }
 
