@@ -70,14 +70,13 @@ function updateNavTabStates(screenId) {
   let activeTab = 'garage';
   if (screenId === 'screen-menu') activeTab = 'garage';
   else if (screenId === 'screen-select') activeTab = 'race';
-  else if (screenId === 'screen-mp-lobby') activeTab = 'mp';
+  else if (screenId === 'screen-mp-lobby') activeTab = 'race';
   else if (screenId === 'screen-leaderboard') activeTab = 'leaderboard';
   else if (screenId === 'screen-settings') activeTab = 'settings';
 
   const topTabs = {
     garage: document.getElementById('top-nav-garage'),
     race: document.getElementById('top-nav-race'),
-    mp: document.getElementById('top-nav-mp'),
     leaderboard: document.getElementById('top-nav-leaderboard'),
     settings: document.getElementById('top-nav-settings')
   };
@@ -1317,7 +1316,6 @@ function initUI() {
 
   bindClickOrTouch('top-nav-leaderboard', openLeaderboard);
   bindClickOrTouch('top-nav-race', openRaceSelect);
-  bindClickOrTouch('top-nav-mp', openRaceSelect);
   bindClickOrTouch('top-nav-garage', () => showScreen('screen-menu'));
   bindClickOrTouch('top-nav-settings', openSettings);
 
@@ -1402,12 +1400,12 @@ function initUI() {
       const cId = selectedCarId();
       const tId = selectedTrackId();
 
-      showStewardToast('CREATING MULTIPLAYER ROOM…', 'amber');
+      showStewardToast('CREATING ONLINE LOBBY…', 'amber');
       const { roomCode } = await createMultiplayerRoom(tId, cId, pName);
 
       document.getElementById('mp-room-code-val').innerText = roomCode;
       showScreen('screen-mp-lobby');
-      showStewardToast(`ROOM ${roomCode} CREATED!`, 'amber');
+      showStewardToast(`ONLINE LOBBY ${roomCode} READY`, 'amber');
     } catch (err) {
       alert(`Could not create room: ${err.message || err}`);
     }
@@ -1451,10 +1449,10 @@ function initUI() {
       document.getElementById('modal-join-room')?.classList.add('hidden');
       document.getElementById('mp-room-code-val').innerText = roomCode;
       showScreen('screen-mp-lobby');
-      showStewardToast(`JOINED ROOM ${roomCode}!`, 'amber');
+      showStewardToast(`JOINED ONLINE LOBBY ${roomCode}`, 'amber');
     } catch (err) {
       if (errorEl) {
-        errorEl.innerText = err.message || 'FAILED TO JOIN ROOM';
+        errorEl.innerText = err.message || 'FAILED TO JOIN ONLINE RACE';
         errorEl.classList.remove('hidden');
       }
     }

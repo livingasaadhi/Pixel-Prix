@@ -44,20 +44,17 @@
           <span class="top-live-tag"><span class="pulse-dot"></span>F1 BROADCAST</span>
         </div>
         <nav class="top-glass-nav" aria-label="Primary Navigation">
-          <button class="top-nav-link active" id="top-nav-garage" aria-label="Garage">
-            <span>GARAGE</span>
+          <button class="top-nav-link active" id="top-nav-garage" aria-label="Home">
+            <span>HOME</span>
           </button>
-          <button class="top-nav-link" id="top-nav-race" aria-label="Solo Race">
-            <span>SOLO</span>
+          <button class="top-nav-link" id="top-nav-race" aria-label="Race Hub">
+            <span>RACE HUB</span>
           </button>
-          <button class="top-nav-link" id="top-nav-mp" aria-label="Multiplayer">
-            <span>MULTIPLAYER</span>
+          <button class="top-nav-link" id="top-nav-leaderboard" aria-label="Live Timing">
+            <span>TIMING</span>
           </button>
-          <button class="top-nav-link" id="top-nav-leaderboard" aria-label="Leaderboard">
-            <span>LEADERBOARD</span>
-          </button>
-          <button class="top-nav-link" id="top-nav-settings" aria-label="Stewards">
-            <span>STEWARDS</span>
+          <button class="top-nav-link" id="top-nav-settings" aria-label="Driver Profile">
+            <span>PROFILE</span>
           </button>
         </nav>
         <div class="top-app-bar-actions">
@@ -82,15 +79,15 @@
           <div class="garage-heading">
             <span class="garage-kicker">PIXEL PRIX / SEASON 04</span>
             <h1>DRIVER HQ</h1>
-            <p>Configure your car, driver profile and championship telemetry.</p>
+            <p>Race setup, driver profile and live timing.</p>
           </div>
 
           <div class="garage-grid">
             <button id="btn-start-game" class="garage-tile garage-car-tile">
               <span class="garage-node" aria-hidden="true"></span>
-              <span class="tile-eyebrow">01 / RACE SETUP</span>
-              <span class="tile-title">YOUR<br>RACE CAR</span>
-              <span class="tile-meta">CAR &amp; CIRCUIT CONFIGURATION <span class="tile-key">ENTER</span></span>
+              <span class="tile-eyebrow">01 / RACE</span>
+              <span class="tile-title">RACE<br>SETUP</span>
+              <span class="tile-meta">CHOOSE YOUR CAR &amp; CIRCUIT <span class="tile-key">ENTER</span></span>
               <span class="garage-car-art" aria-hidden="true">
                 <span class="car-wheel car-wheel-rear"></span>
                 <span class="car-wheel car-wheel-front"></span>
@@ -102,8 +99,8 @@
             <button id="btn-open-settings-menu" class="garage-tile garage-driver-tile">
               <span class="garage-node" aria-hidden="true"></span>
               <span class="tile-eyebrow">02 / PROFILE</span>
-              <span class="tile-title">DRIVER</span>
-              <span class="tile-meta">CONTROLS, ASSISTS &amp; STEWARDS <span class="tile-key">F6</span></span>
+              <span class="tile-title">DRIVER<br>PROFILE</span>
+              <span class="tile-meta">CONTROLS, ASSISTS &amp; RACE RULES <span class="tile-key">F6</span></span>
               <span class="driver-silhouette" aria-hidden="true">
                 <span class="driver-helmet"></span>
                 <span class="driver-body"></span>
@@ -112,9 +109,9 @@
 
             <button id="btn-open-leaderboard" class="garage-tile garage-badge-tile">
               <span class="garage-node" aria-hidden="true"></span>
-              <span class="tile-eyebrow">03 / LIVE DATA</span>
-              <span class="tile-title">TIMING<br>TOWER</span>
-              <span class="tile-meta">GLOBAL LEADERBOARD &amp; RECORDS <span class="tile-key">F5</span></span>
+              <span class="tile-eyebrow">03 / TIMING</span>
+              <span class="tile-title">LIVE<br>TIMING</span>
+              <span class="tile-meta">LAP RECORDS &amp; LEADERBOARD <span class="tile-key">F5</span></span>
               <span class="badge-field" aria-hidden="true">
                 <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
               </span>
@@ -139,7 +136,7 @@
           <button id="btn-select-back" class="icon-btn-circle" aria-label="Go back">
             <span class="material-symbols-outlined">arrow_back</span>
           </button>
-          <h2>CIRCUIT &amp; VEHICLE TELEMETRY</h2>
+          <h2>RACE HUB</h2>
           <div class="spacer"></div>
         </header>
 
@@ -148,7 +145,7 @@
           <!-- ---- SELECT CAR (Vehicle Configuration) --------------------- -->
           <div class="select-section">
             <div class="section-header-row">
-              <p class="section-label">VEHICLE SPECIFICATION</p>
+              <p class="section-label">CAR SELECTION</p>
               <div class="telemetry-live-badge">
                 <span class="pulse-dot"></span>
                 <span>ERS ACTIVE</span>
@@ -217,7 +214,7 @@
           <!-- ---- SELECT CIRCUIT (Circuit Selection) --------------------- -->
           <div class="select-section">
             <div class="section-header-row">
-              <p class="section-label">CIRCUIT TELEMETRY</p>
+              <p class="section-label">CIRCUIT SELECTION</p>
               <span class="circuit-avail-tag">FIA GRADE 1</span>
             </div>
 
@@ -300,12 +297,12 @@
 
           <button id="btn-create-room" class="btn btn-secondary btn-large mp-btn-create">
             <span class="material-symbols-outlined">groups</span>
-            <span>CREATE ROOM</span>
+            <span>HOST ONLINE RACE</span>
           </button>
 
           <button id="btn-join-room-modal" class="btn btn-tertiary btn-large mp-btn-join">
             <span class="material-symbols-outlined">key</span>
-            <span>JOIN ROOM</span>
+            <span>JOIN ONLINE RACE</span>
           </button>
         </div>
       </div>
@@ -317,7 +314,7 @@
         <div class="mp-lobby-container glass-card">
           <div class="mp-lobby-header">
             <div class="mp-room-title">
-              <span class="section-label">F1 MULTIPLAYER ROOM LOBBY</span>
+              <span class="section-label">ONLINE RACE LOBBY</span>
               <h2>ROOM CODE: <span id="mp-room-code-val">----</span></h2>
             </div>
             <button id="btn-copy-room-code" class="btn btn-small btn-secondary">
@@ -356,34 +353,34 @@
       </div>
 
       <!-- ============================================================== -->
-      <!-- JOIN ROOM CODE MODAL                                           -->
+      <!-- JOIN ONLINE RACE MODAL                                         -->
       <!-- ============================================================== -->
       <div id="modal-join-room" class="modal-overlay hidden">
         <div class="modal-card glass-card">
           <div class="modal-header">
-            <h3>JOIN MULTIPLAYER ROOM</h3>
-            <p>Enter the 4-character room code from your host.</p>
+            <h3>JOIN ONLINE RACE</h3>
+            <p>Enter the 4-character lobby code from the host.</p>
           </div>
           <div class="modal-body">
-            <input type="text" id="input-room-code" class="f1-input" maxlength="6" placeholder="ROOM CODE (e.g. R7K2)" autocomplete="off" spellcheck="false" />
+            <input type="text" id="input-room-code" class="f1-input" maxlength="6" placeholder="LOBBY CODE (e.g. R7K2)" autocomplete="off" spellcheck="false" />
             <p id="join-room-error" class="error-msg hidden"></p>
           </div>
           <div class="modal-footer">
             <button id="btn-cancel-join" class="btn btn-secondary">CANCEL</button>
-            <button id="btn-confirm-join" class="btn btn-primary">JOIN ROOM</button>
+            <button id="btn-confirm-join" class="btn btn-primary">JOIN RACE</button>
           </div>
         </div>
       </div>
 
       <!-- ============================================================== -->
-      <!-- MULTIPLAYER CLASSIFICATION RESULTS MODAL                       -->
+      <!-- ONLINE RACE CLASSIFICATION MODAL                               -->
       <!-- ============================================================== -->
       <div id="modal-mp-results" class="modal-overlay hidden">
         <div class="modal-card glass-card mp-results-card">
           <div class="modal-header modal-header-row">
             <div>
-              <span class="section-label">FIA FORMULA TELEMETRY</span>
-              <h2>MULTIPLAYER RACE CLASSIFICATION</h2>
+              <span class="section-label">ONLINE RACE / LIVE TIMING</span>
+              <h2>RACE CLASSIFICATION</h2>
             </div>
             <button id="btn-close-mp-results-x" class="icon-btn-circle modal-close-btn" aria-label="Close modal">
               <span class="material-symbols-outlined">close</span>
@@ -652,7 +649,7 @@
               <span class="material-symbols-outlined">menu</span>
             </button>
             <div class="lb-header-brand">
-              <span class="lb-header-context">GLOBAL TIMING TOWER</span>
+              <span class="lb-header-context">LIVE TIMING</span>
               <span class="lb-header-season">SEASON 04 · LIVE TELEMETRY</span>
             </div>
           </div>
@@ -704,7 +701,7 @@
       <div id="screen-settings" class="ui-screen hidden">
         <div class="modal-card glass-modal">
           <header class="modal-header">
-            <h2>CONTROLS &amp; FIA STEWARDS</h2>
+            <h2>DRIVER PROFILE &amp; CONTROLS</h2>
             <button id="btn-close-settings" class="icon-btn-circle" aria-label="Close settings">
               <span class="material-symbols-outlined">close</span>
             </button>
