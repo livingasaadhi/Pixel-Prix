@@ -7440,3 +7440,222 @@ button[aria-disabled='true']:hover {
     display: none;
   }
 }
+
+/* Circuit briefing hierarchy: selection is about deciding where to race, not
+   reading a dense telemetry dashboard.  The layout gives the route and title
+   room first, then places secondary information in a single quiet band. */
+#screen-select .track-carousel-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  align-items: stretch;
+  gap: 8px;
+}
+
+#screen-select .track-carousel-nav {
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  margin: auto 0;
+  align-self: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  background: rgba(7, 8, 10, 0.58);
+  color: #f4f5f6;
+  font-size: 1.25rem;
+}
+
+#screen-select .track-carousel-nav:hover {
+  border-color: rgba(255, 255, 255, 0.78);
+  background: #f4f5f6;
+  color: #101114;
+  box-shadow: none;
+}
+
+#screen-select .track-content {
+  justify-content: center;
+  padding: clamp(16px, 2vw, 28px);
+}
+
+#screen-select .track-preview-row {
+  align-items: center;
+}
+
+#screen-select .track-minimap-box {
+  width: clamp(122px, 12vw, 164px);
+  height: clamp(122px, 12vw, 164px);
+  flex-basis: clamp(122px, 12vw, 164px);
+  padding: 12px;
+  border-color: rgba(255, 255, 255, 0.22);
+  background: #0b0c0f;
+  box-shadow: none;
+}
+
+#screen-select .track-minimap-box::before,
+#screen-select .track-minimap-box::after {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+#screen-select .track-region {
+  margin-bottom: 8px;
+  color: var(--pp-muted, #a9adb6);
+  font-size: clamp(0.58rem, 0.68vw, 0.68rem);
+  letter-spacing: 0.12em;
+}
+
+#screen-select .track-info-col {
+  gap: 10px;
+}
+
+#screen-select .track-info-col h3 {
+  font-size: clamp(1.22rem, 1.75vw, 1.72rem);
+  letter-spacing: 0.015em;
+}
+
+#screen-select .track-info-col p {
+  max-width: 44ch;
+  color: var(--pp-muted, #a9adb6);
+  font-size: clamp(0.76rem, 0.9vw, 0.9rem);
+  line-height: 1.55;
+}
+
+/* The count in the section header is the reliable progress affordance; dots
+   add noise once the calendar grows beyond a handful of circuits. */
+#screen-select #track-selection-dots {
+  display: none;
+}
+
+#screen-select .track-tags {
+  gap: 6px;
+}
+
+#screen-select .track-tag,
+#screen-select .track-tag.track-character,
+#screen-select #track-difficulty[data-level='EASY'],
+#screen-select #track-difficulty[data-level='MEDIUM'],
+#screen-select #track-difficulty[data-level='HARD'] {
+  padding: 5px 8px;
+  color: var(--pp-text, #f6f7f8);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: clamp(0.54rem, 0.62vw, 0.64rem);
+}
+
+#screen-select .circuit-telemetry-widget {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin-top: clamp(18px, 2vh, 28px);
+  padding: 0;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+}
+
+#screen-select .ct-cell {
+  min-height: 66px;
+  padding: 13px clamp(7px, 1vw, 16px);
+  justify-content: center;
+}
+
+#screen-select .ct-cell + .ct-cell {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#screen-select .ct-label {
+  color: var(--pp-dim, #727782);
+  font-size: clamp(0.5rem, 0.58vw, 0.6rem);
+}
+
+#screen-select .ct-val,
+#screen-select .ct-weather .ct-val {
+  color: var(--pp-text, #f6f7f8);
+  font-size: clamp(0.78rem, 0.9vw, 0.96rem);
+}
+
+@media (min-width: 520px) and (max-width: 860px) {
+  #screen-select .track-preview-row {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  #screen-select .track-minimap-box {
+    width: 132px;
+    height: 132px;
+    flex-basis: 132px;
+  }
+
+  #screen-select .circuit-telemetry-widget {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 519px) {
+  #screen-select .track-carousel-row {
+    grid-template-columns: 34px minmax(0, 1fr) 34px;
+    gap: 4px;
+  }
+
+  #screen-select .track-carousel-nav {
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+    font-size: 1rem;
+  }
+
+  #screen-select .track-content {
+    padding: 10px;
+  }
+
+  #screen-select .track-minimap-box {
+    width: 82px;
+    height: 82px;
+    flex-basis: 82px;
+    padding: 7px;
+  }
+
+  #screen-select .track-region {
+    margin-bottom: 4px;
+    font-size: 0.48rem;
+  }
+
+  #screen-select .track-info-col {
+    gap: 5px;
+  }
+
+  #screen-select .track-info-col h3 {
+    font-size: 0.92rem;
+  }
+
+  #screen-select .track-info-col p {
+    font-size: 0.58rem;
+  }
+
+  #screen-select .track-tags {
+    gap: 3px;
+  }
+
+  #screen-select .track-tag,
+  #screen-select .track-tag.track-character {
+    padding: 3px 5px;
+    font-size: 0.46rem;
+  }
+
+  #screen-select .circuit-telemetry-widget {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 10px;
+  }
+
+  #screen-select .ct-cell {
+    min-height: 40px;
+    padding: 5px 7px;
+  }
+
+  #screen-select .ct-cell:nth-child(3) {
+    border-left: 0;
+  }
+
+  #screen-select .ct-cell:nth-child(n + 3) {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}

@@ -347,21 +347,20 @@ export function drawTrackMinimap(canvas, track) {
   ctx.strokeStyle = 'rgba(8, 10, 15, 0.9)';
   ctx.stroke();
 
-  // Draw Sector 1 (Electric Cyan)
-  drawSegment(0, s1End, '#00F0FF', 'rgba(0, 240, 255, 0.35)');
-
-  // Draw Sector 2 (Neon Green)
-  drawSegment(s1End, s2End, '#00FF66', 'rgba(0, 255, 102, 0.35)');
-
-  // Draw Sector 3 (Precision Red)
-  drawSegment(s2End, rawPoints.length, '#FF1801', 'rgba(255, 24, 1, 0.35)');
+  // A neutral track line keeps the route legible without turning the map into
+  // a multi-colour legend. Sector labels remain available beside the map.
+  const routeColor = '#F4F5F6';
+  const routeGlow = 'rgba(244, 245, 246, 0.18)';
+  drawSegment(0, s1End, routeColor, routeGlow, 2.5);
+  drawSegment(s1End, s2End, routeColor, routeGlow, 2.5);
+  drawSegment(s2End, rawPoints.length, routeColor, routeGlow, 2.5);
 
   // Sector split dots
   const drawSplitMarker = (idx, label) => {
     const pt = rawPoints[idx % rawPoints.length];
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = '#00F0FF';
-    ctx.shadowBlur = 6;
+    ctx.fillStyle = '#ffd500';
+    ctx.shadowColor = 'rgba(255, 213, 0, 0.35)';
+    ctx.shadowBlur = 4;
     ctx.beginPath();
     ctx.arc(mapX(pt.x), mapY(pt.y), 3.5, 0, Math.PI * 2);
     ctx.fill();
@@ -378,8 +377,8 @@ export function drawTrackMinimap(canvas, track) {
   const sfHW = Math.max(6, (track.roadWidth / 2) * scale);
   ctx.lineWidth = 3;
   ctx.strokeStyle = '#FFFFFF';
-  ctx.shadowColor = '#FF1801';
-  ctx.shadowBlur = 10;
+  ctx.shadowColor = 'rgba(255, 255, 255, 0.2)';
+  ctx.shadowBlur = 5;
   ctx.beginPath();
   ctx.moveTo(mapX(sfP.x) + Math.cos(sfAng) * sfHW, mapY(sfP.y) + Math.sin(sfAng) * sfHW);
   ctx.lineTo(mapX(sfP.x) - Math.cos(sfAng) * sfHW, mapY(sfP.y) - Math.sin(sfAng) * sfHW);
