@@ -216,7 +216,7 @@ export function drawTrackMinimap(canvas, track) {
     if (p.y > maxY) maxY = p.y;
   });
 
-  const margin = 14;
+  const margin = 16;
   const scaleX = (w - margin * 2) / (maxX - minX || 1);
   const scaleY = (h - margin * 2) / (maxY - minY || 1);
   const scale = Math.min(scaleX, scaleY);
@@ -227,78 +227,90 @@ export function drawTrackMinimap(canvas, track) {
   const mapX = (x) => offsetX + (x - minX) * scale;
   const mapY = (y) => offsetY + (y - minY) * scale;
 
-  // Build path
+  // Background subtle telemetry grid line overlay
+  ctx.lineWidth = 0.5;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  const gridStep = 20;
+  for (let x = 0; x < w; x += gridStep) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+  for (let y = 0; y < h; y += gridStep) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+
   const rawPoints = track.points;
-  const loopPoints = [...rawPoints, rawPoints[0]];
-  
-  const buildPath = () => {
+  const s1End = track.sector1End || Math.floor(rawPoints.length / 3);
+  const s2End = track.sector2End || Math.floor((rawPoints.length * 2) / 3);
+
+  // Build sector sub-paths
+  const drawSegment = (startIdx, endIdx, color, glowColor, width = 3) => {
     ctx.beginPath();
-    loopPoints.forEach((p, idx) => {
-      if (idx === 0) ctx.moveTo(mapX(p.x), mapY(p.y));
-      else ctx.lineTo(mapX(p.x), mapY(p.y));
-    });
-    ctx.closePath();
+    for (let i = startIdx; i <= endIdx; i++) {
+      const pt = rawPoints[i % rawPoints.length];
+      if (i === startIdx) ctx.moveTo(mapX(pt.x), mapY(pt.y));
+      else ctx.lineTo(mapX(pt.x), mapY(pt.y));
+    }
+    ctx.lineWidth = width + 4;
+    ctx.strokeStyle = glowColor;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    ctx.lineWidth = width;
+    ctx.strokeStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
   };
 
-  // Outer glow aura
-  buildPath();
-  ctx.lineWidth = track.roadWidth * scale + 6;
-  ctx.strokeStyle = 'rgba(232, 0, 45, 0.12)';
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  // Dark road bed underneath
+  ctx.beginPath();
+  rawPoints.forEach((p, idx) => {
+    if (idx === 0) ctx.moveTo(mapX(p.x), mapY(p.y));
+    else ctx.lineTo(mapX(p.x), mapY(p.y));
+  });
+  ctx.closePath();
+  ctx.lineWidth = Math.max(6, track.roadWidth * scale * 0.8);
+  ctx.strokeStyle = 'rgba(8, 10, 15, 0.9)';
   ctx.stroke();
 
-  // Run-off zone (green)
-  buildPath();
-  ctx.lineWidth = track.roadWidth * scale + 2;
-  ctx.strokeStyle = 'rgba(20, 40, 15, 0.9)';
-  ctx.stroke();
+  // Draw Sector 1 (Electric Cyan)
+  drawSegment(0, s1End, '#00F0FF', 'rgba(0, 240, 255, 0.35)');
 
-  // Main road surface
-  buildPath();
-  ctx.lineWidth = track.roadWidth * scale;
-  ctx.strokeStyle = '#100e1a';
-  ctx.stroke();
+  // Draw Sector 2 (Neon Green)
+  drawSegment(s1End, s2End, '#00FF66', 'rgba(0, 255, 102, 0.35)');
 
-  // Bright centerline
-  buildPath();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
-  ctx.setLineDash([4, 4]);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  // Draw Sector 3 (Precision Red)
+  drawSegment(s2End, rawPoints.length, '#FF1801', 'rgba(255, 24, 1, 0.35)');
 
-  // Start/Finish line (red)
-  const sfP  = track.points[1] || track.points[0];
-  const sfN  = track.points[2] || track.points[1];
+  // Sector split dots
+  const drawSplitMarker = (idx, label) => {
+    const pt = rawPoints[idx % rawPoints.length];
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = '#00F0FF';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(mapX(pt.x), mapY(pt.y), 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  };
+  drawSplitMarker(0, 'S1');
+  drawSplitMarker(s1End, 'S2');
+  drawSplitMarker(s2End, 'S3');
+
+  // Start/Finish checkered line overlay
+  const sfP = track.points[1] || track.points[0];
+  const sfN = track.points[2] || track.points[1];
   const sfAng = Math.atan2(sfN.y - sfP.y, sfN.x - sfP.x) + Math.PI / 2;
-  const sfHW  = (track.roadWidth / 2) * scale;
+  const sfHW = Math.max(6, (track.roadWidth / 2) * scale);
   ctx.lineWidth = 3;
-  ctx.strokeStyle = '#e8002d';
-  ctx.shadowColor = '#e8002d';
-  ctx.shadowBlur = 6;
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.shadowColor = '#FF1801';
+  ctx.shadowBlur = 10;
   ctx.beginPath();
   ctx.moveTo(mapX(sfP.x) + Math.cos(sfAng) * sfHW, mapY(sfP.y) + Math.sin(sfAng) * sfHW);
   ctx.lineTo(mapX(sfP.x) - Math.cos(sfAng) * sfHW, mapY(sfP.y) - Math.sin(sfAng) * sfHW);
   ctx.stroke();
   ctx.shadowBlur = 0;
-
-  // Start dot — glowing pulse (animated via JS if needed, static here)
-  const startP = track.points[0];
-  const grad = ctx.createRadialGradient(
-    mapX(startP.x), mapY(startP.y), 0,
-    mapX(startP.x), mapY(startP.y), 6
-  );
-  grad.addColorStop(0, 'rgba(232, 0, 45, 1)');
-  grad.addColorStop(0.5, 'rgba(232, 0, 45, 0.5)');
-  grad.addColorStop(1, 'rgba(232, 0, 45, 0)');
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(mapX(startP.x), mapY(startP.y), 6, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(mapX(startP.x), mapY(startP.y), 2.5, 0, Math.PI * 2);
-  ctx.fill();
 }

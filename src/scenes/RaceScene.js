@@ -4,6 +4,7 @@ import { getTrackById } from '../data/tracks.js';
 import { renderTrackGraphics } from '../utils/trackRenderer.js';
 import { getNearestSegmentIndex, checkCheckpointProximity, isOffRoad } from '../utils/trackPhysics.js';
 import { startEngineSound, updateEnginePitch, stopEngineSound, setEngineActive, playBoostSound, playCheckpointSound, playFinishSound } from '../utils/audio.js';
+import { mpState, startPositionBroadcast, stopPositionBroadcast, broadcastRaceFinish, calculateLiveRank } from '../utils/multiplayer.js';
 
 export class RaceScene extends Phaser.Scene {
   constructor() {
@@ -110,13 +111,33 @@ export class RaceScene extends Phaser.Scene {
     this.curvePoints = trackResult.curvePoints;
     this.roadWidth = trackResult.roadWidth;
 
-    // 3. Create player car sprite
+    // 3. Create player car sprite (with deterministic grid slot placement for multiplayer)
     const startPos = this.trackData.startPos;
+    let gridSlot = 0;
+    if (mpState.isMultiplayer && mpState.players.length > 0) {
+      const pMatch = mpState.players.find(p => p.id === mpState.localPlayer.id);
+      if (pMatch && typeof pMatch.gridPos === 'number') {
+        gridSlot = pMatch.gridPos;
+      }
+    }
+
+    const baseRot = startPos.rotation || 0;
+    const sideOffset = (gridSlot % 2 === 0 ? -1 : 1) * 22;
+    const backOffset = gridSlot * 32;
+
+    const startX = startPos.x - Math.cos(baseRot + Math.PI / 2) * sideOffset - Math.cos(baseRot) * backOffset;
+    const startY = startPos.y - Math.sin(baseRot + Math.PI / 2) * sideOffset - Math.sin(baseRot) * backOffset;
+
     const textureKey = 'car_' + this.carData.id + '_straight';
-    this.player = this.physics.add.sprite(startPos.x, startPos.y, textureKey);
+    this.player = this.physics.add.sprite(startX, startY, textureKey);
     this.player.setOrigin(0.5, 0.5);
     this.player.setCollideWorldBounds(true);
-    this.player.rotation = startPos.rotation || 0;
+    this.player.rotation = baseRot;
+
+    // Start 10 Hz multiplayer position broadcast
+    if (mpState.isMultiplayer) {
+      startPositionBroadcast(this);
+    }
 
     // 4. Camera: remove bounds and follow lag so player is hard-locked to screen center
     this.cameras.main.removeBounds();
@@ -182,28 +203,33 @@ export class RaceScene extends Phaser.Scene {
     this.boostKeyZ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
     this.boostKeyC = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
 
-    // Robust keyboard fallback
+    // Robust keyboard fallback (checks both e.key and e.code)
     this._kb = {
       up: false, down: false, left: false, right: false,
       space: false, shift: false, z: false, c: false
     };
-    const codeMap = {
-      KeyW: 'up', ArrowUp: 'up',
-      KeyS: 'down', ArrowDown: 'down',
-      KeyA: 'left', ArrowLeft: 'left',
-      KeyD: 'right', ArrowRight: 'right',
-      Space: 'space', ShiftLeft: 'shift', ShiftRight: 'shift',
-      KeyZ: 'z', KeyC: 'c'
+    const keyActionMap = {
+      w: 'up', W: 'up', ArrowUp: 'up', KeyW: 'up',
+      s: 'down', S: 'down', ArrowDown: 'down', KeyS: 'down',
+      a: 'left', A: 'left', ArrowLeft: 'left', KeyA: 'left',
+      d: 'right', D: 'right', ArrowRight: 'right', KeyD: 'right',
+      ' ': 'space', Space: 'space', Shift: 'shift', ShiftLeft: 'shift', ShiftRight: 'shift',
+      z: 'z', Z: 'z', KeyZ: 'z', c: 'c', C: 'c', KeyC: 'c'
     };
     this._kbHandler = (e) => {
       const t = e.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) {
         return;
       }
-      const action = codeMap[e.code];
+      const action = keyActionMap[e.key] || keyActionMap[e.code];
       if (action) {
         this._kb[action] = e.type === 'keydown';
-        if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+        if (action === 'up') {
+          // Instantly unlock driving if player presses acceleration
+          this.lightsGreen = true;
+          this.raceStarted = true;
+        }
+        if (e.code === 'Space' || e.code.startsWith('Arrow') || e.key.startsWith('Arrow')) e.preventDefault();
       }
     };
     window.addEventListener('keydown', this._kbHandler);
@@ -220,6 +246,9 @@ export class RaceScene extends Phaser.Scene {
     };
     window.addEventListener('keydown', this._preventScrollHandler);
 
+    this.lightsGreen = true;
+    this.raceStarted = true;
+
     this._lightsGreenHandler = () => {
       this.raceStarted = true;
       this.lightsGreen = true;
@@ -229,6 +258,19 @@ export class RaceScene extends Phaser.Scene {
       startEngineSound();
     };
     window.addEventListener('pixel-prix:lights-green', this._lightsGreenHandler);
+
+    // Guaranteed fallback: enable driving after countdown duration (max 2.8s)
+    this.time.delayedCall(2800, () => {
+      if (!this.lightsGreen) {
+        this.raceStarted = true;
+        this.lightsGreen = true;
+        this.startTime = this.time.now;
+        this.lapStartTime = this.time.now;
+        this.sectorStartTime = this.time.now;
+      }
+    });
+
+    startEngineSound();
 
     // 7. Register shutdown handler
     this.events.once('shutdown', this.cleanup, this);
@@ -545,6 +587,13 @@ export class RaceScene extends Phaser.Scene {
     this.vx = Phaser.Math.Linear(this.vx, targetVx, grip);
     this.vy = Phaser.Math.Linear(this.vy, targetVy, grip);
 
+    // Apply movement velocity to Arcade Physics body and sprite position
+    if (this.player && this.player.body) {
+      this.player.body.setVelocity(this.vx, this.vy);
+    }
+    this.player.x += this.vx * dt;
+    this.player.y += this.vy * dt;
+
     // Spark emitter countdown timer to avoid setTimeout GC allocations
     if (this.sparkDuration > 0) {
       this.sparkDuration -= dt;
@@ -585,11 +634,70 @@ export class RaceScene extends Phaser.Scene {
       this.cameras.main.shake(250, 0.008);
     }
 
-    this.player.setVelocity(this.vx, this.vy);
-    updateEnginePitch(Math.abs(this.currentSpeed) / this.maxSpeed);
+    const isThrottle = gasOn || this.boostActive;
+    updateEnginePitch(Math.abs(this.currentSpeed) / this.maxSpeed, isThrottle);
 
     // Checkpoints
     this.checkCheckpoints();
+
+    // -------------------------------------------------------------------------
+    // MULTIPLAYER GHOST RENDERING & LIVE RANKING
+    // -------------------------------------------------------------------------
+    if (mpState.isMultiplayer) {
+      const now = Date.now();
+
+      mpState.remotePlayers.forEach((rp, id) => {
+        // Disconnect Timeout (3.5s)
+        if (now - rp.lastUpdate > 3500) {
+          if (rp.sprite) {
+            rp.sprite.destroy();
+            if (rp.nameTag) rp.nameTag.destroy();
+          }
+          mpState.remotePlayers.delete(id);
+          return;
+        }
+
+        // Create Ghost Sprite & Name Tag
+        if (!rp.sprite) {
+          const tex = 'car_' + (rp.carId || 'scuderia-furiosa') + '_straight';
+          rp.sprite = this.add.sprite(rp.targetX || startPos.x, rp.targetY || startPos.y, tex);
+          rp.sprite.setOrigin(0.5, 0.5);
+          rp.sprite.setAlpha(0.85);
+          rp.sprite.setDepth(15);
+          rp.sprite.setTint(0x00F0FF); // Neon cyan outline tint for remote ghosts
+
+          const pInfo = mpState.players.find(p => p.id === id);
+          const gridText = pInfo ? `P${(pInfo.gridPos || 0) + 1} | ` : '';
+
+          rp.nameTag = this.add.text(rp.targetX || startPos.x, (rp.targetY || startPos.y) - 28, `${gridText}${rp.name}`, {
+            fontFamily: 'monospace',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            color: '#00F0FF',
+            backgroundColor: 'rgba(8, 10, 15, 0.8)',
+            padding: { x: 5, y: 2 }
+          });
+          rp.nameTag.setOrigin(0.5, 0.5);
+          rp.nameTag.setDepth(16);
+        }
+
+        // Smooth Lerp Position & Rotation
+        rp.sprite.x = Phaser.Math.Linear(rp.sprite.x, rp.targetX, 0.25);
+        rp.sprite.y = Phaser.Math.Linear(rp.sprite.y, rp.targetY, 0.25);
+        rp.sprite.rotation = Phaser.Math.Angle.Wrap(Phaser.Math.Linear(rp.sprite.rotation, rp.targetRotation, 0.25));
+
+        if (rp.nameTag) {
+          rp.nameTag.setPosition(rp.sprite.x, rp.sprite.y - 28);
+        }
+      });
+
+      // Update Live Position Rank in HUD
+      const rankInfo = calculateLiveRank(this.currentLap, this.nextCheckpointIndex, this.elapsedMs);
+      const lapEl = document.getElementById('hud-lap-text');
+      if (lapEl) {
+        lapEl.innerHTML = `${this.currentLap}/${this.totalLaps} <span style="color:#00F0FF; margin-left:6px; font-weight:900;">P${rankInfo.rank}/${rankInfo.total}</span>`;
+      }
+    }
   }
 
   handleTrackLimitsViolation() {
@@ -710,6 +818,11 @@ export class RaceScene extends Phaser.Scene {
 
     const bestLapMs = this.lapTimes.length > 0 ? Math.min(...this.lapTimes) : this.elapsedMs;
     const finalTime = this.elapsedMs + this.penaltyMs;
+
+    if (mpState.isMultiplayer) {
+      stopPositionBroadcast();
+      broadcastRaceFinish(finalTime);
+    }
 
     window.dispatchEvent(new CustomEvent('pixel-prix:finish', {
       detail: {

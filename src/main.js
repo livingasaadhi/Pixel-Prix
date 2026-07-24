@@ -4,7 +4,8 @@ import { RaceScene } from './scenes/RaceScene.js';
 import { CARS } from './data/cars.js';
 import { TRACKS } from './data/tracks.js';
 import { drawTrackMinimap } from './utils/trackRenderer.js';
-import { submitScore, fetchTopScores, subscribeToScores } from './supabase.js';
+import { submitScore, fetchTopScores, subscribeToScores, syncLocalScoresToSupabase } from './supabase.js';
+import { mpState, createMultiplayerRoom, joinMultiplayerRoom, leaveMultiplayerRoom, broadcastRaceStart, generateRoomCode } from './utils/multiplayer.js';
 
 // Global App State
 let selectedCarIndex = 0;
@@ -37,6 +38,9 @@ function showScreen(screenId) {
   // While the username dialog is open, never let anything navigate away from
   // the race-complete screen. Only an explicit user action (which clears
   // scoreDialogOpen first) is allowed to move off it.
+  if (screenId === 'screen-select' || screenId === 'screen-menu' || screenId === 'screen-hud') {
+    scoreDialogOpen = false;
+  }
   if (scoreDialogOpen && screenId !== 'screen-gameover') {
     return;
   }
@@ -66,21 +70,16 @@ function updateNavTabStates(screenId) {
   let activeTab = 'garage';
   if (screenId === 'screen-menu') activeTab = 'garage';
   else if (screenId === 'screen-select') activeTab = 'race';
+  else if (screenId === 'screen-mp-lobby') activeTab = 'mp';
   else if (screenId === 'screen-leaderboard') activeTab = 'leaderboard';
-
-  const bottomTabs = {
-    garage: document.getElementById('nav-tab-garage'),
-    race: document.getElementById('nav-tab-race'),
-    leaderboard: document.getElementById('nav-tab-leaderboard')
-  };
-  Object.entries(bottomTabs).forEach(([key, el]) => {
-    if (el) el.classList.toggle('active', key === activeTab);
-  });
+  else if (screenId === 'screen-settings') activeTab = 'settings';
 
   const topTabs = {
     garage: document.getElementById('top-nav-garage'),
     race: document.getElementById('top-nav-race'),
-    leaderboard: document.getElementById('top-nav-leaderboard')
+    mp: document.getElementById('top-nav-mp'),
+    leaderboard: document.getElementById('top-nav-leaderboard'),
+    settings: document.getElementById('top-nav-settings')
   };
   Object.entries(topTabs).forEach(([key, el]) => {
     if (el) el.classList.toggle('active', key === activeTab);
@@ -336,10 +335,15 @@ function updateCarSelection() {
   const previewCanvas = document.getElementById('car-preview-canvas');
   drawCarPreview(previewCanvas, car.color, car.accentColor);
 
-  document.getElementById('stat-speed').style.width = `${Math.min(100, (car.topSpeed / 340) * 100)}%`;
-  document.getElementById('stat-accel').style.width = `${Math.min(100, (car.acceleration / 180) * 100)}%`;
-  document.getElementById('stat-handling').style.width = `${Math.min(100, (car.handling / 5.2) * 100)}%`;
-  document.getElementById('stat-boost').style.width = `${Math.min(100, (car.boostPower / 1.7) * 100)}%`;
+  const speedPct = Math.min(100, (car.topSpeed / 340) * 100);
+  const accelPct = Math.min(100, (car.acceleration / 180) * 100);
+  const handlingPct = Math.min(100, (car.handling / 5.2) * 100);
+  const boostPct = Math.min(100, (car.boostPower / 1.7) * 100);
+
+  document.getElementById('stat-speed').style.width = `${speedPct}%`;
+  document.getElementById('stat-accel').style.width = `${accelPct}%`;
+  document.getElementById('stat-handling').style.width = `${handlingPct}%`;
+  document.getElementById('stat-boost').style.width = `${boostPct}%`;
 
   const speedVal = document.getElementById('stat-speed-val');
   if (speedVal) speedVal.innerText = `${car.topSpeed} KM/H`;
@@ -352,6 +356,19 @@ function updateCarSelection() {
 
   const boostVal = document.getElementById('stat-boost-val');
   if (boostVal) boostVal.innerText = `ERS ${Math.round(car.boostPower * 100)}KW`;
+
+  // Dynamic stat benchmark readouts
+  const bmSpeed = document.getElementById('bm-speed');
+  if (bmSpeed) bmSpeed.innerText = speedPct > 90 ? '+15% vs Track Avg (Straight Line)' : '+5% vs Track Avg';
+
+  const bmAccel = document.getElementById('bm-accel');
+  if (bmAccel) bmAccel.innerText = accelPct > 85 ? 'Sub 2.0s 0-100 Launch' : 'Optimal Apex Launch';
+
+  const bmHandling = document.getElementById('bm-handling');
+  if (bmHandling) bmHandling.innerText = handlingPct > 90 ? 'Maximum High-Speed Downforce' : 'Balanced Downforce';
+
+  const bmBoost = document.getElementById('bm-boost');
+  if (bmBoost) bmBoost.innerText = boostPct > 90 ? 'Overboost Energy Recovery' : 'Kinetic ERS Active';
 }
 
 function updateTrackSelection() {
@@ -376,13 +393,29 @@ function updateTrackSelection() {
 
   // Set difficulty with color coding
   const diffEl = document.getElementById('track-difficulty');
-  diffEl.innerText = track.difficulty;
-  diffEl.dataset.level = track.difficulty;
+  if (diffEl) {
+    diffEl.innerText = track.difficulty;
+    diffEl.dataset.level = track.difficulty;
+  }
 
-  document.getElementById('track-laps').innerText = `${track.laps} LAPS`;
+  const lapsEl = document.getElementById('track-laps');
+  if (lapsEl) lapsEl.innerText = `${track.laps} LAPS`;
 
   const lengthEl = document.getElementById('track-length');
   if (lengthEl) lengthEl.innerText = track.length || "1.2 KM";
+
+  // Circuit telemetry widget details
+  const ctLapRecord = document.getElementById('ct-lap-record');
+  if (ctLapRecord) ctLapRecord.innerText = track.difficulty === 'EASY' ? '00:18.117' : track.difficulty === 'MEDIUM' ? '00:24.450' : '00:29.890';
+
+  const ctCorners = document.getElementById('ct-corners');
+  if (ctCorners) ctCorners.innerText = `${track.points ? track.points.length : 12} TURNS`;
+
+  const ctDrs = document.getElementById('ct-drs');
+  if (ctDrs) ctDrs.innerText = `${track.difficulty === 'HARD' ? '3' : '2'} ZONES`;
+
+  const ctWeather = document.getElementById('ct-weather');
+  if (ctWeather) ctWeather.innerText = 'DRY · 38°C';
 
   const canvas = document.getElementById('track-minimap');
   drawTrackMinimap(canvas, track);
@@ -607,53 +640,100 @@ function setupTouchControls() {
 }
 
 // ----------------------------------------------------------------------------
+function showStewardToast(text, type = 'amber') {
+  const container = document.getElementById('hud-steward-toasts');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `steward-toast ${type}`;
+  const icon = type === 'red' ? 'gavel' : 'warning';
+  toast.innerHTML = `<span class="material-symbols-outlined">${icon}</span><span>${text}</span>`;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-30px)';
+    toast.style.transition = 'all 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
 // LISTEN TO PHASER CUSTOM EVENTS (HUD & RACE FINISH)
 // ----------------------------------------------------------------------------
 function setupGameEventListeners() {
   window.addEventListener('pixel-prix:hud', (e) => {
-    const { speed, isReverse, lap, totalLaps, timeMs, penaltyMs, stewardInvestigation, boostEnergy, boostActive, speedRatio, currentSector, sectorTimeMs } = e.detail;
+    const { speed, isReverse, lap, totalLaps, timeMs, penaltyMs, stewardInvestigation, boostEnergy, boostActive, speedRatio } = e.detail;
 
-    // Speed: number only (KM/H is the label)
+    // Speedometer & Gear calculation
     const speedEl = document.getElementById('hud-speed-text');
     if (speedEl) {
       speedEl.innerText = `${speed}`;
       speedEl.classList.toggle('boosting', boostActive === true);
       speedEl.classList.toggle('top-speed', speedRatio > 0.95);
     }
-    // Lap: number + sub-text /N
-    document.getElementById('hud-lap-text').innerHTML = `${lap}<span class="hud-chip-sub">/${totalLaps}</span>`;
-    document.getElementById('hud-timer-text').innerText = formatTime(timeMs);
 
-    // Active Sector Info
-    const sectorLabelEl = document.getElementById('hud-sector-label');
-    const sectorTimerEl = document.getElementById('hud-sector-timer');
-    if (sectorLabelEl) sectorLabelEl.innerText = `SECTOR ${currentSector || 1}`;
-    if (sectorTimerEl) sectorTimerEl.innerText = formatTime(sectorTimeMs || 0);
-
-    // Warning bar penalty
-    const penaltyVal = (penaltyMs / 1000).toFixed(1);
-    const penaltyChip = document.getElementById('hud-penalty-chip');
-    const penaltyTextEl = document.getElementById('hud-penalty-text');
-    if (penaltyTextEl) {
-      if (penaltyMs > 0) {
-        penaltyTextEl.innerText = `+${penaltyVal}s PENALTY`;
-      } else if (stewardInvestigation) {
-        penaltyTextEl.innerText = 'STEWARD INVESTIGATION';
+    const gearEl = document.getElementById('hud-gear-val');
+    if (gearEl) {
+      if (isReverse) {
+        gearEl.innerText = 'R';
+      } else if (speed === 0) {
+        gearEl.innerText = 'N';
       } else {
-        penaltyTextEl.innerText = 'CLEAN';
+        const gear = Math.min(6, Math.max(1, Math.ceil(speed / 45)));
+        gearEl.innerText = `${gear}`;
       }
     }
-    if (penaltyChip) {
-      penaltyChip.classList.toggle('investigating', stewardInvestigation === true && penaltyMs <= 0);
-      penaltyChip.classList.toggle('clean', !stewardInvestigation && penaltyMs <= 0);
+
+    // RPM LED Shift Lights
+    const leds = document.querySelectorAll('.f1-rpm-bar .rpm-led');
+    if (leds.length > 0) {
+      const activeCount = Math.floor(speedRatio * leds.length);
+      leds.forEach((led, idx) => {
+        if (idx < activeCount) led.classList.add('active');
+        else led.classList.remove('active');
+      });
     }
 
-    // Update unified boost meter fill
+    // Lap & Timer
+    const lapEl = document.getElementById('hud-lap-text');
+    if (lapEl) lapEl.innerHTML = `${lap}/${totalLaps}`;
+    const timerEl = document.getElementById('hud-timer-text');
+    if (timerEl) timerEl.innerText = formatTime(timeMs);
+
+    // Integrated Bottom Telemetry Ticker (Only update if no active sector split override)
+    if (!window._sectorTickerActive) {
+      const penaltyVal = (penaltyMs / 1000).toFixed(1);
+      const penaltyChip = document.getElementById('hud-penalty-chip');
+      const penaltyTextEl = document.getElementById('hud-penalty-text');
+      const tickerLabelEl = document.getElementById('hud-ticker-label');
+      const tickerIconEl = document.getElementById('hud-ticker-icon');
+
+      if (tickerLabelEl) tickerLabelEl.innerText = 'TRACK LIMITS';
+      if (tickerIconEl) tickerIconEl.innerText = 'shield';
+
+      if (penaltyTextEl) {
+        if (penaltyMs > 0) {
+          penaltyTextEl.innerText = `+${penaltyVal}s PENALTY`;
+        } else if (stewardInvestigation) {
+          penaltyTextEl.innerText = 'STEWARD INVESTIGATION';
+        } else {
+          penaltyTextEl.innerText = 'CLEAN';
+        }
+      }
+      if (penaltyChip) {
+        penaltyChip.className = 'hud-warning-bar';
+        if (penaltyMs > 0) penaltyChip.classList.add('penalty');
+        else if (stewardInvestigation) penaltyChip.classList.add('investigating');
+        else penaltyChip.classList.add('clean');
+      }
+    }
+
+    // ERS Battery gauge fill
     const fillPercent = `${Math.max(0, Math.min(100, boostEnergy))}%`;
     const fillRight = document.getElementById('hud-boost-fill');
     if (fillRight) fillRight.style.width = fillPercent;
 
-    // Boost button conditional visibility (mobile only)
+    // Boost button visibility
     const boostBtnLeft = document.getElementById('btn-touch-boost-left');
     if (boostBtnLeft) {
       const sc = raceScene();
@@ -666,31 +746,34 @@ function setupGameEventListeners() {
     }
   });
 
+  // Steward & Race Notifications (Ignore redundant lap notifications)
   window.addEventListener('pixel-prix:notify', (e) => {
     const { text, type } = e.detail;
-    const container = document.getElementById('hud-notif-container');
-    if (!container) return;
+    // Suppress redundant LAP popups since LAP counter is integrated into core HUD
+    if (text && text.toUpperCase().startsWith('LAP')) return;
 
-    const pill = document.createElement('div');
-    pill.className = `hud-notif-pill ${type || 'normal'}`;
-    pill.innerText = text;
+    // Route critical notifications into the integrated HUD ticker strip
+    const penaltyChip = document.getElementById('hud-penalty-chip');
+    const penaltyTextEl = document.getElementById('hud-penalty-text');
+    const tickerLabelEl = document.getElementById('hud-ticker-label');
+    const tickerIconEl = document.getElementById('hud-ticker-icon');
 
-    container.appendChild(pill);
+    if (tickerLabelEl) tickerLabelEl.innerText = 'STEWARD ALERT';
+    if (tickerIconEl) tickerIconEl.innerText = type === 'penalty' ? 'gavel' : 'warning';
+    if (penaltyTextEl) penaltyTextEl.innerText = text;
 
-    // Trigger slide-in animation
-    requestAnimationFrame(() => {
-      pill.classList.add('slide-in');
-    });
+    if (penaltyChip) {
+      penaltyChip.className = `hud-warning-bar ${type === 'penalty' ? 'penalty' : 'investigating'}`;
+    }
 
-    // Fade out and auto-remove after 2.5 seconds
-    setTimeout(() => {
-      pill.classList.add('fade-out');
-      setTimeout(() => {
-        pill.remove();
-      }, 300);
-    }, 2500);
+    window._sectorTickerActive = true;
+    if (window._sectorTickerTimeout) clearTimeout(window._sectorTickerTimeout);
+    window._sectorTickerTimeout = setTimeout(() => {
+      window._sectorTickerActive = false;
+    }, 3000);
   });
 
+  // Integrated Sector Split Telemetry (Renders directly inside Top HUD Ticker Strip)
   window.addEventListener('pixel-prix:sector-complete', (e) => {
     const { sector, timeMs, isBest } = e.detail;
     const trackId = TRACKS[selectedTrackIndex].id;
@@ -699,59 +782,55 @@ function setupGameEventListeners() {
       sessionBestSectors[trackId] = [null, null, null];
     }
 
-    let colorClass = 'yellow';
-    let isSessionBest = false;
+    let colorClass = 'sector-yellow';
+    let deltaStr = '';
 
     const overallBest = sessionBestSectors[trackId][sector - 1];
     if (overallBest === null || timeMs < overallBest) {
       sessionBestSectors[trackId][sector - 1] = timeMs;
-      colorClass = 'purple';
-      isSessionBest = true;
+      colorClass = 'sector-purple';
+      deltaStr = 'NEW SESSION BEST';
     } else if (isBest) {
-      colorClass = 'green';
+      colorClass = 'sector-green';
+      const diff = (timeMs - overallBest) / 1000;
+      deltaStr = `${diff <= 0 ? '' : '+'}${diff.toFixed(3)}s`;
+    } else {
+      const diff = (timeMs - overallBest) / 1000;
+      deltaStr = `+${diff.toFixed(3)}s`;
     }
 
-    // Dynamic sector slide-down notification banner
-    const banner = document.getElementById('hud-sector-banner');
-    if (banner) {
-      const nameEl = banner.querySelector('.sector-name');
-      const timeEl = banner.querySelector('.sector-time');
-      const diffEl = banner.querySelector('.sector-diff');
+    const penaltyChip = document.getElementById('hud-penalty-chip');
+    const penaltyTextEl = document.getElementById('hud-penalty-text');
+    const tickerLabelEl = document.getElementById('hud-ticker-label');
+    const tickerIconEl = document.getElementById('hud-ticker-icon');
 
-      if (nameEl) nameEl.innerText = `SECTOR ${sector}`;
-      if (timeEl) {
-        timeEl.innerText = `${(timeMs / 1000).toFixed(3)}s`;
-        timeEl.className = `sector-time ${colorClass}`;
-      }
+    if (tickerLabelEl) tickerLabelEl.innerText = `SECTOR ${sector} SPLIT`;
+    if (tickerIconEl) tickerIconEl.innerText = 'timer';
+    if (penaltyTextEl) penaltyTextEl.innerText = `${(timeMs / 1000).toFixed(3)}s · ${deltaStr}`;
 
-      if (diffEl) {
-        if (overallBest !== null) {
-          const diff = timeMs - overallBest;
-          const diffStr = (diff / 1000).toFixed(3);
-          if (diff <= 0) {
-            diffEl.innerText = `${diffStr}s`;
-            diffEl.style.color = '#00e676'; // green
-          } else {
-            diffEl.innerText = `+${diffStr}s`;
-            diffEl.style.color = '#ff4d6d'; // red
-          }
-        } else {
-          diffEl.innerText = 'NEW SESSION BEST';
-          diffEl.style.color = '#d12df2'; // purple
-        }
-      }
-
-      banner.classList.add('visible');
-
-      if (window._sectorBannerTimeout) clearTimeout(window._sectorBannerTimeout);
-      window._sectorBannerTimeout = setTimeout(() => {
-        banner.classList.remove('visible');
-      }, 3000);
+    if (penaltyChip) {
+      penaltyChip.className = `hud-warning-bar ${colorClass}`;
     }
+
+    window._sectorTickerActive = true;
+    if (window._sectorTickerTimeout) clearTimeout(window._sectorTickerTimeout);
+    window._sectorTickerTimeout = setTimeout(() => {
+      window._sectorTickerActive = false;
+    }, 3500);
   });
 
   window.addEventListener('pixel-prix:finish', (e) => {
     lastRaceResult = e.detail;
+
+    // Multiplayer finishes are presented through the live classification.
+    // Do not open the solo score dialog afterward, which could otherwise
+    // cover or redirect away from the classification just rendered.
+    if (mpState.isMultiplayer) {
+      if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
+        phaserGame.scene.stop('RaceScene');
+      }
+      return;
+    }
 
     document.getElementById('go-raw-time').innerText = formatTime(lastRaceResult.rawTimeMs);
     document.getElementById('go-penalty-time').innerText = `+${(lastRaceResult.penaltyMs / 1000).toFixed(3)}s`;
@@ -1037,7 +1116,12 @@ function submitScoreFromDialog() {
 // ----------------------------------------------------------------------------
 async function loadLeaderboard(trackId) {
   const container = document.getElementById('lb-table-body');
-  container.innerHTML = '<p class="loading-cell">Loading circuit times...</p>';
+  container.innerHTML = `
+    <div class="skeleton-row"></div>
+    <div class="skeleton-row"></div>
+    <div class="skeleton-row"></div>
+    <div class="skeleton-row"></div>
+  `;
 
   const { scores, error } = await fetchTopScores(trackId);
 
@@ -1075,14 +1159,23 @@ async function loadLeaderboard(trackId) {
     }
   });
 
+  const leaderTimeMs = scores[0]?.time_ms || 0;
+  const compounds = ['soft', 'medium', 'hard'];
+
   container.innerHTML = scores.map((s, idx) => {
     const carName = CARS.find(c => c.id === s.car_id)?.name || s.car_id;
-    const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'Today';
     const isFirst = idx === 0;
     const isSecond = idx === 1;
     const isThird = idx === 2;
     const podiumClass = isFirst ? ' lb-row-first' : isSecond ? ' lb-row-second' : isThird ? ' lb-row-third' : '';
-    const posStr = `#${String(idx + 1).padStart(2, '0')}`;
+    const posStr = `P${idx + 1}`;
+
+    const compound = compounds[idx % 3];
+    const tireSymbol = compound === 'soft' ? 'S' : compound === 'medium' ? 'M' : 'H';
+    const rankDelta = idx % 2 === 0 ? '<span class="rank-indicator up">▲ 1</span>' : idx % 3 === 0 ? '<span class="rank-indicator down">▼ 1</span>' : '<span class="rank-indicator same">-</span>';
+
+    const gapMs = s.time_ms - leaderTimeMs;
+    const gapStr = isFirst ? 'LEADER' : `+${(gapMs / 1000).toFixed(3)}s`;
 
     let meta = null;
     if (s.metadata) {
@@ -1091,60 +1184,33 @@ async function loadLeaderboard(trackId) {
       } catch (_) {}
     }
 
-    let expandedHtml = '';
-    if (meta) {
-      const bestLapStr = meta.best_lap_ms ? formatTime(meta.best_lap_ms) : 'N/A';
-      const s1Str = meta.s1_ms ? `${(meta.s1_ms / 1000).toFixed(3)}s` : 'N/A';
-      const s2Str = meta.s2_ms ? `${(meta.s2_ms / 1000).toFixed(3)}s` : 'N/A';
-      const s3Str = meta.s3_ms ? `${(meta.s3_ms / 1000).toFixed(3)}s` : 'N/A';
+    const sessionBests = sessionBestSectors[trackId] || [null, null, null];
+    const s1Val = meta?.s1_ms ? `${(meta.s1_ms / 1000).toFixed(3)}s` : '--';
+    const s2Val = meta?.s2_ms ? `${(meta.s2_ms / 1000).toFixed(3)}s` : '--';
+    const s3Val = meta?.s3_ms ? `${(meta.s3_ms / 1000).toFixed(3)}s` : '--';
 
-      const sessionBests = sessionBestSectors[trackId] || [null, null, null];
-      const isS1Fastest = meta.s1_ms && meta.s1_ms === sessionBests[0] ? 'class="session-best-purple"' : '';
-      const isS2Fastest = meta.s2_ms && meta.s2_ms === sessionBests[1] ? 'class="session-best-purple"' : '';
-      const isS3Fastest = meta.s3_ms && meta.s3_ms === sessionBests[2] ? 'class="session-best-purple"' : '';
-
-      expandedHtml = `
-        <div class="lb-row-details">
-          <div class="lb-detail-col">
-            <span class="lb-detail-label">BEST LAP</span>
-            <span class="lb-detail-val">${bestLapStr}</span>
-          </div>
-          <div class="lb-detail-col">
-            <span class="lb-detail-label">SECTOR 1</span>
-            <span class="lb-detail-val" ${isS1Fastest}>${s1Str}</span>
-          </div>
-          <div class="lb-detail-col">
-            <span class="lb-detail-label">SECTOR 2</span>
-            <span class="lb-detail-val" ${isS2Fastest}>${s2Str}</span>
-          </div>
-          <div class="lb-detail-col">
-            <span class="lb-detail-label">SECTOR 3</span>
-            <span class="lb-detail-val" ${isS3Fastest}>${s3Str}</span>
-          </div>
-        </div>
-      `;
-    } else {
-      expandedHtml = `
-        <div class="lb-row-details">
-          <p class="no-telemetry">Telemetry not available for this run</p>
-        </div>
-      `;
-    }
+    const s1Class = meta?.s1_ms && meta.s1_ms === sessionBests[0] ? 'purple' : '';
+    const s2Class = meta?.s2_ms && meta.s2_ms === sessionBests[1] ? 'purple' : '';
+    const s3Class = meta?.s3_ms && meta.s3_ms === sessionBests[2] ? 'purple' : '';
 
     return `
       <div class="lb-row-group">
         <div class="lb-row${podiumClass}" onclick="this.parentElement.classList.toggle('expanded')">
-          <div class="lb-row-pos">${posStr}</div>
-          <div class="lb-row-pilot">
+          <div class="lb-col-pos">${posStr}</div>
+          <div class="lb-col-rank">${rankDelta}</div>
+          <div class="lb-col-tire"><span class="tire-badge ${compound}">${tireSymbol}</span></div>
+          <div class="lb-col-pilot">
             <p class="lb-row-name">${escapeHtml(s.player_name)}</p>
             <p class="lb-row-constructor">${escapeHtml(carName)}</p>
           </div>
-          <div class="lb-row-time-col">
+          <div class="sector-col-val ${s1Class}">${s1Val}</div>
+          <div class="sector-col-val ${s2Class}">${s2Val}</div>
+          <div class="sector-col-val ${s3Class}">${s3Val}</div>
+          <div class="lb-col-time">
             <p class="lb-row-time">${formatTime(s.time_ms)}</p>
-            <p class="lb-row-date">${dateStr}</p>
           </div>
+          <div class="gap-col-val">${gapStr}</div>
         </div>
-        ${expandedHtml}
       </div>
     `;
   }).join('');
@@ -1249,16 +1315,11 @@ function initUI() {
     showScreen('screen-select');
   };
 
-  bindClickOrTouch('nav-tab-leaderboard', openLeaderboard);
   bindClickOrTouch('top-nav-leaderboard', openLeaderboard);
-
-  bindClickOrTouch('nav-tab-race', openRaceSelect);
   bindClickOrTouch('top-nav-race', openRaceSelect);
-
-  bindClickOrTouch('nav-tab-garage', () => showScreen('screen-menu'));
+  bindClickOrTouch('top-nav-mp', openRaceSelect);
   bindClickOrTouch('top-nav-garage', () => showScreen('screen-menu'));
-
-  bindClickOrTouch('nav-tab-profile', openSettings);
+  bindClickOrTouch('top-nav-settings', openSettings);
 
   bindClickOrTouch('btn-close-settings', () => {
     showScreen('screen-menu');
@@ -1320,7 +1381,227 @@ function initUI() {
   });
 
   bindClickOrTouch('btn-launch-race', () => {
+    mpState.isMultiplayer = false;
     launchSelectedRace();
+  });
+
+  // -------------------------------------------------------------------------
+  // MULTIPLAYER ROOM LOBBY & EVENTS
+  // -------------------------------------------------------------------------
+  const selectedCarId = () => CARS[selectedCarIndex].id;
+  const selectedTrackId = () => TRACKS[selectedTrackIndex].id;
+  const getPlayerNameInput = () => {
+    const input = document.getElementById('player-name-input');
+    return (input && input.value.trim()) ? input.value.trim().toUpperCase() : (localStorage.getItem('pixel-prix:player-name') || 'DRIVER 1');
+  };
+
+  // Create Room as Host
+  bindClickOrTouch('btn-create-room', async () => {
+    try {
+      const pName = getPlayerNameInput();
+      const cId = selectedCarId();
+      const tId = selectedTrackId();
+
+      showStewardToast('CREATING MULTIPLAYER ROOM…', 'amber');
+      const { roomCode } = await createMultiplayerRoom(tId, cId, pName);
+
+      document.getElementById('mp-room-code-val').innerText = roomCode;
+      showScreen('screen-mp-lobby');
+      showStewardToast(`ROOM ${roomCode} CREATED!`, 'amber');
+    } catch (err) {
+      alert(`Could not create room: ${err.message || err}`);
+    }
+  });
+
+  // Open Join Room Modal
+  bindClickOrTouch('btn-join-room-modal', () => {
+    const modal = document.getElementById('modal-join-room');
+    const input = document.getElementById('input-room-code');
+    const errorEl = document.getElementById('join-room-error');
+    if (input) input.value = '';
+    if (errorEl) errorEl.classList.add('hidden');
+    if (modal) modal.classList.remove('hidden');
+  });
+
+  // Cancel Join Modal
+  bindClickOrTouch('btn-cancel-join', () => {
+    document.getElementById('modal-join-room')?.classList.add('hidden');
+  });
+
+  // Confirm Join Room Code
+  bindClickOrTouch('btn-confirm-join', async () => {
+    const input = document.getElementById('input-room-code');
+    const errorEl = document.getElementById('join-room-error');
+    const code = (input ? input.value : '').trim().toUpperCase();
+
+    if (!code || code.length < 4) {
+      if (errorEl) {
+        errorEl.innerText = 'PLEASE ENTER A VALID 4-CHAR ROOM CODE';
+        errorEl.classList.remove('hidden');
+      }
+      return;
+    }
+
+    try {
+      const pName = getPlayerNameInput();
+      const cId = selectedCarId();
+      const tId = selectedTrackId();
+
+      const { roomCode } = await joinMultiplayerRoom(code, tId, cId, pName);
+      document.getElementById('modal-join-room')?.classList.add('hidden');
+      document.getElementById('mp-room-code-val').innerText = roomCode;
+      showScreen('screen-mp-lobby');
+      showStewardToast(`JOINED ROOM ${roomCode}!`, 'amber');
+    } catch (err) {
+      if (errorEl) {
+        errorEl.innerText = err.message || 'FAILED TO JOIN ROOM';
+        errorEl.classList.remove('hidden');
+      }
+    }
+  });
+
+  // Leave Lobby
+  bindClickOrTouch('btn-mp-leave-lobby', () => {
+    leaveMultiplayerRoom();
+    showScreen('screen-select');
+  });
+
+  // Copy Room Code
+  bindClickOrTouch('btn-copy-room-code', () => {
+    if (!mpState.roomCode) return;
+    navigator.clipboard?.writeText(mpState.roomCode).then(() => {
+      showStewardToast(`COPIED ROOM CODE: ${mpState.roomCode}`, 'amber');
+    }).catch(() => {
+      showStewardToast(`ROOM CODE: ${mpState.roomCode}`, 'amber');
+    });
+  });
+
+  // Host Start Multiplayer Race
+  bindClickOrTouch('btn-mp-start-race', () => {
+    if (!mpState.isHost) return;
+    broadcastRaceStart();
+  });
+
+  // Exit Classification Results Modal
+  const closeMpResults = () => {
+    closeScoreDialog();
+    document.getElementById('modal-mp-results')?.classList.add('hidden');
+    document.getElementById('mp-results-rows')?.replaceChildren();
+    leaveMultiplayerRoom();
+    if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
+      phaserGame.scene.stop('RaceScene');
+    }
+    showScreen('screen-select');
+  };
+
+  bindClickOrTouch('btn-mp-results-exit', closeMpResults);
+  bindClickOrTouch('btn-close-mp-results-x', closeMpResults);
+
+  const modalMpResults = document.getElementById('modal-mp-results');
+  if (modalMpResults) {
+    modalMpResults.addEventListener('click', (e) => {
+      if (e.target === modalMpResults) {
+        closeMpResults();
+      }
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // MULTIPLAYER REALTIME EVENTS LISTENERS
+  // -------------------------------------------------------------------------
+  window.addEventListener('pixel-prix:mp-lobby-update', (e) => {
+    const { players, isHost, roomCode } = e.detail;
+
+    document.getElementById('mp-room-code-val').innerText = roomCode || '----';
+    document.getElementById('mp-driver-count').innerText = players.length;
+
+    const listEl = document.getElementById('mp-drivers-list');
+    if (listEl) {
+      listEl.innerHTML = players.map((p, idx) => {
+        const isLocal = p.id === mpState.localPlayer.id;
+        const carMatch = CARS.find(c => c.id === p.carId) || CARS[0];
+        const gridLabel = idx === 0 ? 'POLE' : `P${idx + 1}`;
+
+        return `
+          <div class="mp-driver-card ${isLocal ? 'is-local' : ''} ${p.isHost ? 'is-host' : ''}">
+            <div class="mp-driver-left">
+              <span class="mp-grid-pos">${gridLabel}</span>
+              <div class="mp-driver-info">
+                <div class="mp-driver-name">${escapeHtml(p.name)} ${isLocal ? '(YOU)' : ''}</div>
+                <div class="mp-car-name">${escapeHtml(carMatch.name)}</div>
+              </div>
+            </div>
+            ${p.isHost ? '<span class="mp-badge-host">HOST</span>' : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    const startBtn = document.getElementById('btn-mp-start-race');
+    const nonHostMsg = document.getElementById('mp-non-host-msg');
+
+    if (isHost) {
+      if (startBtn) {
+        startBtn.classList.remove('hidden');
+        startBtn.disabled = players.length < 2;
+      }
+      if (nonHostMsg) nonHostMsg.classList.add('hidden');
+    } else {
+      if (startBtn) startBtn.classList.add('hidden');
+      if (nonHostMsg) nonHostMsg.classList.remove('hidden');
+    }
+  });
+
+  // Handle Race Start Event
+  window.addEventListener('pixel-prix:mp-race-start', (e) => {
+    showScreen('screen-hud');
+    playCountdownLights();
+
+    if (phaserGame) {
+      phaserGame.scale.refresh();
+      const selectedCarId = mpState.localPlayer.carId || CARS[selectedCarIndex].id;
+      const selectedTrackId = mpState.trackId || TRACKS[selectedTrackIndex].id;
+
+      if (phaserGame.scene.isActive('RaceScene')) {
+        phaserGame.scene.stop('RaceScene');
+      }
+
+      phaserGame.scene.start('RaceScene', {
+        carId: selectedCarId,
+        trackId: selectedTrackId
+      });
+    }
+  });
+
+  // Handle Finish Classification Event
+  window.addEventListener('pixel-prix:mp-race-finish-update', (e) => {
+    const finishedPlayers = Array.isArray(e.detail?.finishedPlayers) ? e.detail.finishedPlayers : [];
+    const rowsEl = document.getElementById('mp-results-rows');
+    const modal = document.getElementById('modal-mp-results');
+    const localPlayerHasFinished = finishedPlayers.some((player) => player.id === mpState.localPlayer.id);
+
+    // A remote driver finishing must not interrupt racers who are still on
+    // track. Once this driver has finished, later realtime updates refresh
+    // the same classification in place.
+    if (rowsEl && localPlayerHasFinished) {
+      const leaderTime = finishedPlayers[0].timeMs;
+      rowsEl.innerHTML = finishedPlayers.map((p, idx) => {
+        const carMatch = CARS.find(c => c.id === p.carId) || CARS[0];
+        const gapStr = idx === 0 ? 'WINNER' : `+${((p.timeMs - leaderTime) / 1000).toFixed(3)}s`;
+
+        return `
+          <tr>
+            <td>P${idx + 1}</td>
+            <td><strong>${escapeHtml(p.name)}</strong></td>
+            <td>${escapeHtml(carMatch.name)}</td>
+            <td>${formatTime(p.timeMs)}</td>
+            <td>${gapStr}</td>
+          </tr>
+        `;
+      }).join('');
+
+      if (modal) modal.classList.remove('hidden');
+    }
   });
 
   // Game Over Actions
@@ -1381,7 +1662,9 @@ function initUI() {
   bindClickOrTouch('btn-refresh-lb', () => {
     const activeTab = document.querySelector('#lb-track-tabs .lb-tab-btn.active');
     const trackId = activeTab ? activeTab.dataset.trackId : TRACKS[0].id;
-    loadLeaderboard(trackId);
+    syncLocalScoresToSupabase().finally(() => {
+      loadLeaderboard(trackId);
+    });
   });
 
   setupTouchControls();
@@ -1473,26 +1756,54 @@ function startAmbientParticles() {
 
   const ctx = canvas.getContext('2d');
   const particles = [];
-  const NUM = 45;
+  const NUM = 55;
 
   for (let i = 0; i < NUM; i++) {
     particles.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: -0.2 - Math.random() * 0.55,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: -0.3 - Math.random() * 0.6,
       size: 1 + Math.random() * 2.5,
-      alpha: 0.1 + Math.random() * 0.5,
-      hue: Math.random() < 0.15 ? 350 : (Math.random() < 0.3 ? 190 : 0),  // red, cyan, or white
+      alpha: 0.15 + Math.random() * 0.5,
+      color: Math.random() < 0.25 ? '#FF1801' : (Math.random() < 0.5 ? '#00F0FF' : '#ffffff'),
       life: Math.random(),
       decay: 0.002 + Math.random() * 0.004
     });
   }
 
+  // 3D F1 Chassis Wireframe Vertices (x, y, z)
+  const wireframeVertices = [
+    // Nose & Cockpit
+    { x: 0, y: 15, z: 120 }, { x: -15, y: -5, z: 60 }, { x: 15, y: -5, z: 60 },
+    { x: -22, y: -10, z: 0 }, { x: 22, y: -10, z: 0 },
+    // Sidepods & Airbox
+    { x: -35, y: -12, z: -40 }, { x: 35, y: -12, z: -40 },
+    { x: -30, y: -15, z: -100 }, { x: 30, y: -15, z: -100 },
+    { x: 0, y: 35, z: -20 }, // Airbox scoop
+    // Front Wing
+    { x: -65, y: 5, z: 110 }, { x: 65, y: 5, z: 110 },
+    { x: -65, y: -5, z: 125 }, { x: 65, y: -5, z: 125 },
+    // Rear Wing Assembly
+    { x: -40, y: 25, z: -120 }, { x: 40, y: 25, z: -120 },
+    { x: -40, y: 38, z: -120 }, { x: 40, y: 38, z: -120 }
+  ];
+
+  const wireframeEdges = [
+    [0, 1], [0, 2], [1, 2], [1, 3], [2, 4], [3, 4],
+    [3, 5], [4, 6], [5, 6], [5, 7], [6, 8], [7, 8],
+    [1, 9], [2, 9], [7, 9], [8, 9],
+    [0, 10], [0, 11], [10, 12], [11, 13],
+    [7, 14], [8, 15], [14, 15], [14, 16], [15, 17], [16, 17]
+  ];
+
+  let rotationAngle = 0;
+
   function tick() {
     ambientAnimId = requestAnimationFrame(tick);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Render Ambient Particles
     for (const p of particles) {
       p.x += p.vx;
       p.y += p.vy;
@@ -1501,25 +1812,67 @@ function startAmbientParticles() {
       if (p.life <= 0 || p.y < -5 || p.x < -5 || p.x > canvas.width + 5) {
         p.x = Math.random() * canvas.width;
         p.y = canvas.height + 5;
-        p.vx = (Math.random() - 0.5) * 0.35;
-        p.vy = -0.2 - Math.random() * 0.55;
+        p.vx = (Math.random() - 0.5) * 0.4;
+        p.vy = -0.3 - Math.random() * 0.6;
         p.life = 0.6 + Math.random() * 0.4;
-        p.alpha = 0.1 + Math.random() * 0.5;
-        p.hue = Math.random() < 0.15 ? 350 : (Math.random() < 0.3 ? 190 : 0);
       }
-
-      const a = p.life * p.alpha;
-      const color = p.hue === 350
-        ? `rgba(232, 0, 45, ${a})`
-        : p.hue === 190
-          ? `rgba(0, 210, 255, ${a})`
-          : `rgba(255, 255, 255, ${a})`;
 
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = color;
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.life * p.alpha;
       ctx.fill();
     }
+    ctx.globalAlpha = 1.0;
+
+    // Render 3D Rotating F1 Carbon Chassis Wireframe behind glass containers
+    rotationAngle += 0.008;
+    const cx = canvas.width * 0.5;
+    const cy = canvas.height * 0.45;
+    const scale = Math.min(canvas.width, canvas.height) * 0.0022;
+
+    const radY = rotationAngle;
+    const radX = Math.sin(rotationAngle * 0.5) * 0.15 + 0.2;
+
+    const projected = wireframeVertices.map(v => {
+      // Y-axis rotation
+      let x1 = v.x * Math.cos(radY) + v.z * Math.sin(radY);
+      let z1 = -v.x * Math.sin(radY) + v.z * Math.cos(radY);
+
+      // X-axis rotation
+      let y2 = v.y * Math.cos(radX) - z1 * Math.sin(radX);
+      let z2 = v.y * Math.sin(radX) + z1 * Math.cos(radX);
+
+      const fov = 400;
+      const perspective = fov / (fov + z2 + 180);
+
+      return {
+        x: cx + x1 * scale * perspective,
+        y: cy - y2 * scale * perspective,
+        z: z2
+      };
+    });
+
+    // Draw edge lines
+    ctx.lineWidth = 1.2;
+    wireframeEdges.forEach(([i, j]) => {
+      const p1 = projected[i];
+      const p2 = projected[j];
+
+      const grad = ctx.createLinearGradient(p1.x, p1.y, p2.x, p2.y);
+      grad.addColorStop(0, 'rgba(0, 240, 255, 0.35)');
+      grad.addColorStop(1, 'rgba(255, 24, 1, 0.35)');
+
+      ctx.strokeStyle = grad;
+      ctx.shadowColor = '#00F0FF';
+      ctx.shadowBlur = 6;
+
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    });
   }
   tick();
 }

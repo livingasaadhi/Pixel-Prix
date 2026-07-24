@@ -6,8 +6,18 @@ import { createClient } from '@supabase/supabase-js';
 // See README.md for step-by-step instructions on setting up your database!
 // ============================================================================
 // Detect credentials from environment variables (checking both Vite and Next.js prefixes)
-const ENV_URL = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
-const ENV_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const getEnv = (key) => {
+  if (typeof import.meta !== 'undefined' && import.meta && import.meta.env && import.meta.env[key]) {
+    return import.meta.env[key];
+  }
+  if (typeof process !== 'undefined' && process && process.env && process.env[key]) {
+    return process.env[key];
+  }
+  return null;
+};
+
+const ENV_URL = getEnv('VITE_SUPABASE_URL') || getEnv('NEXT_PUBLIC_SUPABASE_URL');
+const ENV_KEY = getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY') || getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
 // Only treat the connection as configured when the user supplied real
 // credentials. Previously a real key was hard-coded as a fallback, which
@@ -22,8 +32,69 @@ const SUPABASE_ANON_KEY = ENV_KEY_VALID ? ENV_KEY : null;
 // Check if credentials have been updated by the user
 const isConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 
-let supabase = null;
+export let supabase = null;
 let connectionVerified = false;
+
+let isSyncing = false;
+
+/**
+ * Automatically syncs any local-only scores stored in LocalStorage
+ * (e.g. from offline play or prior fallback runs) up to the live Supabase database.
+ */
+export async function syncLocalScoresToSupabase() {
+  if (!supabase || isSyncing) return { syncedCount: 0 };
+  isSyncing = true;
+  let syncedCount = 0;
+
+  try {
+    const trackIds = new Set();
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(LB_STORAGE_PREFIX)) {
+        trackIds.add(key.slice(LB_STORAGE_PREFIX.length));
+      }
+    }
+
+    for (const trackId of trackIds) {
+      const localScores = loadLocalScores(trackId);
+      if (!localScores || localScores.length === 0) continue;
+
+      const { data: remoteScores, error } = await supabase
+        .from('scores')
+        .select('player_name, time_ms')
+        .eq('track_id', trackId);
+
+      if (error || !remoteScores) continue;
+
+      const remoteSet = new Set(remoteScores.map(s => `${s.player_name}:${s.time_ms}`));
+
+      for (const ls of localScores) {
+        const key = `${ls.player_name}:${ls.time_ms}`;
+        if (!remoteSet.has(key)) {
+          const result = await submitScore({
+            playerName: ls.player_name,
+            carId: ls.car_id,
+            trackId: ls.track_id || trackId,
+            timeMs: ls.time_ms,
+            metadata: ls.metadata || null
+          });
+
+          if (result.success && result.backend === 'Supabase') {
+            remoteSet.add(key);
+            syncedCount++;
+            console.log(`✅ Synced local score to live Supabase: ${ls.player_name} (${ls.time_ms}ms) on ${trackId}`);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Error during local score synchronization:', err);
+  } finally {
+    isSyncing = false;
+  }
+
+  return { syncedCount };
+}
 
 if (isConfigured) {
   try {
@@ -37,6 +108,7 @@ if (isConfigured) {
       } else {
         connectionVerified = true;
         console.log('✅ Supabase connection verified. scores table exists and is accessible.');
+        syncLocalScoresToSupabase();
       }
     }).catch((err) => {
       console.warn('⚠️ Supabase connection failed:', err.message);
@@ -90,12 +162,20 @@ export async function submitScore({ playerName, carId, trackId, timeMs, metadata
     metadata: metadata || null
   };
 
+  // Helper to persist locally as cache
+  const saveToLocalCache = (record) => {
+    const scores = loadLocalScores(trackId);
+    const exists = scores.some(s => s.player_name === record.player_name && s.time_ms === record.time_ms);
+    if (!exists) {
+      scores.push(record);
+      saveLocalScores(trackId, scores);
+    }
+  };
+
   if (!supabase) {
     // Offline fallback: store in LocalStorage.
-    const scores = loadLocalScores(trackId);
     const record = { ...scoreData, id: Date.now(), created_at: new Date().toISOString() };
-    scores.push(record);
-    saveLocalScores(trackId, scores);
+    saveToLocalCache(record);
     return { success: true, backend: 'LocalStorage', data: [record] };
   }
 
@@ -115,9 +195,15 @@ export async function submitScore({ playerName, carId, trackId, timeMs, metadata
     try {
       return await insertAttempt(payload);
     } catch (error) {
-      // If error is undefined column (e.g. metadata column missing), do not retry with backoff on same payload
-      if (payload.metadata && (error.code === '42703' || error.message.includes('column "metadata"'))) {
-        console.warn('⚠️ Supabase metadata column missing. Retrying fallback payload without metadata...');
+      // Catch missing metadata column (PostgREST code PGRST204 or PostgreSQL 42703 or message with 'metadata')
+      const isMetadataColError = payload.metadata && (
+        error.code === 'PGRST204' ||
+        error.code === '42703' ||
+        /metadata/i.test(error.message || '')
+      );
+
+      if (isMetadataColError) {
+        console.warn('⚠️ Supabase metadata column missing in database/schema cache. Retrying payload without metadata...');
         const fallbackPayload = { ...payload };
         delete fallbackPayload.metadata;
         return executeWithRetry(fallbackPayload, retries, delay);
@@ -135,13 +221,12 @@ export async function submitScore({ playerName, carId, trackId, timeMs, metadata
   try {
     const data = await executeWithRetry(scoreData, 3, 500);
     connectionVerified = true;
+    saveToLocalCache(data || { ...scoreData, id: Date.now(), created_at: new Date().toISOString() });
     return { success: true, backend: 'Supabase', data: [data] };
   } catch (error) {
     console.warn('⚠️ Supabase upload failed after retries. Storing score in LocalStorage fallback:', error.message);
-    const scores = loadLocalScores(trackId);
     const record = { ...scoreData, id: Date.now(), created_at: new Date().toISOString() };
-    scores.push(record);
-    saveLocalScores(trackId, scores);
+    saveToLocalCache(record);
     return { success: true, backend: 'LocalStorage', data: [record] };
   }
 }
@@ -151,6 +236,7 @@ export async function submitScore({ playerName, carId, trackId, timeMs, metadata
  */
 export async function fetchTopScores(trackId) {
   let remoteScores = [];
+  let fetchError = null;
   if (supabase) {
     const { data, error } = await supabase
       .from('scores')
@@ -161,18 +247,29 @@ export async function fetchTopScores(trackId) {
     if (!error && data) {
       remoteScores = data;
       connectionVerified = true;
+    } else if (error) {
+      console.warn('⚠️ Supabase fetch error:', error.message);
+      fetchError = error;
     }
   }
 
   const localScores = loadLocalScores(trackId);
   const combined = [...remoteScores];
   localScores.forEach(ls => {
-    if (!combined.some(s => s.player_name === ls.player_name && s.time_ms === ls.time_ms)) {
+    const matchFound = combined.some(s =>
+      (s.id && ls.id && s.id === ls.id) ||
+      (s.player_name === ls.player_name && s.time_ms === ls.time_ms)
+    );
+    if (!matchFound) {
       combined.push(ls);
     }
   });
   combined.sort((a, b) => a.time_ms - b.time_ms);
-  return { scores: combined.slice(0, 10), backend: remoteScores.length > 0 ? 'Hybrid' : 'LocalStorage' };
+  return {
+    scores: combined.slice(0, 10),
+    backend: remoteScores.length > 0 ? 'Hybrid' : 'LocalStorage',
+    error: (remoteScores.length === 0 && localScores.length === 0) ? fetchError : null
+  };
 }
 
 export function subscribeToScores(trackId, onChange) {
