@@ -70,6 +70,7 @@ export class RaceScene extends Phaser.Scene {
     this.joystickHeading = 0;       // absolute target heading from joystick (radians)
     this.joystickActive = false;    // whether joystick is currently engaged
     this.turnRate = 4.8;            // max rotation per second toward target heading
+    this.gamepadInput = { steer: 0, throttle: 0, brake: 0, boost: false };
 
     // Tunable physics parameters (scaled by 2.4x for high-speed AAA racing feel)
     const VEL_MULT = 2.4;
@@ -334,11 +335,13 @@ export class RaceScene extends Phaser.Scene {
   update(time, delta) {
     const dt = delta / 1000;
     const cam = this.cameras.main;
+    this.gamepadInput = this.readGamepadInputs();
 
     this.centerCameraOnPlayer();
 
     if (!this.lightsGreen) {
       const isTryingToDrive = this.isAccelerating || this.touchGas > 0.1 ||
+                              this.gamepadInput.throttle > 0.1 ||
                               (this.cursors && this.cursors.up && this.cursors.up.isDown) ||
                               (this.wasd && this.wasd.up && this.wasd.up.isDown) ||
                               (this._kb && this._kb.up);
@@ -373,6 +376,10 @@ export class RaceScene extends Phaser.Scene {
     if (this.isSteeringLeft || this.cursors.left.isDown || this.wasd.left.isDown || this._kb.left) steerDir -= 1;
     if (this.isSteeringRight || this.cursors.right.isDown || this.wasd.right.isDown || this._kb.right) steerDir += 1;
 
+    if (Math.abs(this.gamepadInput.steer) > 0) {
+      steerDir = this.gamepadInput.steer;
+    }
+
     if (this.touchSteerValue !== 0) {
       // Map to an exponential response curve (power of 1.6) for smooth analog control and no snap jump
       steerDir = Math.sign(this.touchSteerValue) * Math.pow(Math.abs(this.touchSteerValue), 1.6);
@@ -388,7 +395,7 @@ export class RaceScene extends Phaser.Scene {
     // Boost activation logic: single tap/press toggles boost. Stays active until 0.
     const boostButtonPressed = this.isBoosting || this.wasd.space.isDown || this.wasd.shift.isDown ||
       this.boostKeyZ.isDown || this.boostKeyC.isDown ||
-      this._kb.space || this._kb.shift || this._kb.z || this._kb.c;
+      this._kb.space || this._kb.shift || this._kb.z || this._kb.c || this.gamepadInput.boost;
 
     const boostJustPressed = boostButtonPressed && !this.boostWasPressed;
     this.boostWasPressed = boostButtonPressed;
@@ -409,6 +416,7 @@ export class RaceScene extends Phaser.Scene {
     } else if (this.touchGas > 0) {
       gasValue = this.touchGas;
     }
+    gasValue = Math.max(gasValue, this.gamepadInput.throttle);
 
     let brakeValue = 0;
     if (this.isBraking || this.cursors.down.isDown || this.wasd.down.isDown || this._kb.down) {
@@ -416,6 +424,7 @@ export class RaceScene extends Phaser.Scene {
     } else if (this.touchBrake > 0) {
       brakeValue = this.touchBrake;
     }
+    brakeValue = Math.max(brakeValue, this.gamepadInput.brake);
 
     const gasOn = gasValue > 0;
     const brakeOn = brakeValue > 0;
@@ -698,6 +707,39 @@ export class RaceScene extends Phaser.Scene {
         lapEl.innerHTML = `${this.currentLap}/${this.totalLaps} <span style="color:#00F0FF; margin-left:6px; font-weight:900;">P${rankInfo.rank}/${rankInfo.total}</span>`;
       }
     }
+  }
+
+  /**
+   * Maps a standard browser gamepad to the same analog controls used by
+   * touch input. Supports Xbox, PlayStation, and most generic controllers
+   * without taking ownership of keyboard or touch controls.
+   */
+  readGamepadInputs() {
+    if (!navigator.getGamepads) {
+      return { steer: 0, throttle: 0, brake: 0, boost: false };
+    }
+
+    const gamepad = Array.from(navigator.getGamepads()).find((pad) => pad?.connected);
+    if (!gamepad) {
+      return { steer: 0, throttle: 0, brake: 0, boost: false };
+    }
+
+    const buttonValue = (index) => gamepad.buttons[index]?.value || 0;
+    const buttonPressed = (index) => Boolean(gamepad.buttons[index]?.pressed) || buttonValue(index) > 0.5;
+    const deadzone = 0.16;
+    const rawSteer = gamepad.axes[0] || 0;
+    const steer = Math.abs(rawSteer) >= deadzone
+      ? Math.sign(rawSteer) * Math.pow(Math.abs(rawSteer), 1.45)
+      : 0;
+
+    return {
+      steer,
+      // Right trigger / A accelerates; left trigger / B brakes or reverses.
+      throttle: Math.max(buttonValue(7), buttonPressed(0) ? 1 : 0),
+      brake: Math.max(buttonValue(6), buttonPressed(1) ? 1 : 0),
+      // Shoulder buttons activate ERS boost.
+      boost: buttonPressed(4) || buttonPressed(5)
+    };
   }
 
   handleTrackLimitsViolation() {
