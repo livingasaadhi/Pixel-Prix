@@ -192,12 +192,35 @@ function initGame() {
  * Uses the same 2x-resolution offscreen canvas approach as BootScene,
  * with a per-car body color glow and matching livery.
  */
-function drawCarPreview(canvas, color, accentColor) {
+function drawCarPreview(canvas, car) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const w = canvas.width;
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
+
+  // The garage renders the exact same authored texture as the race scene so
+  // a selected vehicle never turns into a simpler, unrelated thumbnail.
+  const textureKey = car ? `car_${car.id}_straight` : '';
+  const texture = textureKey && phaserGame?.textures?.exists(textureKey)
+    ? phaserGame.textures.get(textureKey).getSourceImage()
+    : null;
+  if (texture) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+    ctx.beginPath();
+    ctx.ellipse(w / 2, h * 0.76, w * 0.31, h * 0.09, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.imageSmoothingEnabled = false;
+    const modelHeight = h * 0.78;
+    const modelWidth = modelHeight * (texture.width / texture.height);
+    ctx.drawImage(texture, (w - modelWidth) / 2, (h - modelHeight) / 2 - 2, modelWidth, modelHeight);
+    ctx.restore();
+    return;
+  }
+
+  const color = car?.color || '#ff1801';
+  const accentColor = car?.accentColor || '#ffeb00';
 
   // Work at 2x scale (canvas is 192×112, logical 96×56)
   ctx.save();
@@ -364,7 +387,7 @@ function updateCarSelection() {
   if (carCount) carCount.textContent = `${String(selectedCarIndex + 1).padStart(2, '0')} / ${String(CARS.length).padStart(2, '0')}`;
 
   const previewCanvas = document.getElementById('car-preview-canvas');
-  drawCarPreview(previewCanvas, car.color, car.accentColor);
+  drawCarPreview(previewCanvas, car);
 
   const speedPct = Math.min(100, (car.topSpeed / 340) * 100);
   const accelPct = Math.min(100, (car.acceleration / 180) * 100);

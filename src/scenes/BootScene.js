@@ -44,6 +44,10 @@ export class BootScene extends Phaser.Scene {
 
     const bodyColor  = car.color;
     const accentColor = car.accentColor;
+    const highDownforce = car.handling >= 4.8;
+    const lowDrag = car.topSpeed >= 310;
+    const tireStripe = accentColor;
+    const raceNumber = this.getRaceNumber(car.id);
 
     // Helper: rounded rect fill
     const roundRect = (x, y, rw, rh, r) => {
@@ -60,6 +64,15 @@ export class BootScene extends Phaser.Scene {
       ctx.closePath();
       ctx.fill();
     };
+
+    // Ground contact shadow and underfloor wake make the small sprite feel
+    // planted on the circuit instead of floating over it.
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.34)';
+    ctx.beginPath();
+    ctx.ellipse(24, 14, 22, 11, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.045)';
+    ctx.fillRect(12, 13, 26, 2);
 
     // ── 1. REAR TIRES ────────────────────────────────────────────────
     // Outer tire rubber
@@ -80,10 +93,18 @@ export class BootScene extends Phaser.Scene {
     ctx.fillStyle = '#5a5875';
     ctx.fillRect(36, 2, 3, 2);
     ctx.fillRect(36, 24, 3, 2);
-    // Tire brand line
-    ctx.fillStyle = '#ff6b00';
+    // Team-coloured sidewalls and wheel spokes
+    ctx.fillStyle = tireStripe;
     ctx.fillRect(33, 2, 1, 2);
     ctx.fillRect(33, 24, 1, 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 0.55;
+    ctx.beginPath();
+    ctx.moveTo(35.5, 3); ctx.lineTo(39.5, 3);
+    ctx.moveTo(37.5, 1.2); ctx.lineTo(37.5, 4.8);
+    ctx.moveTo(35.5, 25); ctx.lineTo(39.5, 25);
+    ctx.moveTo(37.5, 23.2); ctx.lineTo(37.5, 26.8);
+    ctx.stroke();
 
     // ── 2. REAR SUSPENSION ARMS ────────────────────────────────────
     ctx.strokeStyle = '#5a5875';
@@ -95,8 +116,8 @@ export class BootScene extends Phaser.Scene {
     ctx.stroke();
 
     // ── 3. FRONT TIRES (rotated by steering state) ─────────────────
-    this.drawRotatedWheel(ctx, 8, 2, 9, 5, wheelAngle, accentColor);
-    this.drawRotatedWheel(ctx, 8, 21, 9, 5, wheelAngle, accentColor);
+    this.drawRotatedWheel(ctx, 8, 2, 9, 5, wheelAngle, tireStripe);
+    this.drawRotatedWheel(ctx, 8, 21, 9, 5, wheelAngle, tireStripe);
 
     // ── 4. FRONT SUSPENSION ARMS ────────────────────────────────────
     ctx.strokeStyle = '#5a5875';
@@ -116,8 +137,9 @@ export class BootScene extends Phaser.Scene {
     ctx.fillRect(4, 3, 2, 22);
     // DRS upper flap
     ctx.fillStyle = this.lighten(bodyColor, 0.3);
-    ctx.fillRect(3, 4, 2, 3);
-    ctx.fillRect(3, 21, 2, 3);
+    const flapDepth = highDownforce ? 4 : lowDrag ? 2 : 3;
+    ctx.fillRect(3, 4, flapDepth, 3);
+    ctx.fillRect(3, 21, flapDepth, 3);
     // Endplate details
     ctx.fillStyle = '#1e1c28';
     ctx.fillRect(1, 1, 4, 2);
@@ -126,6 +148,11 @@ export class BootScene extends Phaser.Scene {
     ctx.fillStyle = accentColor;
     ctx.fillRect(2, 2, 1, 2);
     ctx.fillRect(2, 24, 1, 2);
+    // Splitter and a second front-wing element
+    ctx.fillStyle = '#08090c';
+    ctx.fillRect(0, 12.5, 7, 3);
+    ctx.fillStyle = 'rgba(255,255,255,0.32)';
+    ctx.fillRect(1, 13, 5, 0.7);
 
     // ── 6. NOSE CONE ────────────────────────────────────────────────
     ctx.fillStyle = bodyColor;
@@ -151,6 +178,32 @@ export class BootScene extends Phaser.Scene {
     ctx.fillStyle = bodyColor;
     roundRect(18, 8, 20, 12, 3);
 
+    // Sculpted sidepods give speed-focused and high-downforce cars subtly
+    // different silhouettes without changing their game collision shape.
+    ctx.fillStyle = this.lighten(bodyColor, 0.1);
+    ctx.beginPath();
+    ctx.moveTo(28, 8);
+    ctx.lineTo(38, highDownforce ? 8.4 : 9.5);
+    ctx.lineTo(38, 18.5);
+    ctx.lineTo(28, 20);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#090a0d';
+    ctx.beginPath();
+    ctx.moveTo(30, 9.3);
+    ctx.lineTo(36.8, 10.2);
+    ctx.lineTo(36.8, 12);
+    ctx.lineTo(30, 11.2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(30, 18.7);
+    ctx.lineTo(36.8, 17.8);
+    ctx.lineTo(36.8, 16);
+    ctx.lineTo(30, 16.8);
+    ctx.closePath();
+    ctx.fill();
+
     // Radiator side inlets / side pod vents
     ctx.fillStyle = '#0d0c10';
     roundRect(20, 8, 6, 3, 1);
@@ -158,6 +211,23 @@ export class BootScene extends Phaser.Scene {
 
     // Livery paint scheme — per-car sidepod stripes
     this.drawLivery(ctx, car, 22, 9, 14, 10);
+
+    // Air intake, mirrors and a crisp race number provide readable details
+    // when the car is enlarged in the garage preview.
+    ctx.fillStyle = '#0a0b0f';
+    ctx.beginPath();
+    ctx.moveTo(29, 10); ctx.lineTo(33, 10); ctx.lineTo(31, 6.5); ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(31.1, 7.2, 0.8, 2.3);
+    ctx.fillStyle = '#d8dbe0';
+    ctx.fillRect(21, 7.4, 2.3, 0.9);
+    ctx.fillRect(21, 19.7, 2.3, 0.9);
+    ctx.fillStyle = '#f4f5f6';
+    ctx.font = 'bold 5px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(raceNumber), 33.2, 14.2);
 
     // Glossy top highlight (fresnel effect)
     const chassisGloss = ctx.createLinearGradient(18, 8, 18, 20);
@@ -231,6 +301,13 @@ export class BootScene extends Phaser.Scene {
     // DRS actuator
     ctx.fillStyle = '#5a5875';
     ctx.fillRect(40, 10, 1, 8);
+
+    // Rear diffuser vanes and wing-slot separation.
+    ctx.fillStyle = '#060709';
+    ctx.fillRect(42, 8, 3, 12);
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(38, 6.5, 5, 0.7);
+    ctx.fillRect(38, 20.8, 5, 0.7);
 
     // ── 11. SAFETY RAIN LIGHT ───────────────────────────────────────
     // Animated-style tri-LED
@@ -339,6 +416,26 @@ export class BootScene extends Phaser.Scene {
     }
   }
 
+  getRaceNumber(id) {
+    const numbers = {
+      'scuderia-furiosa': 16,
+      'blue-bull': 33,
+      'silver-arrows': 44,
+      'papaya-express': 81,
+      'green-emerald': 14,
+      'alpen-glow': 31,
+      'violet-vortex': 27,
+      'obsidian-works': 63,
+      'solar-flare': 55,
+      'arctic-pulse': 77,
+      'crimson-coda': 12,
+      'cobalt-strike': 22,
+      'terra-nova': 38,
+      'quartz-velocity': 91
+    };
+    return numbers[id] ?? 99;
+  }
+
   /**
    * Lightens a hex color string by a factor (0-1).
    */
@@ -353,7 +450,7 @@ export class BootScene extends Phaser.Scene {
   /**
    * Draws a rotated wheel with tire detail and branded sidewall stripe.
    */
-  drawRotatedWheel(ctx, x, y, width, height, angle, accentColor) {
+  drawRotatedWheel(ctx, x, y, width, height, angle, tireStripe) {
     const cx = x + width / 2;
     const cy = y + height / 2;
     ctx.save();
@@ -367,8 +464,8 @@ export class BootScene extends Phaser.Scene {
     ctx.roundRect ? ctx.roundRect(-width/2, -height/2, width, height, 1.5) : ctx.rect(-width/2, -height/2, width, height);
     ctx.fill();
 
-    // Tire brand orange stripe
-    ctx.fillStyle = '#ff6b00';
+    // Team-coloured tire sidewall stripe
+    ctx.fillStyle = tireStripe;
     ctx.fillRect(-width/2, -height/2, 1.5, height);
 
     // Metallic rim
@@ -376,6 +473,13 @@ export class BootScene extends Phaser.Scene {
     ctx.fillRect(-2, -2, 4, 4);
     ctx.fillStyle = '#5a5875';
     ctx.fillRect(-1, -1, 2, 2);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 0.55;
+    ctx.beginPath();
+    ctx.moveTo(-width / 2 + 2, 0); ctx.lineTo(width / 2 - 1, 0);
+    ctx.moveTo(0, -height / 2 + 1); ctx.lineTo(0, height / 2 - 1);
+    ctx.stroke();
 
     ctx.restore();
   }
