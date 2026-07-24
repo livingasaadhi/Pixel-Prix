@@ -8157,3 +8157,275 @@ button[aria-disabled='true']:hover {
     min-height: 46px;
   }
 }
+
+/* ========================================================================
+   ANDROID GAME COMFORT LAYER
+   The app uses a fixed game viewport rather than document-style pages. These
+   final rules deliberately keep every primary action reachable without a
+   nested scroll region, while leaving the race HUD free to own touch input.
+   ======================================================================== */
+@media (max-width: 670px) {
+  html,
+  body {
+    min-height: 100svh;
+    min-height: 100dvh;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #app {
+    min-height: 100svh;
+    height: 100dvh;
+    overscroll-behavior: none;
+  }
+
+  /* Keep the four destinations visible; navigation must never become a tiny
+     horizontal scroller on a phone. */
+  .top-app-bar {
+    width: calc(100% - 20px);
+    height: max(56px, calc(52px + env(safe-area-inset-top)));
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .top-glass-nav {
+    width: calc(100% - 44px);
+    min-height: 44px;
+    overflow: hidden;
+    justify-content: stretch;
+  }
+
+  .top-nav-link {
+    min-width: 0;
+    min-height: 44px;
+    padding: 5px 2px;
+    flex: 1 1 0;
+    overflow: hidden;
+    font-size: clamp(0.48rem, 2.2vw, 0.6rem);
+    line-height: 1;
+    text-align: center;
+    text-overflow: clip;
+    white-space: nowrap;
+  }
+
+  .top-app-bar-actions {
+    top: max(6px, env(safe-area-inset-top));
+  }
+
+  .f1-driver-profile-chip {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  /* Static UI responds like a native app, while the HUD retains its own
+     pointer handling for steering and pedals. */
+  .ui-screen:not(#screen-hud) {
+    touch-action: manipulation !important;
+  }
+
+  .ui-screen:not(#screen-hud) button,
+  .ui-screen:not(#screen-hud) input,
+  .ui-screen:not(#screen-hud) select,
+  .ui-screen:not(#screen-hud) textarea {
+    touch-action: manipulation;
+  }
+
+  .btn,
+  .btn-icon-only,
+  .nav-arrow,
+  .track-carousel-nav,
+  .lb-tab-btn,
+  .icon-btn,
+  .icon-btn-circle,
+  .modal-header .btn-icon-only {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Race setup is a compact two-step board rather than a scrollable page. */
+  #screen-select {
+    height: 100dvh;
+    min-height: 100svh;
+    padding: calc(66px + env(safe-area-inset-top)) 10px
+      calc(70px + env(safe-area-inset-bottom));
+  }
+
+  #screen-select .screen-header {
+    min-height: 30px;
+    margin-bottom: 5px;
+  }
+
+  #screen-select .select-grid {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  #screen-select .select-section,
+  #screen-select .glass-card,
+  #screen-select .car-select-card,
+  #screen-select .track-select-card {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #screen-select .section-header-row {
+    min-height: 23px;
+    margin-bottom: 4px;
+  }
+
+  #screen-select .nav-arrow,
+  #screen-select .track-carousel-nav {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    flex-basis: 44px;
+  }
+
+  #screen-select .carousel-content p,
+  #screen-select .track-info-col p {
+    -webkit-line-clamp: 1;
+  }
+
+  #screen-select .selection-footer {
+    right: max(10px, env(safe-area-inset-right));
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: max(10px, env(safe-area-inset-left));
+    width: auto;
+    min-height: 54px;
+  }
+
+  #screen-select .selection-footer .btn,
+  #screen-select[data-mode='time-trial'] .f1-start-button {
+    min-height: 52px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  #screen-select[data-mode='coop'] .selection-footer {
+    width: auto;
+  }
+
+  /* Modal screens remain bounded in the visual viewport. Their content is
+     condensed before it can sit behind Android's system gesture area. */
+  #screen-mp-lobby,
+  #screen-leaderboard,
+  #screen-settings,
+  #screen-gameover {
+    box-sizing: border-box;
+    height: 100dvh;
+    min-height: 100svh;
+    padding: calc(64px + env(safe-area-inset-top)) 10px
+      calc(12px + env(safe-area-inset-bottom));
+  }
+
+  #screen-mp-lobby .mp-lobby-container,
+  #screen-settings .modal-card,
+  #screen-gameover .modal-card,
+  #screen-leaderboard .modal-card {
+    max-height: calc(100dvh - 82px);
+    overflow: hidden !important;
+    transform: none;
+  }
+
+  #screen-leaderboard .lb-tabs {
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+
+  #screen-leaderboard .lb-tab-btn {
+    min-height: 46px;
+    padding: 6px;
+    font-size: 0.5rem;
+  }
+
+  /* Race controls sit clear of gesture edges, with deliberately large
+     controls and no keyboard-only labels on touch hardware. */
+  #screen-hud {
+    touch-action: none !important;
+  }
+
+  .hud-action-btns {
+    top: max(10px, env(safe-area-inset-top));
+    left: max(10px, env(safe-area-inset-left));
+    gap: 8px;
+  }
+
+  .hud-circle-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .touch-device #screen-hud .hud-drive-group {
+    bottom: max(18px, calc(env(safe-area-inset-bottom) + 6px));
+    left: max(18px, env(safe-area-inset-left)) !important;
+  }
+
+  .hud-steering-wheel-container {
+    bottom: max(18px, calc(env(safe-area-inset-bottom) + 6px));
+    right: max(18px, env(safe-area-inset-right));
+  }
+
+  .hud-steering-wheel {
+    width: clamp(116px, 33vw, 148px);
+    height: clamp(116px, 33vw, 148px);
+  }
+
+  .hud-ctrl-tri-boost {
+    width: clamp(88px, 25vw, 112px);
+    min-width: 88px;
+    height: clamp(64px, 18vw, 78px);
+  }
+
+  .hud-ctrl-tri-brake {
+    width: clamp(66px, 19vw, 82px);
+    min-width: 66px;
+    height: clamp(66px, 19vw, 82px);
+  }
+
+  .hud-ctrl-tri-gas {
+    width: clamp(78px, 22vw, 96px);
+    min-width: 78px;
+    height: clamp(88px, 24vw, 112px);
+  }
+
+  .hud-key-badge {
+    display: none !important;
+  }
+
+  .hud-kers-container {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    max-width: 132px;
+  }
+}
+
+/* Very small Android devices and split-screen landscape need an extra compact
+   information hierarchy, not a smaller tap target. */
+@media (max-width: 420px), (max-height: 560px) and (orientation: landscape) {
+  #screen-select .carousel-content p,
+  #screen-select .track-info-col p,
+  #screen-select .track-region,
+  #screen-select .car-drive-profile,
+  #screen-select .circuit-telemetry-widget {
+    display: none;
+  }
+
+  #screen-select .car-preview-area {
+    min-height: 58px;
+  }
+
+  #screen-select .track-minimap-box {
+    width: 56px;
+    height: 56px;
+    flex-basis: 56px;
+  }
+
+  #screen-select .stat-bars {
+    padding-top: 5px;
+  }
+
+  .hud-steering-wheel {
+    width: 108px;
+    height: 108px;
+  }
+}
