@@ -8455,3 +8455,49 @@ button[aria-disabled='true']:hover {
   line-height: 1;
   text-shadow: none;
 }
+
+/* Timing color language: purple = session fastest, green = this driver's
+   personal best, yellow = slower than reference, and neutral = ordinary.
+   Red is reserved for penalties and warnings, never performance. */
+.hud-warning-bar.sector-purple,
+#hud-penalty-chip.sector-purple {
+  border-color: #bf8cff;
+  background: rgba(154, 94, 225, 0.18);
+  color: #eedfff;
+  box-shadow: none;
+}
+
+.hud-warning-bar.sector-green,
+#hud-penalty-chip.sector-green {
+  border-color: #57dca0;
+  background: rgba(56, 185, 126, 0.16);
+  color: #a8f4ce;
+  box-shadow: none;
+}
+
+.hud-warning-bar.sector-yellow,
+#hud-penalty-chip.sector-yellow {
+  border-color: #e4b84b;
+  background: rgba(212, 158, 42, 0.16);
+  color: #ffe099;
+  box-shadow: none;
+}
+
+#screen-gameover .go-sector-row.fastest-lap-row {
+  border-left-color: #57dca0;
+  background: rgba(56, 185, 126, 0.075);
+}
+
+#screen-gameover .go-sector-row.fastest-lap-row .row-lap-total,
+#screen-gameover .go-sector-row .personal-best-sector,
+#screen-gameover .go-sector-row .personal-best-summary,
+#screen-gameover .go-sector-row.best-sectors-row .row-lap-num {
+  color: #82e8b4;
+  font-weight: 800;
+  text-shadow: none;
+}
+
+#screen-gameover .go-sector-row.best-sectors-row {
+  background: rgba(56, 185, 126, 0.06);
+  border-top-color: rgba(130, 232, 180, 0.3);
+}

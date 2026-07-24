@@ -879,7 +879,7 @@ function setupGameEventListeners() {
     } else if (isBest) {
       colorClass = 'sector-green';
       const diff = (timeMs - overallBest) / 1000;
-      deltaStr = `${diff <= 0 ? '' : '+'}${diff.toFixed(3)}s`;
+      deltaStr = `PERSONAL BEST${diff > 0 ? ` · +${diff.toFixed(3)}s` : ''}`;
     } else {
       const diff = (timeMs - overallBest) / 1000;
       deltaStr = `+${diff.toFixed(3)}s`;
@@ -957,12 +957,14 @@ function setupGameEventListeners() {
       laps.forEach((lap, idx) => {
         const lapSum = lap.reduce((a, b) => a + b, 0);
         const isBestLap = Math.abs(lapSum - bestLapMs) < 10;
-        const bestLapClass = isBestLap ? ' class="best-lap-row"' : '';
+        const bestLapClass = isBestLap ? ' class="fastest-lap-row"' : '';
 
-        // Highlight personal fastest sectors
-        const s1Class = lap[0] === bestSectors[0] ? 'class="pb-sector"' : '';
-        const s2Class = lap[1] === bestSectors[1] ? 'class="pb-sector"' : '';
-        const s3Class = lap[2] === bestSectors[2] ? 'class="pb-sector"' : '';
+        // These are this driver's best sectors for the completed run. They
+        // deliberately use the personal-best color; purple is reserved for a
+        // true session/leaderboard fastest sector in the live HUD.
+        const s1Class = lap[0] === bestSectors[0] ? 'class="personal-best-sector"' : '';
+        const s2Class = lap[1] === bestSectors[1] ? 'class="personal-best-sector"' : '';
+        const s3Class = lap[2] === bestSectors[2] ? 'class="personal-best-sector"' : '';
 
         html += `
           <div class="go-sector-row"${bestLapClass}>
@@ -978,10 +980,10 @@ function setupGameEventListeners() {
       // Best sectors row
       html += `
           <div class="go-sector-row best-sectors-row">
-            <span class="row-lap-num">BEST</span>
-            <span class="session-best-s1">${bestSectors[0] ? (bestSectors[0] / 1000).toFixed(3) + 's' : 'N/A'}</span>
-            <span class="session-best-s2">${bestSectors[1] ? (bestSectors[1] / 1000).toFixed(3) + 's' : 'N/A'}</span>
-            <span class="session-best-s3">${bestSectors[2] ? (bestSectors[2] / 1000).toFixed(3) + 's' : 'N/A'}</span>
+            <span class="row-lap-num">BEST SECTORS</span>
+            <span class="personal-best-summary">${bestSectors[0] ? (bestSectors[0] / 1000).toFixed(3) + 's' : 'N/A'}</span>
+            <span class="personal-best-summary">${bestSectors[1] ? (bestSectors[1] / 1000).toFixed(3) + 's' : 'N/A'}</span>
+            <span class="personal-best-summary">${bestSectors[2] ? (bestSectors[2] / 1000).toFixed(3) + 's' : 'N/A'}</span>
             <span class="row-lap-total">${formatTime(bestLapMs)}</span>
           </div>
         </div>
