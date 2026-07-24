@@ -8429,3 +8429,29 @@ button[aria-disabled='true']:hover {
     height: 108px;
   }
 }
+
+/* Results must read as a clear conclusion, not a bright decorative strip.
+   The circular yellow pins were inherited from an early card experiment and
+   carried no status meaning, so remove them across every surface. */
+.modal-card::before,
+.mp-lobby-container::before,
+.pause-card::before {
+  display: none !important;
+}
+
+#screen-gameover .finish-banner {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 18px;
+  padding: 12px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-left: 4px solid var(--pp-red, #e10600);
+  background: linear-gradient(90deg, rgba(225, 6, 0, 0.18), rgba(255, 255, 255, 0.055));
+  color: #f7f7f5;
+  font-size: clamp(1rem, 2.1vw, 1.45rem);
+  letter-spacing: 0.075em;
+  line-height: 1;
+  text-shadow: none;
+}
