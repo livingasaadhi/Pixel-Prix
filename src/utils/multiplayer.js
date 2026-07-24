@@ -1,4 +1,5 @@
 import { supabase } from '../supabase.js';
+import { CARS } from '../data/cars.js';
 
 // Local Player Unique ID
 export const LOCAL_PLAYER_ID = 'driver_' + Math.random().toString(36).substring(2, 9);
@@ -44,6 +45,62 @@ export function getLocalPlayerName() {
     return input.value.trim().toUpperCase();
   }
   return localStorage.getItem('pixel-prix:player-name') || 'DRIVER 1';
+}
+
+function getPresencePlayers(presenceState) {
+  return Object.values(presenceState || {}).flatMap((presences) => (
+    Array.isArray(presences) ? presences : []
+  ));
+}
+
+function reserveAvailableCar(preferredCarId, players) {
+  const knownIds = new Set(CARS.map((car) => car.id));
+  const occupied = new Set(
+    players.map((player) => player?.carId).filter((carId) => knownIds.has(carId))
+  );
+
+  if (knownIds.has(preferredCarId) && !occupied.has(preferredCarId)) {
+    return preferredCarId;
+  }
+
+  return CARS.find((car) => !occupied.has(car.id))?.id || null;
+}
+
+// Presence is eventually consistent, so simultaneous joiners can briefly
+// advertise the same car. The stable join order below makes every client
+// resolve the collision in exactly the same way; the later driver re-tracks
+// their presence with the first free car.
+function resolveLocalCarReservation(channel, players) {
+  const ordered = [...players].sort((a, b) => (
+    (a.joinedAt || 0) - (b.joinedAt || 0) || String(a.id).localeCompare(String(b.id))
+  ));
+  const occupied = new Set();
+  let replacement = null;
+
+  ordered.forEach((player) => {
+    const requestedCar = CARS.some((car) => car.id === player.carId) ? player.carId : null;
+    const assignedCar = requestedCar && !occupied.has(requestedCar)
+      ? requestedCar
+      : CARS.find((car) => !occupied.has(car.id))?.id;
+
+    if (!assignedCar) return;
+    occupied.add(assignedCar);
+
+    if (player.id === LOCAL_PLAYER_ID && assignedCar !== mpState.localPlayer.carId) {
+      replacement = assignedCar;
+    }
+  });
+
+  if (!replacement) return false;
+
+  mpState.localPlayer = { ...mpState.localPlayer, carId: replacement };
+  window.dispatchEvent(new CustomEvent('pixel-prix:mp-car-reassigned', {
+    detail: { carId: replacement }
+  }));
+  // Do not await this in the sync callback: tracking itself triggers a fresh
+  // presence sync and the lobby should remain responsive while it settles.
+  channel.track(mpState.localPlayer).catch(() => {});
+  return true;
 }
 
 /**
@@ -175,14 +232,20 @@ export async function joinMultiplayerRoom(roomCode, trackId, carId, playerName) 
 
   return subscribeToRoom(channel, async () => {
     // Evaluate room capacity via Presence before adding this driver.
-    const presenceState = channel.presenceState();
-    const currentCount = Object.keys(presenceState).length;
+    const existingPlayers = getPresencePlayers(channel.presenceState());
+    const currentCount = existingPlayers.length;
     if (currentCount >= 8) {
       throw new Error('ONLINE LOBBY FULL (MAXIMUM 8 DRIVERS)');
     }
 
+    const assignedCarId = reserveAvailableCar(mpState.localPlayer.carId, existingPlayers);
+    if (!assignedCarId) {
+      throw new Error('NO UNIQUE CARS ARE AVAILABLE IN THIS LOBBY');
+    }
+    const carChanged = assignedCarId !== mpState.localPlayer.carId;
+    mpState.localPlayer = { ...mpState.localPlayer, carId: assignedCarId };
     await channel.track(mpState.localPlayer);
-    return { roomCode: cleanCode, channelName };
+    return { roomCode: cleanCode, channelName, assignedCarId, carChanged };
   }, `Unable to join online lobby ${cleanCode}`);
 }
 
@@ -213,6 +276,8 @@ function setupChannelListeners(channel) {
       p.gridPos = idx;
       p.isHost = p.id === hostId;
     });
+
+    resolveLocalCarReservation(channel, playerList);
 
     mpState.isHost = hostId === LOCAL_PLAYER_ID;
     mpState.localPlayer.isHost = mpState.isHost;
@@ -276,6 +341,8 @@ function setupChannelListeners(channel) {
  */
 export function broadcastRaceStart() {
   if (!mpState.channel || !mpState.isHost) return;
+  const uniqueCars = new Set(mpState.players.map((player) => player.carId));
+  if (mpState.players.length < 2 || uniqueCars.size !== mpState.players.length) return;
 
   const startTimestamp = Date.now() + 3000;
   mpState.startCountDownTime = startTimestamp;

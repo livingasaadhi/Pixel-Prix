@@ -1542,7 +1542,15 @@ function initUI() {
       const cId = selectedCarId();
       const tId = selectedTrackId();
 
-      const { roomCode } = await joinMultiplayerRoom(code, tId, cId, pName);
+      const { roomCode, assignedCarId, carChanged } = await joinMultiplayerRoom(code, tId, cId, pName);
+      if (carChanged && assignedCarId) {
+        const assignedIndex = CARS.findIndex((car) => car.id === assignedCarId);
+        if (assignedIndex >= 0) {
+          selectedCarIndex = assignedIndex;
+          updateCarSelection();
+        }
+        showStewardToast(`CAR ALREADY CLAIMED — ASSIGNED ${CARS[assignedIndex]?.name?.toUpperCase() || 'AVAILABLE CAR'}`, 'amber');
+      }
       document.getElementById('modal-join-room')?.classList.add('hidden');
       document.getElementById('mp-room-code-val').innerText = roomCode;
       showScreen('screen-mp-lobby');
@@ -1606,6 +1614,7 @@ function initUI() {
   // -------------------------------------------------------------------------
   window.addEventListener('pixel-prix:mp-lobby-update', (e) => {
     const { players, isHost, roomCode } = e.detail;
+    const hasUniqueCars = new Set(players.map((player) => player.carId)).size === players.length;
 
     document.getElementById('mp-room-code-val').innerText = roomCode || '----';
     document.getElementById('mp-driver-count').innerText = players.length;
@@ -1638,13 +1647,28 @@ function initUI() {
     if (isHost) {
       if (startBtn) {
         startBtn.classList.remove('hidden');
-        startBtn.disabled = players.length < 2;
+        startBtn.disabled = players.length < 2 || !hasUniqueCars;
+        startBtn.title = hasUniqueCars ? '' : 'Waiting for unique car assignments';
       }
-      if (nonHostMsg) nonHostMsg.classList.add('hidden');
+      if (nonHostMsg) {
+        nonHostMsg.textContent = 'ASSIGNING UNIQUE CARS…';
+        nonHostMsg.classList.toggle('hidden', hasUniqueCars);
+      }
     } else {
       if (startBtn) startBtn.classList.add('hidden');
-      if (nonHostMsg) nonHostMsg.classList.remove('hidden');
+      if (nonHostMsg) {
+        nonHostMsg.textContent = 'WAITING FOR HOST TO START RACE…';
+        nonHostMsg.classList.remove('hidden');
+      }
     }
+  });
+
+  window.addEventListener('pixel-prix:mp-car-reassigned', (e) => {
+    const assignedIndex = CARS.findIndex((car) => car.id === e.detail?.carId);
+    if (assignedIndex < 0) return;
+    selectedCarIndex = assignedIndex;
+    updateCarSelection();
+    showStewardToast(`CAR ALREADY CLAIMED — ASSIGNED ${CARS[assignedIndex].name.toUpperCase()}`, 'amber');
   });
 
   // Handle Race Start Event
@@ -1794,6 +1818,41 @@ function initUI() {
       return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
     };
 
+    const cycleFocus = (targets, key) => {
+      if (!targets.length) return false;
+      const step = (key === 'ArrowLeft' || key === 'ArrowUp') ? -1 : 1;
+      const activeIndex = targets.indexOf(document.activeElement);
+      const nextIndex = activeIndex < 0
+        ? 0
+        : (activeIndex + step + targets.length) % targets.length;
+      targets[nextIndex].focus({ preventScroll: true });
+      return true;
+    };
+
+    window.addEventListener('keydown', (e) => {
+      if (inField() || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+
+      const focusedNav = document.activeElement?.closest('.top-glass-nav');
+      if (focusedNav) {
+        const tabs = [...focusedNav.querySelectorAll('.top-nav-link:not(:disabled)')];
+        if (cycleFocus(tabs, e.key)) e.preventDefault();
+        return;
+      }
+
+      if (isActive('screen-menu')) {
+        const tiles = [...document.querySelectorAll('#screen-menu .garage-tile:not(:disabled)')];
+        if (cycleFocus(tiles, e.key)) e.preventDefault();
+        return;
+      }
+
+      if (isActive('screen-pause') || isActive('screen-gameover')) {
+        const screen = isActive('screen-pause') ? '#screen-pause' : '#screen-gameover';
+        const actions = [...document.querySelectorAll(`${screen} button:not(:disabled)`)]
+          .filter((button) => !button.classList.contains('hidden'));
+        if (cycleFocus(actions, e.key)) e.preventDefault();
+      }
+    });
+
     window.addEventListener('keydown', (e) => {
       if (inField()) return;
       const k = e.key;
@@ -1805,7 +1864,13 @@ function initUI() {
       }
 
       if (isActive('screen-menu')) {
-        if (k === 'Enter') { e.preventDefault(); click('btn-start-game'); }
+        if (document.activeElement?.closest('.top-glass-nav')) return;
+        if (k === 'Enter' || k === ' ') {
+          e.preventDefault();
+          const selectedTile = document.activeElement?.closest('#screen-menu .garage-tile:not(:disabled)');
+          if (selectedTile) selectedTile.click();
+          else click('btn-start-game');
+        }
         return;
       }
 

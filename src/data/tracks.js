@@ -346,8 +346,8 @@ export const TRACKS = [
 // meaningfully longer without changing a circuit's identity or breaking its
 // checkpoint order.  Road width grows a little more than the route itself,
 // giving drivers room to choose lines and recover from small mistakes.
-const CIRCUIT_LENGTH_SCALE = 1.55;
-const CIRCUIT_WIDTH_SCALE = 1.75;
+const CIRCUIT_LENGTH_SCALE = 3;
+const CIRCUIT_WIDTH_SCALE = 2.4;
 
 TRACKS.forEach((track) => {
   const scalePoint = ({ x, y, ...rest }) => ({
