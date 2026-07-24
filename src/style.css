@@ -5027,6 +5027,22 @@ body {
   font-size: 0.68rem;
 }
 
+.daily-featured-chip {
+  display: inline-flex;
+  width: fit-content;
+  margin-left: auto;
+  align-items: center;
+  padding: 6px 10px;
+  color: #171717;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  border-radius: 3px;
+  background: #ffd500;
+  box-shadow: 0 0 0 2px rgba(255, 213, 0, 0.16);
+}
+
 .garage-grid {
   display: grid;
   flex: 1;
@@ -5425,6 +5441,7 @@ body {
   }
 
   .garage-heading p { font-size: 0.56rem; }
+  .daily-featured-chip { margin: 8px 0 0; font-size: 0.5rem; }
 
   .garage-grid {
     grid-template-columns: 1fr;

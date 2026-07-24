@@ -6,6 +6,7 @@ import { TRACKS } from './data/tracks.js';
 import { drawTrackMinimap } from './utils/trackRenderer.js';
 import { submitScore, fetchTopScores, subscribeToScores, syncLocalScoresToSupabase } from './supabase.js';
 import { mpState, createMultiplayerRoom, joinMultiplayerRoom, leaveMultiplayerRoom, broadcastRaceStart } from './utils/multiplayer.js';
+import { getDailyFeaturedTrackId, getDriverName, loadDriverProfile, recordSoloRace, saveDriverName } from './utils/progression.js';
 
 // Global App State
 let selectedCarIndex = 0;
@@ -17,6 +18,7 @@ let leaderboardTrackId = null;
 let ambientAnimId = null;      // requestAnimationFrame for menu particles
 let countdownLightsTimer = null; // F1 countdown lights timeout chain
 let sessionBestSectors = {};     // session best S1, S2, S3 per trackId
+let dailyFeaturedTrackId = null;
 
 // Helper to convert milliseconds to MM:SS.mmm format
 function formatTime(ms) {
@@ -31,6 +33,24 @@ function formatTime(ms) {
   const mmm = String(millis).padStart(3, '0');
 
   return `${mm}:${ss}.${mmm}`;
+}
+
+function refreshDriverProfileUI() {
+  const profile = loadDriverProfile();
+  const name = getDriverName();
+  const nameEl = document.getElementById('top-driver-name');
+  const xpEl = document.getElementById('top-driver-pts');
+  const levelEl = document.getElementById('top-driver-level');
+  const dailyEl = document.getElementById('daily-featured-chip');
+
+  if (nameEl) nameEl.textContent = name;
+  if (xpEl) xpEl.textContent = `${profile.xp.toLocaleString()} XP`;
+  if (levelEl) levelEl.textContent = `LEVEL ${profile.level}`;
+
+  const dailyTrack = TRACKS.find((track) => track.id === dailyFeaturedTrackId);
+  if (dailyEl && dailyTrack) {
+    dailyEl.textContent = `DAILY FEATURE: ${dailyTrack.name.toUpperCase()}`;
+  }
 }
 
 // UI Screen Navigation
@@ -838,6 +858,19 @@ function setupGameEventListeners() {
       return;
     }
 
+    const progression = recordSoloRace({
+      trackId: lastRaceResult.trackId,
+      totalTimeMs: lastRaceResult.totalTimeMs,
+      penaltyMs: lastRaceResult.penaltyMs
+    });
+    refreshDriverProfileUI();
+    const raceReward = progression.personalBest
+      ? `NEW PERSONAL BEST · +${progression.earnedXp} XP`
+      : progression.cleanRace
+        ? `CLEAN RACE · +${progression.earnedXp} XP`
+        : `RACE COMPLETE · +${progression.earnedXp} XP`;
+    showStewardToast(raceReward, 'amber');
+
     document.getElementById('go-raw-time').innerText = formatTime(lastRaceResult.rawTimeMs);
     document.getElementById('go-penalty-time').innerText = `+${(lastRaceResult.penaltyMs / 1000).toFixed(3)}s`;
     document.getElementById('go-final-time').innerText = formatTime(lastRaceResult.totalTimeMs);
@@ -1007,6 +1040,7 @@ function openScoreDialog() {
     form.reset();
     form.classList.remove('is-loading', 'is-success', 'is-error');
   }
+  if (nameInput) nameInput.value = getDriverName();
   if (statusMsg) {
     statusMsg.className = 'status-msg';
     statusMsg.innerText = '';
@@ -1052,6 +1086,8 @@ function submitScoreFromDialog() {
   }
 
   setScoreDialogState('loading');
+  saveDriverName(check.name);
+  refreshDriverProfileUI();
 
   // Extract sectors of the best lap
   const bestLapMs = lastRaceResult.bestLapMs;
@@ -1397,7 +1433,7 @@ function initUI() {
   const selectedTrackId = () => TRACKS[selectedTrackIndex].id;
   const getPlayerNameInput = () => {
     const input = document.getElementById('player-name-input');
-    return (input && input.value.trim()) ? input.value.trim().toUpperCase() : (localStorage.getItem('pixel-prix:player-name') || 'DRIVER 1');
+    return (input && input.value.trim()) ? input.value.trim().toUpperCase() : getDriverName();
   };
 
   // Create Room as Host
@@ -1964,11 +2000,16 @@ function startApp() {
     document.documentElement.classList.add('desktop-device');
   }
 
+  dailyFeaturedTrackId = getDailyFeaturedTrackId(TRACKS);
+  const dailyTrackIndex = TRACKS.findIndex((track) => track.id === dailyFeaturedTrackId);
+  if (dailyTrackIndex >= 0) selectedTrackIndex = dailyTrackIndex;
+
   // The UI must remain available even when a browser cannot initialise the
   // Phaser renderer (for example after a GPU/WebGL reset).  Initialising the
   // game first made that failure look like a blank application because none
   // of the menu handlers or the visible-screen state had been established.
   initUI();
+  refreshDriverProfileUI();
   setRaceMode(false);
   showScreen('screen-menu');
   startAmbientParticles();
