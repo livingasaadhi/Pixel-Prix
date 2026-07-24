@@ -47,6 +47,47 @@ export function getLocalPlayerName() {
 }
 
 /**
+ * Subscribe, track presence, and fail cleanly if Realtime cannot establish a
+ * usable room. A timeout prevents the UI from being left in a pending state
+ * when a browser loses its network without emitting a channel error.
+ */
+function subscribeToRoom(channel, onSubscribed, errorMessage) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timeoutId = window.setTimeout(() => {
+      fail(new Error(`${errorMessage} (TIMED_OUT)`));
+    }, 12000);
+
+    const succeed = (result) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      resolve(result);
+    };
+
+    const fail = (error) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      leaveMultiplayerRoom();
+      reject(error);
+    };
+
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        try {
+          succeed(await onSubscribed());
+        } catch (error) {
+          fail(error instanceof Error ? error : new Error(String(error)));
+        }
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        fail(new Error(`${errorMessage} (${status})`));
+      }
+    });
+  });
+}
+
+/**
  * Initialize / Create a new Multiplayer Room as Host
  */
 export async function createMultiplayerRoom(trackId, carId, playerName) {
@@ -84,17 +125,10 @@ export async function createMultiplayerRoom(trackId, carId, playerName) {
   mpState.channel = channel;
   setupChannelListeners(channel);
 
-  return new Promise((resolve, reject) => {
-    channel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await channel.track(mpState.localPlayer);
-        console.log(`✅ Created Multiplayer Room: ${roomCode} on channel ${channelName}`);
-        resolve({ roomCode, channelName });
-      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        reject(new Error(`Failed to connect to room channel (${status})`));
-      }
-    });
-  });
+  return subscribeToRoom(channel, async () => {
+    await channel.track(mpState.localPlayer);
+    return { roomCode, channelName };
+  }, 'Failed to create online lobby');
 }
 
 /**
@@ -139,29 +173,17 @@ export async function joinMultiplayerRoom(roomCode, trackId, carId, playerName) 
   mpState.channel = channel;
   setupChannelListeners(channel);
 
-  return new Promise((resolve, reject) => {
-    channel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        // Evaluate room capacity via Presence
-        const presenceState = channel.presenceState();
-        const currentCount = Object.keys(presenceState).length;
+  return subscribeToRoom(channel, async () => {
+    // Evaluate room capacity via Presence before adding this driver.
+    const presenceState = channel.presenceState();
+    const currentCount = Object.keys(presenceState).length;
+    if (currentCount >= 8) {
+      throw new Error('ONLINE LOBBY FULL (MAXIMUM 8 DRIVERS)');
+    }
 
-        if (currentCount >= 8) {
-          channel.unsubscribe();
-          mpState.channel = null;
-          mpState.isMultiplayer = false;
-          reject(new Error('ROOM FULL (MAX 8 PLAYERS ALLOWED)'));
-          return;
-        }
-
-        await channel.track(mpState.localPlayer);
-        console.log(`✅ Joined Multiplayer Room: ${cleanCode} on channel ${channelName}`);
-        resolve({ roomCode: cleanCode, channelName });
-      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        reject(new Error(`Failed to subscribe to room ${cleanCode}. Check connection.`));
-      }
-    });
-  });
+    await channel.track(mpState.localPlayer);
+    return { roomCode: cleanCode, channelName };
+  }, `Unable to join online lobby ${cleanCode}`);
 }
 
 /**
@@ -183,19 +205,17 @@ function setupChannelListeners(channel) {
     // Sort players by join order (joinedAt ascending)
     playerList.sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
 
-    // Assign Grid Positions (0 = Pole / Host)
+    const hostId = playerList[0]?.id || null;
+
+    // Assign grid positions and derive host status from the current presence
+    // list. This avoids stale HOST labels after a host disconnects.
     playerList.forEach((p, idx) => {
       p.gridPos = idx;
+      p.isHost = p.id === hostId;
     });
 
-    // Host Failover: Earliest joined player becomes Host if Host leaves
-    if (playerList.length > 0) {
-      const firstPlayer = playerList[0];
-      if (firstPlayer.id === LOCAL_PLAYER_ID) {
-        mpState.isHost = true;
-        mpState.localPlayer.isHost = true;
-      }
-    }
+    mpState.isHost = hostId === LOCAL_PLAYER_ID;
+    mpState.localPlayer.isHost = mpState.isHost;
 
     mpState.players = playerList;
 

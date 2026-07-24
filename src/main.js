@@ -5,7 +5,7 @@ import { CARS } from './data/cars.js';
 import { TRACKS } from './data/tracks.js';
 import { drawTrackMinimap } from './utils/trackRenderer.js';
 import { submitScore, fetchTopScores, subscribeToScores, syncLocalScoresToSupabase } from './supabase.js';
-import { mpState, createMultiplayerRoom, joinMultiplayerRoom, leaveMultiplayerRoom, broadcastRaceStart, generateRoomCode } from './utils/multiplayer.js';
+import { mpState, createMultiplayerRoom, joinMultiplayerRoom, leaveMultiplayerRoom, broadcastRaceStart } from './utils/multiplayer.js';
 
 // Global App State
 let selectedCarIndex = 0;
@@ -648,7 +648,12 @@ function showStewardToast(text, type = 'amber') {
   const toast = document.createElement('div');
   toast.className = `steward-toast ${type}`;
   const icon = type === 'red' ? 'gavel' : 'warning';
-  toast.innerHTML = `<span class="material-symbols-outlined">${icon}</span><span>${text}</span>`;
+  const iconEl = document.createElement('span');
+  iconEl.className = 'material-symbols-outlined';
+  iconEl.textContent = icon;
+  const labelEl = document.createElement('span');
+  labelEl.textContent = text;
+  toast.append(iconEl, labelEl);
   container.appendChild(toast);
 
   setTimeout(() => {
@@ -1409,7 +1414,8 @@ function initUI() {
       showScreen('screen-mp-lobby');
       showStewardToast(`ONLINE LOBBY ${roomCode} READY`, 'amber');
     } catch (err) {
-      alert(`Could not create room: ${err.message || err}`);
+      console.error('Unable to create online lobby:', err);
+      showStewardToast('UNABLE TO CREATE LOBBY — CHECK YOUR CONNECTION', 'red');
     }
   });
 
