@@ -344,6 +344,9 @@ function updateCarSelection() {
   document.getElementById('car-name').innerText = car.name;
   document.getElementById('car-desc').innerText = car.description;
 
+  const driveStyle = document.getElementById('car-drive-style');
+  if (driveStyle) driveStyle.textContent = getCarDriveStyle(car);
+
   updateSelectionDots('car-selection-dots', CARS.length, selectedCarIndex);
   const carCount = document.getElementById('car-selection-count');
   if (carCount) carCount.textContent = `GARAGE ${String(selectedCarIndex + 1).padStart(2, '0')} / ${String(CARS.length).padStart(2, '0')}`;
@@ -385,6 +388,15 @@ function updateCarSelection() {
 
   const bmBoost = document.getElementById('bm-boost');
   if (bmBoost) bmBoost.innerText = boostPct > 90 ? 'Overboost Energy Recovery' : 'Kinetic ERS Active';
+}
+
+function getCarDriveStyle(car) {
+  if (car.driveStyle) return car.driveStyle;
+  if (car.topSpeed >= 310) return 'STRAIGHT-LINE ATTACK';
+  if (car.acceleration >= 205) return 'LAUNCH & EXIT';
+  if (car.handling >= 4.8) return 'PRECISION GRIP';
+  if (car.boostPower >= 1.55) return 'ERS QUALIFYING MODE';
+  return 'BALANCED RACE PACE';
 }
 
 function updateTrackSelection() {

@@ -83,6 +83,14 @@ export class RaceScene extends Phaser.Scene {
     this.steeringSensitivity = (this.carData.steeringSensitivity || this.carData.handling || 4.4) * 1.48;
     this.highSpeedSteeringMultiplier = this.carData.highSpeedSteeringMultiplier || 0.48;
 
+    // Vehicle identity is deliberately expressed through a few intuitive
+    // behaviours. Defaults preserve the original roster while newer cars
+    // gain meaningful launch, cornering and ERS trade-offs.
+    this.launchGrip = Phaser.Math.Clamp(this.carData.launchGrip ?? 1, 0.92, 1.16);
+    this.corneringGrip = Phaser.Math.Clamp(this.carData.corneringGrip ?? 1, 0.92, 1.14);
+    this.ersRecovery = Phaser.Math.Clamp(this.carData.ersRecovery ?? 12, 8, 16);
+    this.boostDrain = Phaser.Math.Clamp(this.carData.boostDrain ?? 35, 28, 42);
+
     // Lateral drift physics
     this.vx = 0;
     this.vy = 0;
@@ -522,7 +530,7 @@ export class RaceScene extends Phaser.Scene {
     let currentAccel = boostActive ? this.boostAcceleration : this.acceleration;
 
     if (boostActive) {
-      this.boostEnergy = Math.max(0, this.boostEnergy - 35 * dt);
+      this.boostEnergy = Math.max(0, this.boostEnergy - this.boostDrain * dt);
       this.smokeEmitter.emitting = true;
       this.boostEmitter.emitting = true;
       if (Math.random() < 0.1) playBoostSound();
@@ -542,7 +550,7 @@ export class RaceScene extends Phaser.Scene {
         window.dispatchEvent(new CustomEvent('pixel-prix:boost-state', { detail: { active: false } }));
       }
     } else {
-      this.boostEnergy = Math.min(100, this.boostEnergy + 12 * dt);
+      this.boostEnergy = Math.min(100, this.boostEnergy + this.ersRecovery * dt);
       this.boostEmitter.emitting = false;
     }
 
@@ -567,7 +575,9 @@ export class RaceScene extends Phaser.Scene {
         if (this.currentSpeed > 0) this.currentSpeed = 0;
       } else if (this.currentSpeed < targetMaxSpeed) {
         const ratio = Math.max(0, this.currentSpeed / targetMaxSpeed);
-        const launchAccel = currentAccel * (1.75 - 0.95 * Math.pow(ratio, 1.3));
+        const launchWindow = Math.max(0, 1 - ratio / 0.24);
+        const launchModifier = 1 + (this.launchGrip - 1) * launchWindow;
+        const launchAccel = currentAccel * (1.75 - 0.95 * Math.pow(ratio, 1.3)) * launchModifier;
         this.currentSpeed += launchAccel * gasValue * dt;
         if (this.currentSpeed > targetMaxSpeed) {
           this.currentSpeed = targetMaxSpeed;
@@ -612,7 +622,8 @@ export class RaceScene extends Phaser.Scene {
 
     const targetVx = Math.cos(this.player.rotation) * this.currentSpeed;
     const targetVy = Math.sin(this.player.rotation) * this.currentSpeed;
-    const grip = (boostActive || steerDir !== 0) ? 0.98 : 0.94;
+    const baseGrip = (boostActive || steerDir !== 0) ? 0.98 : 0.94;
+    const grip = Phaser.Math.Clamp(baseGrip + (this.corneringGrip - 1) * 0.035 - (this.onGrass ? 0.025 : 0), 0.9, 0.992);
     this.vx = Phaser.Math.Linear(this.vx, targetVx, grip);
     this.vy = Phaser.Math.Linear(this.vy, targetVy, grip);
 

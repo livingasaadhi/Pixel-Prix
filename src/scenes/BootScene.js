@@ -330,6 +330,12 @@ export class BootScene extends Phaser.Scene {
       ctx.fillStyle = accent;
       ctx.fillRect(x, y + h * 0.22, w, h * 0.12);
       ctx.fillRect(x, y + h * 0.66, w, h * 0.12);
+    } else {
+      // Future garage additions retain a visible livery identity even before
+      // a bespoke pattern is authored for them.
+      ctx.fillStyle = accent;
+      ctx.fillRect(x, y + h * 0.42, w, h * 0.16);
+      ctx.fillRect(x + w * 0.48, y, w * 0.12, h);
     }
   }
 

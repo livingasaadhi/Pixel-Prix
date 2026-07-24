@@ -239,6 +239,105 @@ export const TRACKS = [
       { id: 3, x: 1700, y: 500, label: 'CP 3 (LES COMBES)' },
       { id: 4, x: 600, y: 1400, label: 'CP 4 (POUHON)' }
     ]
+  },
+  {
+    id: 'ember-pass',
+    name: 'Ember Pass',
+    description: 'A climbing mountain circuit where braking confidence unlocks the fast descent.',
+    difficulty: 'MEDIUM',
+    region: 'VOLCANO RANGE / SUNSET',
+    character: 'ELEVATION & BRAKING',
+    weather: 'WARM · 26°C',
+    drsZones: 2,
+    record: '01:28.940',
+    laps: 2,
+    roadWidth: 178,
+    length: '5.1 KM',
+    worldWidth: 4200,
+    worldHeight: 3000,
+    startPos: { x: 2100, y: 2580, rotation: 0 },
+    sector1End: 2,
+    sector2End: 4,
+    points: [
+      { x: 900, y: 2580 }, { x: 2100, y: 2580 }, { x: 3350, y: 2580 },
+      { x: 3750, y: 2100 }, { x: 3380, y: 1620 }, { x: 3620, y: 980 },
+      { x: 2860, y: 520 }, { x: 2020, y: 740 }, { x: 1420, y: 420 },
+      { x: 760, y: 860 }, { x: 980, y: 1480 }, { x: 520, y: 2020 }
+    ],
+    checkpoints: [
+      { id: 0, x: 2100, y: 2580, label: 'START/FINISH' },
+      { id: 1, x: 3750, y: 2100, label: 'CP 1 (ASHFALL)' },
+      { id: 2, x: 3620, y: 980, label: 'CP 2 (CALDERA)' },
+      { id: 3, x: 2020, y: 740, label: 'CP 3 (RIDGELINE)' },
+      { id: 4, x: 760, y: 860, label: 'CP 4 (FIREWATCH)' },
+      { id: 5, x: 520, y: 2020, label: 'CP 5 (DESCENT)' }
+    ]
+  },
+  {
+    id: 'azure-coast',
+    name: 'Azure Coast',
+    description: 'Wide coastal sweepers and a forgiving surface make this the perfect race-day rhythm track.',
+    difficulty: 'EASY',
+    region: 'MEDITERRANEAN / COAST',
+    character: 'FLOWING RHYTHM',
+    weather: 'CLEAR · 24°C',
+    drsZones: 3,
+    record: '01:30.380',
+    laps: 2,
+    roadWidth: 214,
+    length: '6.2 KM',
+    worldWidth: 4600,
+    worldHeight: 3000,
+    startPos: { x: 2300, y: 2440, rotation: 0 },
+    sector1End: 2,
+    sector2End: 4,
+    points: [
+      { x: 900, y: 2440 }, { x: 2300, y: 2440 }, { x: 3700, y: 2440 },
+      { x: 4100, y: 1900 }, { x: 3550, y: 1370 }, { x: 2800, y: 1510 },
+      { x: 2400, y: 780 }, { x: 1500, y: 540 }, { x: 760, y: 920 },
+      { x: 520, y: 1580 }, { x: 920, y: 1990 }
+    ],
+    checkpoints: [
+      { id: 0, x: 2300, y: 2440, label: 'START/FINISH' },
+      { id: 1, x: 4100, y: 1900, label: 'CP 1 (MARINA)' },
+      { id: 2, x: 3550, y: 1370, label: 'CP 2 (SEAFRONT)' },
+      { id: 3, x: 2400, y: 780, label: 'CP 3 (AZURE CREST)' },
+      { id: 4, x: 760, y: 920, label: 'CP 4 (COVE)' },
+      { id: 5, x: 520, y: 1580, label: 'CP 5 (HARBOUR)' }
+    ]
+  },
+  {
+    id: 'ironworks-gp',
+    name: 'Ironworks GP',
+    description: 'A compact industrial sprint packed with chicanes, walls and uncompromising braking zones.',
+    difficulty: 'HARD',
+    region: 'FORGE CITY / INDUSTRIAL',
+    character: 'BRAKE & ROTATE',
+    weather: 'OVERCAST · 17°C',
+    drsZones: 1,
+    record: '01:16.420',
+    laps: 2,
+    roadWidth: 158,
+    length: '4.1 KM',
+    worldWidth: 3600,
+    worldHeight: 2600,
+    startPos: { x: 1800, y: 2240, rotation: 0 },
+    sector1End: 2,
+    sector2End: 4,
+    points: [
+      { x: 600, y: 2240 }, { x: 1800, y: 2240 }, { x: 3000, y: 2240 },
+      { x: 3180, y: 1740 }, { x: 2660, y: 1450 }, { x: 3040, y: 920 },
+      { x: 2380, y: 460 }, { x: 1560, y: 600 }, { x: 980, y: 420 },
+      { x: 500, y: 900 }, { x: 1040, y: 1360 }, { x: 470, y: 1740 }
+    ],
+    checkpoints: [
+      { id: 0, x: 1800, y: 2240, label: 'START/FINISH' },
+      { id: 1, x: 3180, y: 1740, label: 'CP 1 (YARD ONE)' },
+      { id: 2, x: 3040, y: 920, label: 'CP 2 (FOUNDRY)' },
+      { id: 3, x: 1560, y: 600, label: 'CP 3 (STACKS)' },
+      { id: 4, x: 500, y: 900, label: 'CP 4 (SIDING)' },
+      { id: 5, x: 470, y: 1740, label: 'CP 5 (PIT WALL)' }
+    ]
   }
 ];
 
