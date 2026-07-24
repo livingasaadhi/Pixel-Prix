@@ -111,10 +111,8 @@ function setRaceMode(enabled) {
   // Hide / show persistent nav chrome during a race session
   const topBar = document.getElementById('top-app-bar');
   const accentBar = document.getElementById('f1-red-accent-bar');
-  const bottomNav = document.getElementById('bottom-nav');
   if (topBar) topBar.style.display = enabled ? 'none' : '';
   if (accentBar) accentBar.style.display = enabled ? 'none' : '';
-  if (bottomNav) bottomNav.style.display = enabled ? 'none' : '';
 
   // Orientation locking is supported by installed/PWA-capable browsers. The
   // layout remains fully usable when a browser declines the request.
@@ -963,11 +961,6 @@ function setupGameEventListeners() {
     if (fillRight) {
       if (active) fillRight.classList.add('active-boost');
       else fillRight.classList.remove('active-boost');
-    }
-    const fillLeft = document.getElementById('hud-boost-fill-left');
-    if (fillLeft) {
-      if (active) fillLeft.classList.add('active-boost');
-      else fillLeft.classList.remove('active-boost');
     }
   });
 }

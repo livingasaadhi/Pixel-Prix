@@ -231,16 +231,28 @@ export class RaceScene extends Phaser.Scene {
       const action = keyActionMap[e.key] || keyActionMap[e.code];
       if (action) {
         this._kb[action] = e.type === 'keydown';
-        if (action === 'up') {
-          // Instantly unlock driving if player presses acceleration
-          this.lightsGreen = true;
-          this.raceStarted = true;
-        }
         if (e.code === 'Space' || e.code.startsWith('Arrow') || e.key.startsWith('Arrow')) e.preventDefault();
       }
     };
     window.addEventListener('keydown', this._kbHandler);
     window.addEventListener('keyup', this._kbHandler);
+
+    // Browsers can miss keyup/touchend when a tab loses focus. Reset every
+    // control source so the car never keeps accelerating in the background.
+    this._resetInputHandler = () => {
+      Object.keys(this._kb).forEach((key) => { this._kb[key] = false; });
+      this.isAccelerating = false;
+      this.isBraking = false;
+      this.isBoosting = false;
+      this.isSteeringLeft = false;
+      this.isSteeringRight = false;
+      this.touchSteerValue = 0;
+      this.touchGas = 0;
+      this.touchBrake = 0;
+      this.joystickActive = false;
+    };
+    window.addEventListener('blur', this._resetInputHandler);
+    document.addEventListener('visibilitychange', this._resetInputHandler);
 
     this._preventScrollHandler = (e) => {
       const t = e.target;
@@ -253,31 +265,13 @@ export class RaceScene extends Phaser.Scene {
     };
     window.addEventListener('keydown', this._preventScrollHandler);
 
-    this.lightsGreen = true;
-    this.raceStarted = true;
-
     this._lightsGreenHandler = () => {
-      this.raceStarted = true;
-      this.lightsGreen = true;
-      this.startTime = this.time.now;
-      this.lapStartTime = this.time.now;
-      this.sectorStartTime = this.time.now;
-      startEngineSound();
+      this.beginRace();
     };
     window.addEventListener('pixel-prix:lights-green', this._lightsGreenHandler);
 
-    // Guaranteed fallback: enable driving after countdown duration (max 2.8s)
-    this.time.delayedCall(2800, () => {
-      if (!this.lightsGreen) {
-        this.raceStarted = true;
-        this.lightsGreen = true;
-        this.startTime = this.time.now;
-        this.lapStartTime = this.time.now;
-        this.sectorStartTime = this.time.now;
-      }
-    });
-
-    startEngineSound();
+    // Guaranteed fallback when a browser animation/event is interrupted.
+    this.time.delayedCall(4500, () => this.beginRace());
 
     // 7. Register shutdown handler
     this.events.once('shutdown', this.cleanup, this);
@@ -321,6 +315,18 @@ export class RaceScene extends Phaser.Scene {
     }
   }
 
+  beginRace() {
+    if (this.lightsGreen || this.raceFinished) return;
+    this.raceStarted = true;
+    this.lightsGreen = true;
+    this.startTime = this.time.now;
+    this.lapStartTime = this.time.now;
+    this.sectorStartTime = this.time.now;
+    startEngineSound();
+    this.showNotification('LIGHTS OUT — GO!');
+    this.emitHUDUpdate();
+  }
+
   centerCameraOnPlayer() {
     if (!this.player || !this.cameras.main) return;
     const cam = this.cameras.main;
@@ -348,6 +354,10 @@ export class RaceScene extends Phaser.Scene {
     this.gamepadInput = this.readGamepadInputs();
 
     this.centerCameraOnPlayer();
+    if (this.playerShadow) {
+      this.playerShadow.setPosition(this.player.x + 7, this.player.y + 9);
+      this.playerShadow.rotation = this.player.rotation;
+    }
 
     if (!this.lightsGreen) {
       const isTryingToDrive = this.isAccelerating || this.touchGas > 0.1 ||
@@ -944,8 +954,6 @@ export class RaceScene extends Phaser.Scene {
       window.removeEventListener('pixel-prix:lights-green', this._lightsGreenHandler);
       this._lightsGreenHandler = null;
     }
-    const countdownEl = document.getElementById('hud-countdown');
-    if (countdownEl) countdownEl.classList.add('hidden');
     if (this._notifEvent) {
       this._notifEvent.destroy();
       this._notifEvent = null;
@@ -964,6 +972,11 @@ export class RaceScene extends Phaser.Scene {
       window.removeEventListener('keydown', this._kbHandler);
       window.removeEventListener('keyup', this._kbHandler);
       this._kbHandler = null;
+    }
+    if (this._resetInputHandler) {
+      window.removeEventListener('blur', this._resetInputHandler);
+      document.removeEventListener('visibilitychange', this._resetInputHandler);
+      this._resetInputHandler = null;
     }
   }
 
