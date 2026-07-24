@@ -34,8 +34,10 @@ export class RaceScene extends Phaser.Scene {
     this.advantageAlertActive = false;
     this.advantageTimerMs = 0;
     this.offRoadGraceMs = 0; // Grace period when returning to track
-    this.warningThresholdMs = 6000; // 6s off-road before warning
-    this.penaltyThresholdMs = 12000; // 12s off-road before penalty
+    this.offRoadWarningIssued = false;
+    this.warningThresholdMs = 10000; // 10s sustained off-road before review
+    this.penaltyThresholdMs = 26000; // 26s sustained off-road before breach
+    this.shortcutThresholdMs = 8000; // High-speed cuts must also be sustained
 
     // Timer state
     this.startTime = 0;
@@ -482,45 +484,50 @@ export class RaceScene extends Phaser.Scene {
     // Use the updated track tolerance (+35) as the single source of truth for off-road.
     this.onGrass = isOffRoad(this.player.x, this.player.y, this.curvePoints, this.roadWidth);
 
-    if (this.onGrass && Math.abs(this.currentSpeed) > 140) {
+    const displayedSpeed = Math.abs(this.currentSpeed) / 2.4;
+    const isMeaningfulOffTrack = this.onGrass && displayedSpeed > 160;
+
+    if (isMeaningfulOffTrack) {
       this.offRoadDurationMs += delta;
       this.offRoadGraceMs = 0; // Reset grace when actively off-road
 
-      // Progressive warning system based on off-road duration
+      // A review notice is not a confirmed warning. This avoids charging two
+      // steward strikes for one long recovery while still making intent clear.
       if (this.offRoadDurationMs > this.penaltyThresholdMs) {
         this.handleTrackLimitsViolation();
         this.offRoadDurationMs = 0; // Reset after penalty
-      } else if (this.offRoadDurationMs > this.warningThresholdMs && this.trackLimitsCount === 0) {
-        this.trackLimitsCount = 1;
-        this.showStewardsNotification('STEWARDS: TRACK LIMITS WARNING 1/3');
+        this.offRoadWarningIssued = false;
+      } else if (this.offRoadDurationMs > this.warningThresholdMs && !this.offRoadWarningIssued) {
+        this.offRoadWarningIssued = true;
+        this.showStewardsNotification('STEWARDS: TRACK LIMITS UNDER REVIEW');
       }
 
-      // Advantage alert at high speed threshold (>260 km/h)
-      if (Math.abs(this.currentSpeed) / 2.4 > 260 && !this.advantageAlertActive) {
+      // A shortcut investigation requires both very high speed and a
+      // sustained off-track segment; a normal wide exit cannot trigger it.
+      if (this.offRoadDurationMs > this.shortcutThresholdMs && displayedSpeed > 285 && !this.advantageAlertActive) {
         this.advantageAlertActive = true;
-        this.advantageTimerMs = 5000;
-        this.showStewardsNotification('STEWARDS: SLOW DOWN OR YIELD ADVANTAGE!');
+        this.advantageTimerMs = 9000;
+        this.showStewardsNotification('STEWARDS: POSSIBLE SHORTCUT — RETURN TO TRACK');
       }
     } else {
-      // Grace period when returning to track - rapidly decrease off-road accumulation
+      // Generous recovery: a brief run-off does not become a later penalty.
       this.offRoadGraceMs += delta;
-      if (this.offRoadGraceMs > 500) {
-        this.offRoadDurationMs = Math.max(0, this.offRoadDurationMs - delta * 5);
-        this.offRoadGraceMs = 0;
-      }
+      const recoveryRate = this.offRoadGraceMs > 450 ? 5 : 2;
+      this.offRoadDurationMs = Math.max(0, this.offRoadDurationMs - delta * recoveryRate);
+      if (this.offRoadDurationMs < 500) this.offRoadWarningIssued = false;
     }
 
     if (this.advantageAlertActive) {
-      if (Math.abs(this.currentSpeed) / 2.4 < 180) {
+      if (!this.onGrass || displayedSpeed < 200) {
         this.advantageAlertActive = false;
         this.advantageTimerMs = 0;
-        this.showStewardsNotification('STEWARDS: ADVANTAGE YIELDED - WARNING CLEARED');
+        this.showStewardsNotification('STEWARDS: REVIEW CLEARED');
       } else {
         this.advantageTimerMs -= delta;
         if (this.advantageTimerMs <= 0) {
           this.penaltyMs += 3000;
           this.advantageAlertActive = false;
-          this.showStewardsNotification('STEWARDS: +3.0s PENALTY (CORNER CUTTING)');
+          this.showStewardsNotification('STEWARDS: +3.0s PENALTY (SUSTAINED SHORTCUT)');
         }
       }
     }

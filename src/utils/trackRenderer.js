@@ -1,22 +1,25 @@
 import Phaser from 'phaser';
 
 /**
- * Generates a perfectly closed, smoothly interpolated Catmull-Rom spline points list
- * with no kinks at start/finish and no overlapping segments.
+ * Generates a perfectly closed cardinal spline points list. Slightly reduced
+ * tangent tension keeps high-speed circuits from overshooting their intended
+ * apexes while retaining a natural flowing curve between controls.
  */
 function getClosedSplinePoints(rawPoints, divisions = 220) {
   const n = rawPoints.length;
   const curvePoints = [];
   
-  // Standard Catmull-Rom spline interpolation equation
+  // Cardinal spline interpolation. Catmull-Rom uses 0.5; a lower value gives
+  // the expanded circuits cleaner, more believable curve transitions.
   const interpolate = (p0, p1, p2, p3, t) => {
     const t2 = t * t;
     const t3 = t2 * t;
     
-    const f1 = -0.5 * t3 + t2 - 0.5 * t;
-    const f2 = 1.5 * t3 - 2.5 * t2 + 1.0;
-    const f3 = -1.5 * t3 + 2.0 * t2 + 0.5 * t;
-    const f4 = 0.5 * t3 - 0.5 * t2;
+    const tension = 0.42;
+    const f1 = -tension * t3 + 2 * tension * t2 - tension * t;
+    const f2 = (2 - tension) * t3 + (tension - 3) * t2 + 1;
+    const f3 = (tension - 2) * t3 + (3 - 2 * tension) * t2 + tension * t;
+    const f4 = tension * t3 - tension * t2;
     
     return {
       x: p0.x * f1 + p1.x * f2 + p2.x * f3 + p3.x * f4,
@@ -53,7 +56,7 @@ export function renderTrackGraphics(scene, track) {
   const roadWidth = track.roadWidth;
 
   // Generate high-density spline points
-  const curvePoints = getClosedSplinePoints(track.points, 280);
+  const curvePoints = getClosedSplinePoints(track.points, 420);
   
   // === BACKGROUND: Broadcast-grade circuit infield ===
   graphics.fillStyle(0x07090d, 1);
