@@ -152,6 +152,15 @@ body {
   pointer-events: auto !important;
 }
 
+/* Shared state utility. Dialogs, inline errors, and screens all use this
+   class; without a global rule, modal overlays marked `hidden` still render
+   and block the menu on first load. */
+.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 /* --- SCREEN BASE --------------------------------------------------------- */
 .ui-screen {
   position: absolute;
