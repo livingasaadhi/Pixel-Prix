@@ -6281,3 +6281,173 @@ body {
     transform-origin: center;
   }
 }
+
+/* --- Accessible control system ------------------------------------------ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+button,
+.btn,
+.top-nav-link,
+.garage-tile,
+.nav-arrow,
+.track-carousel-nav,
+.icon-btn,
+.icon-btn-circle,
+.hud-circle-btn,
+.hud-ctrl-btn,
+.lb-fab-btn {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn,
+.top-nav-link,
+.garage-tile,
+.nav-arrow,
+.track-carousel-nav,
+.icon-btn,
+.icon-btn-circle,
+.hud-circle-btn,
+.hud-ctrl-btn,
+.lb-fab-btn {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.18;
+}
+
+.btn,
+.top-nav-link,
+.nav-arrow,
+.track-carousel-nav,
+.icon-btn,
+.icon-btn-circle,
+.hud-circle-btn,
+.lb-fab-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.btn-primary {
+  color: #101114 !important;
+  border: 2px solid #f5f5f2;
+  background: #f5f5f2 !important;
+}
+
+.btn-primary:hover {
+  color: #101114 !important;
+  border-color: #ffd500;
+  background: #ffd500 !important;
+}
+
+.btn-secondary,
+.btn-tertiary,
+.btn-outline,
+.btn-ghost {
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.56) !important;
+  background: rgba(12, 13, 16, 0.88) !important;
+}
+
+.btn-secondary:hover,
+.btn-tertiary:hover,
+.btn-outline:hover,
+.btn-ghost:hover {
+  color: #111216 !important;
+  border-color: #fff !important;
+  background: #fff !important;
+}
+
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  z-index: 5;
+  outline: 3px solid #ffd500 !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.82) !important;
+}
+
+button:disabled,
+button[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.48;
+  filter: grayscale(0.45);
+}
+
+button:disabled:hover,
+button[aria-disabled='true']:hover {
+  color: inherit !important;
+  border-color: inherit !important;
+  background: inherit !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.tile-eyebrow,
+.tile-meta,
+.garage-shortcuts,
+.section-label,
+.stat-label,
+.stat-benchmark,
+.ct-label,
+.f1-tel-label,
+.f1-gear-label,
+.f1-speed-unit,
+.hud-ctrl-label,
+.kers-label {
+  letter-spacing: 0.075em;
+}
+
+@media (max-width: 670px) {
+  .top-nav-link {
+    font-size: 0.58rem;
+  }
+
+  .tile-meta,
+  #screen-select .carousel-content p,
+  #screen-select .track-info-col p,
+  #screen-select .stat-benchmark {
+    font-size: 0.56rem;
+  }
+
+  #screen-select .ct-label,
+  #screen-select .ct-val {
+    font-size: 0.5rem;
+  }
+
+  .selection-footer .btn {
+    min-height: 44px;
+    font-size: 0.6rem;
+  }
+
+  .garage-shortcuts {
+    font-size: 0.56rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -83,7 +83,7 @@
           </div>
 
           <div class="garage-grid">
-            <button id="btn-start-game" class="garage-tile garage-car-tile">
+            <button id="btn-start-game" class="garage-tile garage-car-tile" aria-label="Open Race Hub to choose a car and circuit">
               <span class="garage-node" aria-hidden="true"></span>
               <span class="tile-eyebrow">01 / RACE</span>
               <span class="tile-title">RACE<br>SETUP</span>
@@ -96,7 +96,7 @@
               </span>
             </button>
 
-            <button id="btn-open-settings-menu" class="garage-tile garage-driver-tile">
+            <button id="btn-open-settings-menu" class="garage-tile garage-driver-tile" aria-label="Open Driver Profile, controls, assists, and race rules">
               <span class="garage-node" aria-hidden="true"></span>
               <span class="tile-eyebrow">02 / PROFILE</span>
               <span class="tile-title">DRIVER<br>PROFILE</span>
@@ -107,7 +107,7 @@
               </span>
             </button>
 
-            <button id="btn-open-leaderboard" class="garage-tile garage-badge-tile">
+            <button id="btn-open-leaderboard" class="garage-tile garage-badge-tile" aria-label="Open Live Timing and lap records">
               <span class="garage-node" aria-hidden="true"></span>
               <span class="tile-eyebrow">03 / TIMING</span>
               <span class="tile-title">LIVE<br>TIMING</span>
@@ -362,6 +362,7 @@
             <p>Enter the 4-character lobby code from the host.</p>
           </div>
           <div class="modal-body">
+            <label class="sr-only" for="input-room-code">Online lobby code</label>
             <input type="text" id="input-room-code" class="f1-input" maxlength="6" placeholder="LOBBY CODE (e.g. R7K2)" autocomplete="off" spellcheck="false" />
             <p id="join-room-error" class="error-msg hidden"></p>
           </div>
@@ -654,7 +655,7 @@
             </div>
           </div>
           <div class="lb-header-right">
-            <button class="icon-btn" aria-label="Search" id="btn-search-lb" title="Search coming soon">
+            <button class="icon-btn" aria-label="Search live timing (unavailable)" id="btn-search-lb" title="Search live timing is unavailable" disabled aria-disabled="true">
               <span class="material-symbols-outlined">search</span>
             </button>
           </div>
