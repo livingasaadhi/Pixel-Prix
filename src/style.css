@@ -5445,3 +5445,645 @@ body {
   .tile-meta { max-width: 57%; font-size: 0.47rem; line-height: 1.45; }
   .garage-shortcuts { margin: 12px 0 2px; justify-content: center; gap: 12px; font-size: 0.52rem; }
 }
+
+/* --- Shared app surfaces ------------------------------------------------ */
+.screen-header,
+.lb-header {
+  width: min(1710px, 100%);
+  min-height: 54px;
+  margin: 0 auto 20px;
+  padding: 0 0 12px;
+  border-bottom: 2px solid #d91b1b;
+}
+
+.screen-header h2,
+.lb-header-context,
+.modal-header h2,
+.modal-header h3,
+.mp-lobby-header h2,
+.pause-title {
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: 0.025em;
+}
+
+.icon-btn-circle,
+.icon-btn,
+.nav-arrow,
+.track-carousel-nav {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(8, 9, 11, 0.82);
+  box-shadow: none;
+}
+
+.icon-btn-circle:hover,
+.icon-btn:hover,
+.nav-arrow:hover,
+.track-carousel-nav:hover {
+  color: #131313;
+  border-color: #fff;
+  background: #fff;
+}
+
+#screen-select {
+  padding: 104px 5.2vw 118px;
+}
+
+.select-grid {
+  width: min(1710px, 100%);
+  margin: 0 auto;
+  gap: 16px;
+}
+
+.select-section {
+  position: relative;
+  margin: 0;
+}
+
+.section-header-row {
+  min-height: 33px;
+  padding: 0 8px 7px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.section-header-row::after {
+  width: 15px;
+  height: 15px;
+  content: '';
+  border: 2px solid #3a3515;
+  border-radius: 50%;
+  background: #ffd500;
+  box-shadow: 0 0 0 2px rgba(255, 213, 0, 0.16);
+}
+
+.section-label {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.telemetry-live-badge,
+.circuit-avail-tag,
+.track-tag {
+  color: #101114;
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  font-weight: 800;
+  border: 0;
+  border-radius: 3px;
+  background: #f2f2f1;
+}
+
+.telemetry-live-badge .pulse-dot {
+  background: #df1515;
+  box-shadow: none;
+}
+
+.car-select-card,
+.track-select-card {
+  min-height: 420px;
+  padding: 22px !important;
+  border-radius: 12px !important;
+}
+
+.car-select-card {
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.055) 0 24%, transparent 24.2%),
+    linear-gradient(160deg, #23262d, #0a0b0e 72%) !important;
+}
+
+.track-select-card {
+  background:
+    linear-gradient(39deg, rgba(224, 24, 26, 0.19), transparent 42%),
+    linear-gradient(160deg, #24262c, #090a0c 70%) !important;
+}
+
+.carousel-header,
+.track-carousel-row {
+  gap: 12px;
+}
+
+.car-preview-area {
+  min-height: 177px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9px;
+  background:
+    repeating-linear-gradient(125deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 6px),
+    linear-gradient(142deg, #12151c, #040506);
+}
+
+.car-preview-area::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
+.carousel-content h3,
+.track-info-col h3 {
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: 0.015em;
+}
+
+.carousel-content p,
+.track-info-col p {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.carousel-dots .dot {
+  width: 7px;
+  height: 7px;
+  border: 0;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.carousel-dots .dot.active {
+  width: 24px;
+  background: #e21b1b;
+}
+
+.meter-track,
+.kers-bar-bg {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0;
+  background: #08090b;
+}
+
+.meter-fill,
+.kers-bar-fill {
+  background: linear-gradient(90deg, #e10808, #ffdc00) !important;
+  box-shadow: none !important;
+}
+
+.stat-label,
+.ct-label {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.56rem;
+  font-weight: 800;
+}
+
+.stat-val-mono,
+.ct-val {
+  color: #fff;
+  font-weight: 800;
+}
+
+.stat-benchmark {
+  color: #ffd500;
+}
+
+.track-minimap-box {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  background: #0a0b0d;
+}
+
+.circuit-telemetry-widget {
+  margin-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0;
+  background: transparent;
+}
+
+.ct-cell:not(:last-child) {
+  border-color: rgba(255, 255, 255, 0.13);
+}
+
+.selection-footer {
+  position: fixed;
+  right: 5.2vw;
+  bottom: 25px;
+  left: 5.2vw;
+  z-index: 20;
+  width: auto;
+  max-width: 1710px;
+  min-height: 76px;
+  margin: 0 auto;
+  padding: 10px;
+  justify-content: flex-end;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(9, 10, 12, 0.9);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.46);
+  backdrop-filter: blur(14px);
+}
+
+.selection-footer .btn {
+  min-height: 48px;
+  border-radius: 5px;
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.f1-start-button {
+  order: 3;
+  min-width: 190px;
+}
+
+.mp-btn-create,
+.mp-btn-join,
+.btn-secondary,
+.btn-tertiary,
+.btn-outline {
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none !important;
+}
+
+.mp-btn-create:hover,
+.mp-btn-join:hover,
+.btn-secondary:hover,
+.btn-tertiary:hover,
+.btn-outline:hover {
+  color: #111 !important;
+  border-color: #fff !important;
+  background: #fff !important;
+}
+
+/* --- Multiplayer, dialogs, session end --------------------------------- */
+#screen-mp-lobby {
+  padding: 108px 5.2vw 42px;
+}
+
+.mp-lobby-container {
+  position: relative;
+  width: min(1040px, 100%);
+  min-height: 570px;
+  padding: 30px !important;
+  border-radius: 12px !important;
+}
+
+.mp-lobby-container::before,
+.modal-card::before,
+.pause-card::before {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 24px;
+  height: 24px;
+  content: '';
+  border: 3px solid #403c19;
+  border-radius: 50%;
+  background: #ffd500;
+}
+
+.mp-lobby-header,
+.mp-drivers-section {
+  border-color: rgba(255, 255, 255, 0.17);
+}
+
+.mp-lobby-header h2 {
+  font-size: clamp(1.15rem, 2vw, 1.8rem);
+}
+
+.mp-driver-card {
+  border-color: rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.mp-driver-card.is-local {
+  border-color: #f2f2f2;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.mp-grid-pos,
+.mp-badge-host {
+  color: #141414;
+  background: #ffd500;
+}
+
+.modal-overlay {
+  position: fixed;
+  z-index: 3000;
+  background: rgba(1, 2, 3, 0.84);
+  backdrop-filter: blur(10px);
+}
+
+.modal-card,
+.pause-card {
+  position: relative;
+  border-radius: 12px !important;
+}
+
+.modal-card .modal-header,
+.pause-header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.modal-close-btn {
+  border-radius: 50%;
+}
+
+.f1-results-table th,
+.f1-results-table td {
+  padding: 13px 14px;
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+.f1-results-table tr:first-child {
+  background: rgba(255, 213, 0, 0.1);
+}
+
+.f1-results-table tr:first-child td {
+  color: #ffd500;
+}
+
+#screen-pause {
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 4, 6, 0.75);
+  backdrop-filter: blur(13px);
+}
+
+.pause-card {
+  width: min(460px, calc(100% - 32px));
+  padding: 28px !important;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.pause-title {
+  font-size: 1.85rem;
+}
+
+.pause-actions .btn {
+  min-height: 52px;
+  border-radius: 5px;
+  font-weight: 900;
+}
+
+#screen-gameover,
+#screen-settings {
+  padding: 102px 20px 36px;
+}
+
+#screen-gameover .modal-card,
+#screen-settings .modal-card {
+  width: min(780px, 100%);
+  max-width: 780px;
+}
+
+.finish-banner {
+  color: #151519;
+  font-family: var(--font-display);
+  font-weight: 900;
+  background: #f4f4f3;
+}
+
+.time-display-box {
+  border-color: rgba(255, 255, 255, 0.18);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.final-time-label,
+.best-lap-sub,
+.time-row {
+  font-family: var(--font-mono);
+}
+
+.final-time-value {
+  color: #ffd500;
+  text-shadow: none;
+}
+
+.score-form label,
+.control-box h4 {
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 900;
+}
+
+.input-group input {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.32);
+  border-radius: 4px;
+  background: #08090b;
+}
+
+.input-group input:focus {
+  border-color: #ffd500;
+  box-shadow: 0 0 0 2px rgba(255, 213, 0, 0.22);
+}
+
+.go-sectors-table,
+.control-box {
+  border-color: rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+/* --- Timing tower -------------------------------------------------------- */
+#screen-leaderboard {
+  padding: 100px 5.2vw 36px;
+}
+
+.lb-header {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.lb-header-context {
+  font-size: clamp(1rem, 1.8vw, 1.45rem);
+}
+
+.lb-header-season,
+.lb-tabs .lb-tab-btn {
+  font-family: var(--font-mono);
+  font-weight: 800;
+}
+
+.lb-body {
+  width: min(1710px, 100%);
+  margin: 0 auto;
+}
+
+.lb-tabs {
+  gap: 3px;
+  margin-bottom: 14px;
+  padding: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.lb-tabs .lb-tab-btn {
+  border-radius: 4px 4px 0 0;
+}
+
+.lb-tabs .lb-tab-btn.active {
+  color: #151519;
+  background: #f3f3f1;
+}
+
+.lb-table-wrap {
+  border: 1px solid rgba(255, 255, 255, 0.19);
+  border-radius: 8px;
+  background: rgba(7, 8, 10, 0.8);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.35);
+}
+
+.f1-timing-header {
+  color: rgba(255, 255, 255, 0.58);
+  border-bottom: 2px solid #d91b1b;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lb-row {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  background: transparent;
+}
+
+.lb-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lb-row-first {
+  background: linear-gradient(90deg, rgba(255, 213, 0, 0.16), transparent) !important;
+}
+
+.lb-fab-btn {
+  color: #151519;
+  border: 2px solid #fff;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+}
+
+/* --- Racing HUD ---------------------------------------------------------- */
+#screen-hud {
+  overflow: hidden;
+}
+
+.hud-steering-wheel-display {
+  top: 16px;
+  width: min(540px, calc(100vw - 150px));
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 9px;
+  background: rgba(5, 6, 8, 0.86);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+}
+
+.f1-rpm-bar {
+  border-radius: 8px 8px 0 0;
+  background: #0d0e11;
+}
+
+.rpm-led.active {
+  background: #ffd500;
+  box-shadow: 0 0 8px #ffd500;
+}
+
+.f1-wheel-core {
+  background: transparent;
+}
+
+.f1-gear-box,
+.f1-speed-box,
+.f1-telemetry-box {
+  border-color: rgba(255, 255, 255, 0.17);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.f1-gear-val,
+.f1-speed-val,
+.f1-tel-val {
+  color: #fff;
+}
+
+.f1-speed-val {
+  color: #ffd500;
+}
+
+.hud-warning-bar {
+  min-height: 30px;
+  color: #151519;
+  border-radius: 0 0 7px 7px;
+  background: #f2f2f0;
+}
+
+.hud-warning-bar.penalty { background: #e11b1b; color: #fff; }
+.hud-warning-bar.investigating { background: #ffd500; color: #191919; }
+
+.hud-action-btns {
+  top: 20px;
+  left: 20px;
+}
+
+.hud-circle-btn,
+.hud-ctrl-btn,
+.glass-touch,
+.glass-kers {
+  border-color: rgba(255, 255, 255, 0.34) !important;
+  background: rgba(6, 7, 9, 0.82) !important;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.38) !important;
+  backdrop-filter: blur(10px);
+}
+
+.hud-circle-btn:hover,
+.hud-ctrl-btn:hover {
+  color: #151519;
+  background: #fff !important;
+}
+
+.hud-kers-container {
+  border-radius: 5px;
+}
+
+.kers-label {
+  color: #fff;
+  font-family: var(--font-mono);
+  font-weight: 800;
+}
+
+@media (max-width: 860px) {
+  #screen-select,
+  #screen-mp-lobby,
+  #screen-leaderboard {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .selection-footer {
+    right: 18px;
+    bottom: 12px;
+    left: 18px;
+    flex-wrap: wrap;
+    justify-content: stretch;
+  }
+
+  .selection-footer .btn {
+    flex: 1 1 145px;
+  }
+
+  .f1-start-button { order: 0; }
+}
+
+@media (max-width: 670px) {
+  #screen-select,
+  #screen-mp-lobby,
+  #screen-leaderboard,
+  #screen-gameover,
+  #screen-settings {
+    padding: 78px 12px 110px;
+  }
+
+  .screen-header { margin-bottom: 13px; }
+  .screen-header h2 { font-size: 0.7rem; }
+  .car-select-card,
+  .track-select-card { min-height: 0; padding: 14px !important; }
+  .car-preview-area { min-height: 125px; }
+  .section-header-row { margin-bottom: 7px; }
+  .selection-footer { padding: 7px; }
+  .selection-footer .btn { min-height: 42px; font-size: 0.55rem; }
+  .mp-lobby-container { min-height: 0; padding: 18px !important; }
+  .mp-lobby-container::before, .modal-card::before, .pause-card::before { width: 17px; height: 17px; top: -8px; right: -8px; border-width: 2px; }
+  .lb-table-wrap { overflow-x: auto; }
+  .hud-steering-wheel-display { top: 8px; width: min(430px, calc(100vw - 80px)); transform: translateX(-50%) scale(0.87); transform-origin: top center; }
+  .hud-action-btns { top: 11px; left: 10px; }
+}
