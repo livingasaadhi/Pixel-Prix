@@ -6087,3 +6087,197 @@ body {
   .hud-steering-wheel-display { top: 8px; width: min(430px, calc(100vw - 80px)); transform: translateX(-50%) scale(0.87); transform-origin: top center; }
   .hud-action-btns { top: 11px; left: 10px; }
 }
+
+/* --- Fixed viewport policy ---------------------------------------------- */
+/* Screens are task boards, not documents: every primary action must stay in
+   the viewport.  Small layouts compact the contents rather than introducing
+   nested or page scrolling. */
+.f1-red-accent-bar {
+  display: none !important;
+}
+
+.ui-screen,
+.ui-screen:not(#screen-hud),
+#screen-menu,
+#screen-select,
+#screen-mp-lobby,
+#screen-leaderboard,
+#screen-settings,
+#screen-gameover {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none !important;
+}
+
+#screen-select {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+}
+
+#screen-select .select-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: stretch;
+}
+
+#screen-select .select-section,
+#screen-select .glass-card {
+  min-height: 0;
+}
+
+#screen-leaderboard .lb-body {
+  min-height: 0;
+}
+
+#screen-leaderboard .lb-rows {
+  overflow: hidden !important;
+}
+
+@media (max-width: 670px) {
+  #screen-select {
+    padding-top: 69px;
+    padding-bottom: 62px;
+  }
+
+  #screen-select .screen-header {
+    min-height: 34px;
+    margin-bottom: 7px;
+    padding-bottom: 5px;
+  }
+
+  #screen-select .select-grid {
+    gap: 5px;
+  }
+
+  #screen-select .section-header-row {
+    min-height: 24px;
+    margin-bottom: 3px;
+    padding-bottom: 3px;
+  }
+
+  #screen-select .section-header-row::after {
+    width: 11px;
+    height: 11px;
+  }
+
+  #screen-select .car-select-card,
+  #screen-select .track-select-card {
+    padding: 9px !important;
+  }
+
+  #screen-select .car-preview-area {
+    min-height: 76px;
+    margin-bottom: 6px;
+  }
+
+  #screen-select #car-preview-canvas {
+    transform: scale(0.7);
+  }
+
+  #screen-select .carousel-content h3,
+  #screen-select .track-info-col h3 {
+    font-size: 0.78rem;
+  }
+
+  #screen-select .carousel-content p,
+  #screen-select .track-info-col p,
+  #screen-select .stat-benchmark {
+    font-size: 0.46rem;
+  }
+
+  #screen-select .stat-bars {
+    gap: 5px 12px;
+  }
+
+  #screen-select .stat-row-header,
+  #screen-select .circuit-telemetry-widget {
+    margin-bottom: 3px;
+  }
+
+  #screen-select .track-preview-row {
+    gap: 8px;
+  }
+
+  #screen-select .track-minimap-box {
+    width: 66px;
+    height: 66px;
+  }
+
+  #screen-select .circuit-telemetry-widget {
+    margin-top: 7px;
+  }
+
+  #screen-select .ct-cell {
+    padding: 4px;
+  }
+
+  #screen-select .ct-label,
+  #screen-select .ct-val {
+    font-size: 0.43rem;
+  }
+
+  .selection-footer {
+    bottom: 5px;
+  }
+
+  #screen-mp-lobby,
+  #screen-settings,
+  #screen-gameover {
+    align-items: center;
+    justify-content: center;
+    padding: 66px 12px 12px;
+  }
+
+  #screen-mp-lobby .mp-lobby-container,
+  #screen-settings .modal-card,
+  #screen-gameover .modal-card {
+    max-height: calc(100dvh - 78px);
+    transform: scale(0.9);
+    transform-origin: center;
+  }
+
+  #screen-leaderboard {
+    padding-top: 67px;
+    padding-bottom: 12px;
+  }
+
+  #screen-leaderboard .lb-row,
+  #screen-leaderboard .f1-timing-header {
+    min-height: 38px;
+    font-size: 0.5rem;
+  }
+}
+
+@media (max-height: 700px) and (min-width: 671px) {
+  #screen-select {
+    padding-top: 84px;
+    padding-bottom: 84px;
+  }
+
+  #screen-select .screen-header {
+    margin-bottom: 8px;
+  }
+
+  #screen-select .car-select-card,
+  #screen-select .track-select-card {
+    min-height: 0;
+    padding: 14px !important;
+  }
+
+  #screen-select .car-preview-area {
+    min-height: 102px;
+  }
+
+  .selection-footer {
+    bottom: 8px;
+    min-height: 58px;
+  }
+
+  #screen-mp-lobby .mp-lobby-container,
+  #screen-settings .modal-card,
+  #screen-gameover .modal-card {
+    transform: scale(0.86);
+    transform-origin: center;
+  }
+}

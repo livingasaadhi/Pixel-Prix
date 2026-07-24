@@ -90,8 +90,10 @@ function setRaceMode(enabled) {
 
   // Hide / show persistent nav chrome during a race session
   const topBar = document.getElementById('top-app-bar');
+  const accentBar = document.getElementById('f1-red-accent-bar');
   const bottomNav = document.getElementById('bottom-nav');
   if (topBar) topBar.style.display = enabled ? 'none' : '';
+  if (accentBar) accentBar.style.display = enabled ? 'none' : '';
   if (bottomNav) bottomNav.style.display = enabled ? 'none' : '';
 
   // Orientation locking is supported by installed/PWA-capable browsers. The
