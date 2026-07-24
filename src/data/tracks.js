@@ -341,6 +341,34 @@ export const TRACKS = [
   }
 ];
 
+// The original circuits were intentionally compact while the core handling
+// was being tuned.  Scale the complete geometry as one unit so a lap is
+// meaningfully longer without changing a circuit's identity or breaking its
+// checkpoint order.  Road width grows a little more than the route itself,
+// giving drivers room to choose lines and recover from small mistakes.
+const CIRCUIT_LENGTH_SCALE = 1.28;
+const CIRCUIT_WIDTH_SCALE = 1.4;
+
+TRACKS.forEach((track) => {
+  const scalePoint = ({ x, y, ...rest }) => ({
+    ...rest,
+    x: Math.round(x * CIRCUIT_LENGTH_SCALE),
+    y: Math.round(y * CIRCUIT_LENGTH_SCALE)
+  });
+
+  track.worldWidth = Math.round(track.worldWidth * CIRCUIT_LENGTH_SCALE);
+  track.worldHeight = Math.round(track.worldHeight * CIRCUIT_LENGTH_SCALE);
+  track.roadWidth = Math.round(track.roadWidth * CIRCUIT_WIDTH_SCALE);
+  track.startPos = scalePoint(track.startPos);
+  track.points = track.points.map(scalePoint);
+  track.checkpoints = track.checkpoints.map(scalePoint);
+
+  const baseDistanceKm = Number.parseFloat(track.length);
+  if (Number.isFinite(baseDistanceKm)) {
+    track.length = `${(baseDistanceKm * CIRCUIT_LENGTH_SCALE).toFixed(1)} KM`;
+  }
+});
+
 export function getTrackById(id) {
   return TRACKS.find(t => t.id === id) || TRACKS[0];
 }
