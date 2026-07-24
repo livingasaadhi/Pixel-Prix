@@ -6573,3 +6573,344 @@ button[aria-disabled='true']:hover {
 .lb-row:hover {
   transform: translateX(3px);
 }
+
+/* ========================================================================
+   RACE HUB — FINALISED TASK-BOARD LAYOUT
+   ------------------------------------------------------------------------
+   The setup screen is a control surface, not a scrolling document.  Keep
+   the selected car, circuit and every route into a race in the viewport.
+   These rules intentionally live last: they resolve legacy visual passes
+   above without changing any game-state or input behaviour.
+   ======================================================================== */
+#screen-select {
+  box-sizing: border-box;
+  height: 100dvh;
+  min-height: 0;
+  padding: 104px 5.2vw 124px;
+}
+
+#screen-select .screen-header {
+  flex: 0 0 auto;
+  min-height: 54px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+}
+
+#screen-select .screen-header h2 {
+  font-size: clamp(1.1rem, 1.65vw, 1.55rem);
+  letter-spacing: 0.035em;
+}
+
+#screen-select .select-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0 auto;
+  gap: clamp(14px, 1.35vw, 24px);
+}
+
+#screen-select .select-section {
+  min-width: 0;
+  min-height: 0;
+  gap: 8px;
+}
+
+#screen-select .section-header-row {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+#screen-select .glass-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#screen-select .car-select-card,
+#screen-select .track-select-card {
+  min-height: 0;
+  padding: clamp(15px, 1.45vw, 22px) !important;
+}
+
+#screen-select .car-select-card {
+  gap: clamp(10px, 1.3vh, 18px);
+}
+
+#screen-select .car-preview-area {
+  min-height: clamp(124px, 19vh, 178px);
+  margin-bottom: 10px;
+}
+
+#screen-select .carousel-content h3,
+#screen-select .track-info-col h3 {
+  font-size: clamp(0.94rem, 1.2vw, 1.16rem);
+  line-height: 1.1;
+}
+
+#screen-select .carousel-content p,
+#screen-select .track-info-col p {
+  font-size: clamp(0.68rem, 0.8vw, 0.8rem);
+  line-height: 1.45;
+}
+
+#screen-select .stat-bars {
+  gap: clamp(9px, 1.15vh, 14px) clamp(16px, 2.1vw, 28px);
+  padding-top: clamp(10px, 1.3vh, 16px);
+}
+
+#screen-select .stat-row {
+  gap: 4px;
+  margin: 0;
+}
+
+#screen-select .stat-label,
+#screen-select .ct-label {
+  font-size: clamp(0.54rem, 0.62vw, 0.64rem);
+}
+
+#screen-select .stat-val-mono,
+#screen-select .ct-val {
+  font-size: clamp(0.7rem, 0.78vw, 0.88rem);
+}
+
+#screen-select .stat-benchmark {
+  min-height: 1.2em;
+  font-size: clamp(0.56rem, 0.65vw, 0.68rem);
+}
+
+#screen-select .track-content {
+  min-width: 0;
+  padding: clamp(10px, 1.2vw, 18px);
+  gap: clamp(10px, 1.25vh, 16px);
+}
+
+#screen-select .track-preview-row {
+  gap: clamp(10px, 1.3vw, 20px);
+}
+
+#screen-select .circuit-telemetry-widget {
+  gap: 0;
+  margin-top: auto;
+  padding: clamp(9px, 1.1vw, 14px);
+}
+
+#screen-select .ct-cell {
+  min-width: 0;
+  padding: 5px 8px;
+}
+
+/* The persistent action tray reserves its own space, so it can never cover
+   content.  Red is the sole primary action; white stays available for focus
+   states and navigation rather than looking like a disabled race button. */
+.selection-footer {
+  box-sizing: border-box;
+  right: 5.2vw;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  left: 5.2vw;
+  min-height: 72px;
+  padding: 9px;
+  gap: 10px;
+}
+
+.selection-footer .btn {
+  min-height: 52px;
+  padding: 9px 16px;
+  font-size: clamp(0.62rem, 0.72vw, 0.74rem);
+  letter-spacing: 0.035em;
+}
+
+.mp-btn-create,
+.mp-btn-join {
+  min-width: min(220px, 20vw);
+}
+
+.f1-start-button.btn-primary {
+  min-width: min(272px, 25vw);
+  border: 1px solid #ff5a50 !important;
+  background: linear-gradient(135deg, #ef1717, #ba0808) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 26px rgba(225, 8, 8, 0.32), inset 0 1px rgba(255, 255, 255, 0.28) !important;
+}
+
+.f1-start-button.btn-primary:hover {
+  border-color: #fff !important;
+  background: linear-gradient(135deg, #ff3028, #d10909) !important;
+  color: #fff !important;
+  box-shadow: 0 12px 30px rgba(225, 8, 8, 0.5), inset 0 1px rgba(255, 255, 255, 0.35) !important;
+}
+
+.f1-start-button .start-btn-content {
+  color: #fff;
+  font-size: clamp(0.72rem, 0.82vw, 0.86rem);
+}
+
+/* Mobile keeps the full navigation visible instead of making the primary
+   navigation horizontally scrollable.  Labels remain readable at 320px. */
+@media (max-width: 860px) {
+  #screen-select {
+    padding: 82px 18px 96px;
+  }
+
+  #screen-select .select-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #screen-select .car-preview-area {
+    min-height: clamp(76px, 14vh, 118px);
+  }
+
+  #screen-select .carousel-content p,
+  #screen-select .track-info-col p {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .selection-footer {
+    right: 12px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: 12px;
+    min-height: 54px;
+    padding: 5px;
+    gap: 5px;
+    flex-wrap: nowrap;
+  }
+
+  .selection-footer .btn,
+  .mp-btn-create,
+  .mp-btn-join,
+  .f1-start-button.btn-primary {
+    min-width: 0;
+    min-height: 44px;
+    padding: 6px 8px !important;
+    font-size: clamp(0.48rem, 1.45vw, 0.6rem);
+  }
+
+  .f1-start-button {
+    gap: 3px !important;
+  }
+
+  .f1-start-button .start-btn-content {
+    gap: 4px;
+    font-size: clamp(0.54rem, 1.55vw, 0.66rem);
+  }
+
+  .start-lights-row {
+    gap: 4px;
+  }
+
+  .start-led {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+@media (max-width: 670px) {
+  .top-glass-nav {
+    width: calc(100% - 44px);
+    overflow: hidden;
+    gap: 0;
+  }
+
+  .top-nav-link {
+    min-width: 0;
+    flex: 1 1 0;
+    overflow: hidden;
+    padding: 5px 3px;
+    text-overflow: clip;
+    white-space: nowrap;
+  }
+
+  #screen-select {
+    padding: 68px 10px 68px;
+  }
+
+  #screen-select .screen-header {
+    min-height: 32px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+  }
+
+  #screen-select .screen-header h2 {
+    font-size: 0.76rem;
+  }
+
+  #screen-select .section-header-row {
+    min-height: 21px;
+    padding: 0 4px 3px;
+  }
+
+  #screen-select .car-select-card,
+  #screen-select .track-select-card {
+    padding: 8px !important;
+  }
+
+  #screen-select .car-preview-area {
+    min-height: clamp(58px, 10vh, 82px);
+    margin-bottom: 4px;
+  }
+
+  #screen-select .track-content {
+    padding: 7px;
+    gap: 5px;
+  }
+
+  #screen-select .track-minimap-box {
+    width: 58px;
+    height: 58px;
+    flex-basis: 58px;
+    padding: 5px;
+  }
+
+  #screen-select .stat-bars {
+    gap: 5px 10px;
+    padding-top: 6px;
+  }
+
+  #screen-select .stat-benchmark {
+    display: none;
+  }
+
+  #screen-select .circuit-telemetry-widget {
+    padding: 3px;
+  }
+
+  #screen-select .ct-cell {
+    padding: 2px 4px;
+  }
+}
+
+@media (max-height: 720px) and (min-width: 861px) {
+  #screen-select {
+    padding-top: 86px;
+    padding-bottom: 86px;
+  }
+
+  #screen-select .screen-header {
+    min-height: 40px;
+    margin-bottom: 7px;
+  }
+
+  #screen-select .car-preview-area {
+    min-height: 92px;
+  }
+
+  #screen-select .stat-benchmark {
+    display: none;
+  }
+
+  .selection-footer {
+    min-height: 58px;
+    bottom: 8px;
+  }
+
+  .selection-footer .btn {
+    min-height: 42px;
+  }
+}
