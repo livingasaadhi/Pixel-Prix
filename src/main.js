@@ -19,6 +19,7 @@ let ambientAnimId = null;      // requestAnimationFrame for menu particles
 let countdownLightsTimer = null; // F1 countdown lights timeout chain
 let sessionBestSectors = {};     // session best S1, S2, S3 per trackId
 let dailyFeaturedTrackId = null;
+let raceSelectionMode = 'time-trial';
 
 // Helper to convert milliseconds to MM:SS.mmm format
 function formatTime(ms) {
@@ -123,6 +124,17 @@ function setRaceMode(enabled) {
       screen.orientation.unlock?.();
     }
   }
+}
+
+function setRaceSelectionMode(mode = 'time-trial') {
+  raceSelectionMode = mode === 'coop' ? 'coop' : 'time-trial';
+  const selectScreen = document.getElementById('screen-select');
+  const title = document.getElementById('select-screen-title');
+  const launchLabel = document.querySelector('#btn-launch-race .start-btn-content > span:first-child');
+
+  if (selectScreen) selectScreen.dataset.mode = raceSelectionMode;
+  if (title) title.textContent = raceSelectionMode === 'coop' ? 'CO-OP RACE' : 'TIME TRIAL';
+  if (launchLabel) launchLabel.textContent = 'START TIME TRIAL';
 }
 
 // ----------------------------------------------------------------------------
@@ -1347,11 +1359,15 @@ function bindClickOrTouch(idOrEl, handler) {
 // ----------------------------------------------------------------------------
 function initUI() {
   // Navigation Buttons
-  bindClickOrTouch('btn-start-game', () => {
+  const openRaceSelect = (mode = 'time-trial') => {
+    setRaceSelectionMode(mode);
     updateCarSelection();
     updateTrackSelection();
     showScreen('screen-select');
-  });
+  };
+
+  bindClickOrTouch('btn-start-game', () => openRaceSelect('time-trial'));
+  bindClickOrTouch('btn-open-coop', () => openRaceSelect('coop'));
 
   const openLeaderboard = () => {
     const trackId = TRACKS[selectedTrackIndex].id;
@@ -1368,18 +1384,9 @@ function initUI() {
   // Top-right settings icon
   bindClickOrTouch('top-settings-icon', openSettings);
 
-  // Menu screen's "Controls & Info" button
-  bindClickOrTouch('btn-open-settings-menu', openSettings);
-
   // Bottom & Top nav tab wiring
-  const openRaceSelect = () => {
-    updateCarSelection();
-    updateTrackSelection();
-    showScreen('screen-select');
-  };
-
   bindClickOrTouch('top-nav-leaderboard', openLeaderboard);
-  bindClickOrTouch('top-nav-race', openRaceSelect);
+  bindClickOrTouch('top-nav-race', () => openRaceSelect('time-trial'));
   bindClickOrTouch('top-nav-garage', () => showScreen('screen-menu'));
   bindClickOrTouch('top-nav-settings', openSettings);
 
@@ -1778,7 +1785,10 @@ function initUI() {
       }
 
       if (isActive('screen-select')) {
-        if (k === 'Enter') { e.preventDefault(); click('btn-launch-race'); }
+        if (k === 'Enter') {
+          e.preventDefault();
+          click(raceSelectionMode === 'coop' ? 'btn-create-room' : 'btn-launch-race');
+        }
         else if (k === 'ArrowLeft') { e.preventDefault(); click('car-prev'); }
         else if (k === 'ArrowRight') { e.preventDefault(); click('car-next'); }
         else if (k === 'ArrowUp') { e.preventDefault(); click('track-prev'); }

@@ -78,17 +78,17 @@
         <div class="garage-shell">
           <div class="garage-heading">
             <span class="garage-kicker">PIXEL PRIX / SEASON 04</span>
-            <h1>DRIVER HQ</h1>
-            <p>Race setup, driver profile and live timing.</p>
+            <h1>RACE CONTROL</h1>
+            <p>Choose a solo time trial, join a co-op race, or review live timing.</p>
             <span class="daily-featured-chip" id="daily-featured-chip">DAILY FEATURE: LOADING…</span>
           </div>
 
           <div class="garage-grid">
-            <button id="btn-start-game" class="garage-tile garage-car-tile" aria-label="Open Race Hub to choose a car and circuit">
+            <button id="btn-start-game" class="garage-tile garage-car-tile garage-time-trial-tile" aria-label="Set up a Time Trial with a car and circuit">
               <span class="garage-node" aria-hidden="true"></span>
-              <span class="tile-eyebrow">01 / RACE</span>
-              <span class="tile-title">RACE<br>SETUP</span>
-              <span class="tile-meta">CHOOSE YOUR CAR &amp; CIRCUIT <span class="tile-key">ENTER</span></span>
+              <span class="tile-eyebrow">01 / SOLO</span>
+              <span class="tile-title">TIME<br>TRIAL</span>
+              <span class="tile-meta">SET CAR, CIRCUIT &amp; BEST LAP <span class="tile-key">ENTER</span></span>
               <span class="garage-car-art" aria-hidden="true">
                 <span class="car-wheel car-wheel-rear"></span>
                 <span class="car-wheel car-wheel-front"></span>
@@ -97,14 +97,17 @@
               </span>
             </button>
 
-            <button id="btn-open-settings-menu" class="garage-tile garage-driver-tile" aria-label="Open Driver Profile, controls, assists, and race rules">
+            <button id="btn-open-coop" class="garage-tile garage-coop-tile" aria-label="Set up an online co-op race">
               <span class="garage-node" aria-hidden="true"></span>
-              <span class="tile-eyebrow">02 / PROFILE</span>
-              <span class="tile-title">DRIVER<br>PROFILE</span>
-              <span class="tile-meta">CONTROLS, ASSISTS &amp; RACE RULES <span class="tile-key">F6</span></span>
-              <span class="driver-silhouette" aria-hidden="true">
-                <span class="driver-helmet"></span>
-                <span class="driver-body"></span>
+              <span class="tile-eyebrow">02 / ONLINE</span>
+              <span class="tile-title">CO-OP<br>RACE</span>
+              <span class="tile-meta">HOST OR JOIN A MULTIPLAYER RACE <span class="tile-key">ONLINE</span></span>
+              <span class="coop-lobby-art" aria-hidden="true">
+                <i class="coop-link"></i>
+                <i class="coop-driver coop-driver-one"></i>
+                <i class="coop-driver coop-driver-two"></i>
+                <i class="coop-driver coop-driver-three"></i>
+                <i class="coop-driver coop-driver-four"></i>
               </span>
             </button>
 
@@ -137,7 +140,7 @@
           <button id="btn-select-back" class="icon-btn-circle" aria-label="Go back">
             <span class="material-symbols-outlined">arrow_back</span>
           </button>
-          <h2>RACE HUB</h2>
+          <h2 id="select-screen-title">TIME TRIAL</h2>
           <div class="spacer"></div>
         </header>
 
@@ -286,7 +289,7 @@
           </div>
         </div>
 
-        <!-- Sticky bottom action bar with Solo & Multiplayer options -->
+        <!-- Mode-aware race actions -->
         <div class="selection-footer selection-footer-bar mp-action-bar">
           <button id="btn-launch-race" class="btn btn-primary btn-large btn-start-race f1-start-button">
             <div class="start-lights-row">
@@ -297,19 +300,19 @@
               <span class="start-led"></span>
             </div>
             <div class="start-btn-content">
-              <span>SOLO RACE</span>
+              <span>START TIME TRIAL</span>
               <span class="material-symbols-outlined">sports_motorsports</span>
             </div>
           </button>
 
           <button id="btn-create-room" class="btn btn-secondary btn-large mp-btn-create">
             <span class="material-symbols-outlined">groups</span>
-            <span>HOST ONLINE RACE</span>
+            <span>HOST CO-OP RACE</span>
           </button>
 
           <button id="btn-join-room-modal" class="btn btn-tertiary btn-large mp-btn-join">
             <span class="material-symbols-outlined">key</span>
-            <span>JOIN ONLINE RACE</span>
+            <span>JOIN CO-OP RACE</span>
           </button>
         </div>
       </div>
