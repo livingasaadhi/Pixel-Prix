@@ -1287,8 +1287,9 @@ function escapeHtml(str) {
 
 function renderLeaderboardTabs(activeTrackId = TRACKS[selectedTrackIndex].id) {
   const container = document.getElementById('lb-track-tabs');
-  container.innerHTML = TRACKS.map((t) => `
-    <button class="lb-tab-btn ${t.id === activeTrackId ? 'active' : ''}" data-track-id="${t.id}">
+  container.innerHTML = TRACKS.map((t, index) => `
+    <button class="lb-tab-btn ${t.id === activeTrackId ? 'active' : ''}" data-track-id="${t.id}" aria-label="Show live timing for ${escapeHtml(t.name)}" title="${escapeHtml(t.name)}">
+      <span class="lb-tab-index">${String(index + 1).padStart(2, '0')}</span>
       <span class="lb-tab-label">${t.name}</span>
       <span class="lb-tab-line"></span>
     </button>

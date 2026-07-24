@@ -7038,3 +7038,374 @@ button[aria-disabled='true']:hover {
     display: none;
   }
 }
+
+/* ========================================================================
+   PIXEL PRIX SIGNATURE UI SYSTEM
+   ------------------------------------------------------------------------
+   A single quiet, high-contrast material system replaces the competing neon,
+   glass and game-menu treatments from earlier iterations.  Red now signals a
+   race action or a priority state; it is never used as decorative chrome.
+   ======================================================================== */
+:root {
+  --pp-ink: #08090b;
+  --pp-surface: #101216;
+  --pp-surface-raised: #171a20;
+  --pp-line: rgba(255, 255, 255, 0.15);
+  --pp-line-soft: rgba(255, 255, 255, 0.08);
+  --pp-text: #f6f7f8;
+  --pp-muted: #a9adb6;
+  --pp-dim: #727782;
+  --pp-red: #e10600;
+  --pp-yellow: #ffd500;
+  --pp-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card,
+.glass-modal,
+.modal-card,
+.mp-lobby-container,
+.pause-card,
+.lb-table-wrap {
+  border: 1px solid var(--pp-line) !important;
+  background:
+    linear-gradient(125deg, rgba(255, 255, 255, 0.045), transparent 26%),
+    linear-gradient(160deg, rgba(23, 26, 32, 0.97), rgba(8, 9, 11, 0.98)) !important;
+  box-shadow: var(--pp-shadow), inset 0 1px rgba(255, 255, 255, 0.065) !important;
+}
+
+.modal-card::before,
+.mp-lobby-container::before,
+.pause-card::before {
+  width: 13px;
+  height: 13px;
+  border: 2px solid #453d16;
+  background: var(--pp-yellow);
+  box-shadow: none;
+}
+
+.btn,
+.top-nav-link,
+.lb-tab-btn,
+.garage-tile,
+.nav-arrow,
+.track-carousel-nav,
+.icon-btn,
+.icon-btn-circle,
+.hud-circle-btn,
+.hud-ctrl-btn {
+  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.btn:not(:disabled):active,
+.top-nav-link:active,
+.lb-tab-btn:active,
+.nav-arrow:active,
+.track-carousel-nav:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+/* --- Race setup: readable circuit identity ----------------------------- */
+#screen-select .track-info-col h3 {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--pp-text);
+  font-size: clamp(1.05rem, 1.35vw, 1.32rem);
+  letter-spacing: 0.025em;
+  text-shadow: 0 1px 0 #000;
+}
+
+#screen-select .track-info-col p {
+  color: var(--pp-muted);
+}
+
+#screen-select .track-region {
+  color: var(--pp-yellow);
+  text-shadow: none;
+}
+
+#screen-select .track-minimap-box {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* --- Live timing: explicit, non-scrolling circuit selector ------------- */
+#screen-leaderboard {
+  box-sizing: border-box;
+  height: 100dvh;
+  padding: 94px 5.2vw 34px;
+}
+
+#screen-leaderboard .lb-header {
+  position: relative;
+  width: min(1710px, 100%);
+  min-height: 62px;
+  height: auto;
+  margin: 0 auto 16px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--pp-line);
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+#screen-leaderboard .lb-header-context {
+  color: var(--pp-text);
+  font-size: clamp(1.15rem, 1.9vw, 1.65rem);
+  letter-spacing: 0.02em;
+}
+
+#screen-leaderboard .lb-header-season {
+  margin-top: 3px;
+  color: var(--pp-muted);
+  font-family: var(--font-mono);
+  font-size: clamp(0.58rem, 0.72vw, 0.7rem);
+  letter-spacing: 0.11em;
+}
+
+#screen-leaderboard .lb-body {
+  width: min(1710px, 100%);
+  min-height: 0;
+  padding: 0;
+}
+
+#screen-leaderboard .lb-tabs {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0 0 14px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+}
+
+#screen-leaderboard .lb-tab-btn {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 62px;
+  padding: 9px 10px 8px;
+  align-content: center;
+  justify-items: start;
+  gap: 3px;
+  border: 1px solid var(--pp-line-soft);
+  border-radius: 7px;
+  background: rgba(8, 9, 11, 0.62);
+  color: var(--pp-muted);
+  opacity: 1;
+  text-align: left;
+  white-space: normal;
+}
+
+#screen-leaderboard .lb-tab-btn:hover {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.075);
+}
+
+#screen-leaderboard .lb-tab-btn.active {
+  border-color: rgba(255, 255, 255, 0.78);
+  background: #f4f4f2;
+  color: #111216;
+  box-shadow: inset 3px 0 var(--pp-red);
+}
+
+#screen-leaderboard .lb-tab-index {
+  color: var(--pp-dim);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1;
+}
+
+#screen-leaderboard .lb-tab-btn.active .lb-tab-index {
+  color: #6a6d72;
+}
+
+#screen-leaderboard .lb-tab-label {
+  display: block;
+  overflow-wrap: anywhere;
+  color: currentColor;
+  font-family: var(--font-display);
+  font-size: clamp(0.58rem, 0.76vw, 0.75rem);
+  font-weight: 900;
+  letter-spacing: 0.025em;
+  line-height: 1.1;
+  text-align: left;
+}
+
+#screen-leaderboard .lb-tab-line {
+  display: none;
+}
+
+#screen-leaderboard .lb-table-wrap {
+  border-radius: 8px;
+}
+
+#screen-leaderboard .f1-timing-header {
+  min-height: 44px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.045);
+  border-bottom-color: var(--pp-line);
+}
+
+#screen-leaderboard .lb-row {
+  min-height: 62px;
+  padding: 9px 14px;
+  border-bottom-color: var(--pp-line-soft);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+#screen-leaderboard .lb-row:hover {
+  background: rgba(255, 255, 255, 0.055);
+}
+
+#screen-leaderboard .lb-row-first {
+  border-left-color: var(--pp-red);
+  background: linear-gradient(90deg, rgba(225, 6, 0, 0.16), rgba(255, 255, 255, 0.025));
+  box-shadow: none;
+}
+
+#screen-leaderboard .lb-row-first .lb-col-pos,
+#screen-leaderboard .lb-row-first .lb-row-name,
+#screen-leaderboard .lb-row-first .lb-row-time {
+  color: var(--pp-text);
+}
+
+#screen-leaderboard .lb-row-constructor,
+#screen-leaderboard .lb-table-header > div {
+  color: var(--pp-dim);
+}
+
+/* --- Main menu and setup share a deliberate command-centre hierarchy --- */
+#screen-menu .garage-heading p,
+#screen-menu .tile-meta,
+#screen-menu .garage-kicker {
+  color: var(--pp-muted);
+}
+
+#screen-menu .garage-tile {
+  border-color: var(--pp-line);
+  border-radius: 12px;
+  box-shadow: var(--pp-shadow), inset 0 1px rgba(255, 255, 255, 0.06);
+}
+
+#screen-menu .garage-tile:hover,
+#screen-menu .garage-tile:focus-visible {
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 26px 58px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(255, 213, 0, 0.72);
+}
+
+#screen-menu .garage-car-tile {
+  border-color: rgba(255, 255, 255, 0.88);
+}
+
+/* --- Lobby, result and profile surfaces -------------------------------- */
+#screen-mp-lobby,
+#screen-settings,
+#screen-gameover {
+  background:
+    radial-gradient(ellipse at 50% -8%, rgba(255, 255, 255, 0.07), transparent 36%),
+    #08090b;
+}
+
+#screen-mp-lobby .mp-lobby-container,
+#screen-settings .modal-card,
+#screen-gameover .modal-card {
+  border-radius: 12px !important;
+}
+
+#screen-mp-lobby .mp-lobby-header,
+#screen-settings .modal-header,
+#screen-gameover .modal-header {
+  border-bottom-color: var(--pp-line);
+}
+
+#screen-mp-lobby .mp-driver-card,
+#screen-settings .control-box,
+#screen-settings .rules-box,
+#screen-gameover .go-sector-row,
+#screen-gameover .time-display-box {
+  border-color: var(--pp-line);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+#screen-mp-lobby .mp-driver-card.is-local {
+  border-color: rgba(255, 255, 255, 0.64);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+#screen-settings .control-box h4,
+#screen-settings .rules-box h4,
+#screen-gameover .finish-banner {
+  color: var(--pp-text);
+}
+
+#screen-gameover .final-time-value {
+  color: var(--pp-yellow);
+}
+
+/* --- HUD: calm broadcast framing, without decorative glow overload ----- */
+#screen-hud .hud-steering-wheel-display,
+#screen-hud .hud-circle-btn,
+#screen-hud .hud-ctrl-btn,
+#screen-hud .hud-warning-bar {
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.46);
+}
+
+#screen-hud .hud-warning-bar {
+  background: rgba(11, 12, 15, 0.94);
+}
+
+@media (max-width: 960px) {
+  #screen-leaderboard .lb-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #screen-leaderboard .lb-tab-btn {
+    min-height: 52px;
+  }
+}
+
+@media (max-width: 670px) {
+  #screen-leaderboard {
+    padding: 66px 10px 12px;
+  }
+
+  #screen-leaderboard .lb-header {
+    min-height: 40px;
+    margin-bottom: 8px;
+    padding-bottom: 7px;
+  }
+
+  #screen-leaderboard .lb-header-context {
+    font-size: 0.92rem;
+  }
+
+  #screen-leaderboard .lb-header-season {
+    font-size: 0.48rem;
+  }
+
+  #screen-leaderboard .lb-tabs {
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  #screen-leaderboard .lb-tab-btn {
+    min-height: 45px;
+    padding: 6px 7px;
+  }
+
+  #screen-leaderboard .lb-tab-index {
+    font-size: 0.45rem;
+  }
+
+  #screen-leaderboard .lb-tab-label {
+    font-size: clamp(0.45rem, 1.65vw, 0.56rem);
+  }
+}
+
+@media (max-width: 430px) {
+  #screen-leaderboard .lb-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
