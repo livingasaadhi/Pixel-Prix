@@ -7779,3 +7779,381 @@ button[aria-disabled='true']:hover {
     min-width: 0;
   }
 }
+
+/* ========================================================================
+   TIME TRIAL — FOCUSED CHOICE SCREEN
+   ------------------------------------------------------------------------
+   This is a decision surface, not a telemetry wall.  Only the car, circuit
+   and launch action carry visual weight; supporting data is deliberately
+   quiet and neutral.
+   ======================================================================== */
+#screen-select {
+  padding: 110px 5.2vw 98px;
+}
+
+#screen-select .screen-header {
+  min-height: 52px;
+  margin-bottom: 18px;
+  padding: 0;
+  border: 0 !important;
+}
+
+#screen-select .screen-header::after {
+  display: none;
+}
+
+#screen-select .screen-header h2 {
+  color: #f6f7f8;
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  letter-spacing: 0.02em;
+}
+
+#screen-select .section-header-row {
+  min-height: 30px;
+  margin: 0 0 12px;
+  padding: 0 0 9px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+#screen-select .section-header-row::after,
+#screen-select .section-header-row .pulse-dot {
+  display: none;
+}
+
+#screen-select .section-label {
+  color: rgba(255, 255, 255, 0.64);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+}
+
+#screen-select .telemetry-live-badge,
+#screen-select .circuit-avail-tag {
+  min-width: auto;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.48);
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.61rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+#screen-select .select-grid {
+  gap: 22px;
+}
+
+#screen-select .glass-card,
+#screen-select .car-select-card,
+#screen-select .track-select-card {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.025), transparent 28%),
+    #101216 !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.04) !important;
+}
+
+#screen-select .car-select-card,
+#screen-select .track-select-card {
+  padding: clamp(20px, 1.8vw, 30px) !important;
+}
+
+#screen-select .car-select-card {
+  gap: 20px;
+}
+
+#screen-select .carousel-header {
+  gap: 18px;
+}
+
+#screen-select .nav-arrow,
+#screen-select .track-carousel-nav {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  flex-basis: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  box-shadow: none;
+}
+
+#screen-select .nav-arrow:hover,
+#screen-select .track-carousel-nav:hover {
+  border-color: #fff;
+  background: #fff;
+  color: #101114;
+  box-shadow: none;
+}
+
+#screen-select .car-preview-area {
+  min-height: clamp(144px, 18vh, 188px);
+  margin-bottom: 14px;
+  border-color: rgba(255, 255, 255, 0.13);
+  border-radius: 7px;
+  background: #090a0c;
+  box-shadow: none;
+}
+
+#screen-select .carousel-content h3 {
+  color: #f6f7f8;
+  font-size: clamp(1.08rem, 1.4vw, 1.35rem);
+  letter-spacing: 0.02em;
+}
+
+#screen-select .carousel-content p {
+  max-width: 48ch;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: clamp(0.71rem, 0.84vw, 0.82rem);
+}
+
+#screen-select .car-drive-profile {
+  margin: 8px 0 2px;
+  padding: 0;
+  gap: 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+#screen-select .car-drive-label,
+#screen-select .car-drive-value {
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+}
+
+#screen-select .car-drive-label {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+#screen-select .car-drive-value {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+#screen-select .carousel-dots {
+  display: none;
+}
+
+#screen-select .stat-bars {
+  gap: 14px 26px;
+  padding-top: 18px;
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+#screen-select .stat-label {
+  color: rgba(255, 255, 255, 0.44);
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+}
+
+#screen-select .stat-val-mono {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.75rem;
+}
+
+#screen-select .meter-track {
+  height: 6px;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+#screen-select .meter-fill {
+  background: #e7e8e9 !important;
+  box-shadow: none !important;
+}
+
+#screen-select .meter-ticks {
+  background: repeating-linear-gradient(90deg, transparent, transparent 24%, rgba(9, 10, 12, 0.72) 25%);
+}
+
+#screen-select .stat-benchmark {
+  display: none;
+}
+
+#screen-select .track-carousel-row {
+  gap: 14px;
+}
+
+#screen-select .track-content {
+  padding: 4px 0;
+}
+
+#screen-select .track-minimap-box {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: #090a0c;
+}
+
+#screen-select .track-region {
+  margin-bottom: 7px;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 0.58rem;
+}
+
+#screen-select .track-info-col h3 {
+  color: #f6f7f8;
+  font-size: clamp(1.28rem, 1.8vw, 1.75rem);
+}
+
+#screen-select .track-info-col p {
+  color: rgba(255, 255, 255, 0.56);
+}
+
+#screen-select .track-tag,
+#screen-select .track-tag.track-character,
+#screen-select #track-difficulty[data-level='EASY'],
+#screen-select #track-difficulty[data-level='MEDIUM'],
+#screen-select #track-difficulty[data-level='HARD'] {
+  color: rgba(255, 255, 255, 0.78);
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+#screen-select .track-character {
+  display: none;
+}
+
+#screen-select .circuit-telemetry-widget {
+  margin-top: 24px;
+  border-top-color: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+#screen-select .ct-cell + .ct-cell {
+  border-left-color: rgba(255, 255, 255, 0.08);
+}
+
+#screen-select .ct-label {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.53rem;
+}
+
+#screen-select .ct-val,
+#screen-select .ct-weather .ct-val {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.84rem;
+}
+
+/* A single floating CTA replaces the heavy empty footer. */
+#screen-select .selection-footer {
+  right: auto;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  left: 50%;
+  width: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  transform: translateX(-50%);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+#screen-select .selection-footer .btn,
+#screen-select[data-mode='time-trial'] .f1-start-button {
+  min-width: min(340px, calc(100vw - 32px));
+  min-height: 58px;
+  padding: 10px 24px !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 7px !important;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.34) !important;
+}
+
+#screen-select .f1-start-button.btn-primary {
+  background: #d90808 !important;
+}
+
+#screen-select .f1-start-button.btn-primary:hover {
+  border-color: #fff !important;
+  background: #ef1717 !important;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.42) !important;
+}
+
+#screen-select .start-lights-row {
+  display: none;
+}
+
+#screen-select .f1-start-button .start-btn-content {
+  font-size: 0.78rem;
+  letter-spacing: 0.075em;
+}
+
+#screen-select[data-mode='coop'] .selection-footer {
+  display: flex;
+  width: min(590px, calc(100vw - 32px));
+  gap: 10px;
+}
+
+#screen-select[data-mode='coop'] .selection-footer .btn {
+  min-width: 0;
+  flex: 1;
+  background: #17191e !important;
+}
+
+@media (max-width: 860px) {
+  #screen-select {
+    padding: 80px 18px 84px;
+  }
+
+  #screen-select .section-header-row {
+    margin-bottom: 7px;
+  }
+
+  #screen-select .car-select-card,
+  #screen-select .track-select-card {
+    padding: 14px !important;
+  }
+}
+
+@media (max-width: 519px) {
+  #screen-select {
+    padding: 66px 10px 72px;
+  }
+
+  #screen-select .screen-header {
+    min-height: 32px;
+    margin-bottom: 6px;
+  }
+
+  #screen-select .screen-header h2 {
+    font-size: 0.86rem;
+  }
+
+  #screen-select .section-header-row {
+    min-height: 22px;
+    padding-bottom: 5px;
+  }
+
+  #screen-select .section-label,
+  #screen-select .telemetry-live-badge,
+  #screen-select .circuit-avail-tag {
+    font-size: 0.49rem;
+  }
+
+  #screen-select .car-preview-area {
+    min-height: 66px;
+    margin-bottom: 6px;
+  }
+
+  #screen-select .carousel-content h3,
+  #screen-select .track-info-col h3 {
+    font-size: 0.9rem;
+  }
+
+  #screen-select .stat-bars {
+    gap: 7px 12px;
+    padding-top: 8px;
+  }
+
+  #screen-select .circuit-telemetry-widget {
+    margin-top: 10px;
+  }
+
+  #screen-select .selection-footer .btn {
+    min-height: 46px;
+  }
+}

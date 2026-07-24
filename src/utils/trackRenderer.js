@@ -358,8 +358,8 @@ export function drawTrackMinimap(canvas, track) {
   // Sector split dots
   const drawSplitMarker = (idx, label) => {
     const pt = rawPoints[idx % rawPoints.length];
-    ctx.fillStyle = '#ffd500';
-    ctx.shadowColor = 'rgba(255, 213, 0, 0.35)';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.22)';
     ctx.shadowBlur = 4;
     ctx.beginPath();
     ctx.arc(mapX(pt.x), mapY(pt.y), 3.5, 0, Math.PI * 2);

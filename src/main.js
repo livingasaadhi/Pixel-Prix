@@ -361,7 +361,7 @@ function updateCarSelection() {
 
   updateSelectionDots('car-selection-dots', CARS.length, selectedCarIndex);
   const carCount = document.getElementById('car-selection-count');
-  if (carCount) carCount.textContent = `GARAGE ${String(selectedCarIndex + 1).padStart(2, '0')} / ${String(CARS.length).padStart(2, '0')}`;
+  if (carCount) carCount.textContent = `${String(selectedCarIndex + 1).padStart(2, '0')} / ${String(CARS.length).padStart(2, '0')}`;
 
   const previewCanvas = document.getElementById('car-preview-canvas');
   drawCarPreview(previewCanvas, car.color, car.accentColor);
@@ -426,7 +426,7 @@ function updateTrackSelection() {
 
   updateSelectionDots('track-selection-dots', TRACKS.length, selectedTrackIndex);
   const trackCount = document.getElementById('track-selection-count');
-  if (trackCount) trackCount.textContent = `CIRCUIT ${String(selectedTrackIndex + 1).padStart(2, '0')} / ${String(TRACKS.length).padStart(2, '0')}`;
+  if (trackCount) trackCount.textContent = `${String(selectedTrackIndex + 1).padStart(2, '0')} / ${String(TRACKS.length).padStart(2, '0')}`;
 
   const regionEl = document.getElementById('track-region');
   if (regionEl) regionEl.textContent = track.region || 'PIXEL PRIX / GRAND PRIX';
