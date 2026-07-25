@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#141313">
-  <meta name="description" content="Pixel Prix - Open-wheel arcade racing game. Compete for the fastest lap times on 6 unique circuits.">
-  <title>Pixel Prix | Open-Wheel F1 2D Racing</title>
+  <meta name="theme-color" content="#06080c">
+  <meta name="description" content="Pixel Prix — original open-wheel racing with solo, Grand Prix, co-op, and live timing.">
+  <title>Pixel Prix | Open-Wheel Racing</title>
 
   <!-- Preconnect for performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,8 +17,8 @@
   <!-- Material Symbols (icon font) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
 
-  <script type="module" crossorigin src="./assets/index-Bx2f3UaP.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-D17-hzDs.css">
+  <script type="module" crossorigin src="./assets/index-iYdCbiGY.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CrVD87fv.css">
 </head>
 <body>
   <!-- Scanline CRT overlay -->
@@ -42,7 +42,7 @@
       <header class="top-app-bar" id="top-app-bar">
         <div class="top-app-bar-left">
           <span class="top-app-bar-brand">PIXEL PRIX</span>
-          <span class="top-live-tag"><span class="pulse-dot"></span>F1 BROADCAST</span>
+          <span class="top-live-tag"><span class="pulse-dot"></span>LIVE TIMING</span>
         </div>
         <nav class="top-glass-nav" aria-label="Primary Navigation">
           <button class="top-nav-link active" id="top-nav-garage" aria-label="Home">
@@ -80,7 +80,7 @@
           <div class="garage-heading">
             <span class="garage-kicker">PIXEL PRIX / SEASON 04</span>
             <h1>RACE CONTROL</h1>
-            <p>Choose a solo time trial, race an AI grid, join a co-op race, or review live timing.</p>
+            <p>Choose solo, AI Grand Prix, co-op, or live timing.</p>
             <span class="daily-featured-chip" id="daily-featured-chip">DAILY FEATURE: LOADING…</span>
           </div>
 
@@ -444,7 +444,7 @@
           </div>
           <div class="modal-body">
             <label class="sr-only" for="input-room-code">Online lobby code</label>
-            <input type="text" id="input-room-code" class="f1-input" maxlength="6" placeholder="LOBBY CODE (e.g. R7K2)" autocomplete="off" spellcheck="false" />
+            <input type="text" id="input-room-code" class="f1-input" maxlength="6" placeholder="LOBBY CODE (e.g. R7K2M9)" autocomplete="off" spellcheck="false" />
             <p id="join-room-error" class="error-msg hidden"></p>
           </div>
           <div class="modal-footer">
@@ -499,11 +499,14 @@
       <!-- ============================================================== -->
       <!-- F1 Countdown Start Lights -->
       <div id="countdown-overlay" aria-hidden="true">
-        <div class="countdown-light" id="cl-1"></div>
-        <div class="countdown-light" id="cl-2"></div>
-        <div class="countdown-light" id="cl-3"></div>
-        <div class="countdown-light" id="cl-4"></div>
-        <div class="countdown-light" id="cl-5"></div>
+        <div class="countdown-lights" aria-hidden="true">
+          <div class="countdown-light" id="cl-1"></div>
+          <div class="countdown-light" id="cl-2"></div>
+          <div class="countdown-light" id="cl-3"></div>
+          <div class="countdown-light" id="cl-4"></div>
+          <div class="countdown-light" id="cl-5"></div>
+        </div>
+        <span class="countdown-control-hint"><span class="countdown-touch-copy">GO ON GREEN · GAS TO LAUNCH</span><span class="countdown-desktop-copy">GO ON GREEN · W / ↑ TO LAUNCH</span></span>
       </div>
 
       <div id="screen-hud" class="ui-screen hidden pointer-through">
@@ -842,7 +845,7 @@
             </div>
 
             <div class="rules-box">
-              <h4>FIA Stewards &amp; Penalty System</h4>
+              <h4>RACE STEWARDS &amp; PENALTY SYSTEM</h4>
               <p>Passing checkpoints in order is mandatory. Brief run-off and recovery are allowed. Sustained off-track driving is reviewed, with three confirmed warnings before further breaches add a +2.0s penalty. A prolonged high-speed shortcut can add +3.0s.</p>
             </div>
           </div>
