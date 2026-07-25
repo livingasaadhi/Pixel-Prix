@@ -132,6 +132,27 @@
   #screen-select .ct-cell:nth-child(2) { border-right: 0; }
   #screen-select .ct-cell:nth-child(-n + 2) { border-bottom: 1px solid var(--pp-line); }
 }
+
+/* Leaderboard: full-width timing surface, not the retired narrow timing rail. */
+#screen-leaderboard { align-content: start !important; display: grid !important; grid-template-columns: repeat(12, minmax(0, 1fr)) !important; }
+#screen-leaderboard .lb-header { align-items: center; display: flex !important; grid-column: 1 / -1 !important; margin: 0 0 20px !important; min-height: 58px; min-width: 0; padding: 0 0 14px; position: static !important; transform: none !important; width: 100% !important; }
+#screen-leaderboard .lb-header-left { align-items: center; display: flex; gap: 14px; min-width: 0; }
+#screen-leaderboard .lb-header-brand { display: grid; gap: 4px; min-width: 0; }
+#screen-leaderboard .lb-header-context { color: var(--pp-text); font: 900 clamp(24px, 3vw, 42px) var(--pp-display); letter-spacing: .02em; }
+#screen-leaderboard .lb-header-season { color: var(--pp-muted); font: 700 11px var(--pp-mono); letter-spacing: .09em; }
+#screen-leaderboard .lb-body { display: grid !important; gap: 18px; grid-column: 1 / -1 !important; grid-template-columns: repeat(12, minmax(0, 1fr)); margin: 0 !important; min-width: 0; position: static !important; transform: none !important; width: 100% !important; }
+#screen-leaderboard .lb-tabs { align-items: center; display: flex; gap: 8px; grid-column: 1 / -1; max-width: 100%; min-width: 0; overflow-x: auto; padding-bottom: 4px; }
+#screen-leaderboard .lb-table-wrap { background: linear-gradient(145deg, rgba(18, 25, 35, .94), rgba(7, 11, 17, .98)); border: 1px solid var(--pp-line); border-radius: 12px; grid-column: 1 / -1; min-width: 0; overflow-x: auto; overflow-y: hidden; padding: 0; width: 100% !important; }
+#screen-leaderboard .lb-table-header,
+#screen-leaderboard .lb-rows { min-width: 900px; width: 100%; }
+#screen-leaderboard .lb-table-header { background: rgba(255, 255, 255, .04); border-bottom: 1px solid var(--pp-line); }
+#screen-leaderboard .lb-rows { max-height: min(58dvh, 680px); overflow-y: auto !important; touch-action: pan-y; }
+#screen-leaderboard .lb-fab { bottom: max(24px, env(safe-area-inset-bottom)); position: fixed !important; right: max(24px, env(safe-area-inset-right)); }
+@media (max-width: 767px) {
+  #screen-leaderboard .lb-header-context { font-size: 27px; }
+  #screen-leaderboard .lb-table-wrap { border-radius: 8px; }
+  #screen-leaderboard .lb-fab { bottom: max(16px, env(safe-area-inset-bottom)); right: max(16px, env(safe-area-inset-right)); }
+}
 @media (max-width: 860px) and (orientation: landscape) {
   #screen-hud { padding: 0 !important; }
   #screen-hud .hud-steering-wheel-display #hud-alert-region { max-width: none; }
