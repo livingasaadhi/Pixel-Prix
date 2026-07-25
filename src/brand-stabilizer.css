@@ -41,7 +41,7 @@
 #screen-select .screen-header,
 #screen-select .select-grid,
 #screen-select .select-bottom-bar-shell,
-#screen-lobby .mp-lobby-container,
+#screen-mp-lobby .mp-lobby-container,
 #screen-leaderboard .lb-container,
 #screen-gameover .modal-card,
 #screen-settings .modal-card,
@@ -74,7 +74,7 @@
 #screen-select .ct-cell { min-width: 0; }
 
 /* Non-race components keep their brand surfaces but never clip their content. */
-#screen-lobby .mp-lobby-container,
+#screen-mp-lobby .mp-lobby-container,
 #screen-leaderboard .lb-container,
 #screen-gameover .modal-card,
 #screen-settings .modal-card,
@@ -162,5 +162,38 @@
   .f1-driver-profile-chip { min-height: 38px !important; padding: 3px !important; }
   .f1-chip-rank, .f1-chip-badge, .f1-chip-name { display: none !important; }
   .f1-chip-avatar { height: 30px; width: 30px; }
-  #screen-menu, #screen-select, #screen-lobby, #screen-leaderboard, #screen-settings, #screen-gameover { padding-top: 78px !important; }
+  #screen-menu, #screen-select, #screen-mp-lobby, #screen-leaderboard, #screen-settings, #screen-gameover { padding-top: 78px !important; }
+}
+
+/* Co-op lobby: use the full command-centre rail instead of the legacy side panel. */
+#screen-mp-lobby .mp-lobby-container { display: grid !important; gap: 20px; grid-column: 1 / -1 !important; grid-template-columns: repeat(12, minmax(0, 1fr)); margin: 0 !important; max-width: none !important; min-width: 0; padding: 28px !important; width: 100% !important; }
+#screen-mp-lobby .mp-lobby-header { align-items: start; display: grid; gap: 20px; grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr) auto; }
+#screen-mp-lobby .mp-room-title h2 { font: 900 clamp(28px, 3.2vw, 46px) var(--pp-display); margin: 8px 0; }
+#screen-mp-lobby .mp-room-title p { color: var(--pp-muted); margin: 0; max-width: 50ch; }
+#screen-mp-lobby .mp-room-code-panel { align-items: center; background: rgba(0, 0, 0, .22); border: 1px solid var(--pp-line); border-radius: 10px; display: grid; gap: 8px; grid-template-columns: auto auto; padding: 14px; }
+#screen-mp-lobby .mp-room-code-panel .mp-panel-label { grid-column: 1 / -1; }
+#screen-mp-lobby .mp-room-code-panel strong { color: var(--pp-cyan); font: 900 24px var(--pp-mono); letter-spacing: .12em; }
+#screen-mp-lobby .mp-session-strip { display: grid; grid-column: 1 / -1; grid-template-columns: 3fr 6fr 3fr; overflow: hidden; border: 1px solid var(--pp-line); border-radius: 10px; }
+#screen-mp-lobby .mp-session-cell { display: grid; gap: 8px; min-height: 86px; padding: 16px; }
+#screen-mp-lobby .mp-session-cell + .mp-session-cell { border-left: 1px solid var(--pp-line); }
+#screen-mp-lobby .mp-session-cell strong { font: 800 17px var(--pp-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#screen-mp-lobby .mp-track-picker { align-items: center; display: flex; gap: 10px; min-width: 0; }
+#screen-mp-lobby .mp-track-picker strong { flex: 1; min-width: 0; }
+#screen-mp-lobby .mp-drivers-section { grid-column: 1 / -1; min-width: 0; }
+#screen-mp-lobby .mp-section-sub { align-items: center; border-bottom: 1px solid var(--pp-line); display: flex; font: 800 12px var(--pp-mono); justify-content: space-between; padding: 0 0 10px; }
+#screen-mp-lobby .mp-section-sub span:last-child { color: var(--pp-cyan); }
+#screen-mp-lobby .mp-drivers-grid { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 14px; }
+#screen-mp-lobby .mp-driver-card { background: rgba(5, 8, 13, .54); border: 1px solid var(--pp-line); border-radius: 8px; min-width: 0; padding: 14px; }
+#screen-mp-lobby .mp-lobby-footer { display: flex; gap: 12px; grid-column: 1 / -1; justify-content: flex-end; }
+#screen-mp-lobby .mp-lobby-footer .mp-start-btn { min-width: min(100%, 310px); }
+#screen-mp-lobby .mp-non-host-msg { color: var(--pp-muted); grid-column: 1 / -1; text-align: right; }
+@media (max-width: 767px) {
+  #screen-mp-lobby .mp-lobby-container { padding: 18px !important; }
+  #screen-mp-lobby .mp-lobby-header { grid-template-columns: 1fr; }
+  #screen-mp-lobby .mp-room-code-panel { justify-self: stretch; }
+  #screen-mp-lobby .mp-session-strip { grid-template-columns: 1fr; }
+  #screen-mp-lobby .mp-session-cell + .mp-session-cell { border-left: 0; border-top: 1px solid var(--pp-line); }
+  #screen-mp-lobby .mp-drivers-grid { grid-template-columns: 1fr; }
+  #screen-mp-lobby .mp-lobby-footer { align-items: stretch; flex-direction: column-reverse; }
+  #screen-mp-lobby .mp-lobby-footer .btn { width: 100%; }
 }
