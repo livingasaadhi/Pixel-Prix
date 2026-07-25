@@ -10098,49 +10098,19 @@ border-right: 0 !important;
 #screen-select .ct-cell:nth-child(n+3)  {
 border-bottom: 0 !important;
 }
-/* UNIFIED 12-COL BOTTOM BAR ROW: Session Controls (Left 8-cols) + Start Action Button (Right 4-cols) */  #screen-select .select-bottom-bar-shell  {
-display: grid !important;
-grid-template-columns: 1fr 340px !important;
-gap: 14px !important;
-align-items: stretch !important;
-width: 100% !important;
-min-height: 68px !important;
-margin: 0 !important;
-box-sizing: border-box !important;
+#session-config, .session-config {
+display: none !important;
+visibility: hidden !important;
+pointer-events: none !important;
 }
-#screen-select #session-config  {
-width: 100% !important;
-margin: 0 !important;
-padding: 8px 14px !important;
-box-sizing: border-box !important;
-overflow: hidden !important;
-border-radius: 8px !important;
-background: rgba(5, 9, 14, 0.72) !important;
-border: 1px solid var(--pp-line) !important;
-}
-#screen-select .session-config-grid  {
-display: grid !important;
-grid-template-columns: 1.15fr 1fr 1fr !important;
-gap: 10px !important;
-align-items: center !important;
-margin-top: 4px !important;
-}
-#screen-select .session-choice-buttons  {
+#screen-select .select-bottom-bar-shell  {
 display: flex !important;
-flex-wrap: nowrap !important;
-gap: 4px !important;
+justify-content: center !important;
+align-items: center !important;
 width: 100% !important;
-margin-top: 4px !important;
-}
-#screen-select .session-choice  {
-flex: 1 !important;
-min-width: 0 !important;
-min-height: 28px !important;
-padding: 4px 5px !important;
-font-size: 0.52rem !important;
-white-space: nowrap !important;
-overflow: hidden !important;
-text-overflow: ellipsis !important;
+min-height: 54px !important;
+margin: 0 auto !important;
+box-sizing: border-box !important;
 }
 #screen-select .selection-footer  {
 position: relative !important;
@@ -10152,10 +10122,10 @@ transform: none !important;
 display: flex !important;
 align-items: center !important;
 justify-content: center !important;
-width: 100% !important;
-height: 100% !important;
-min-height: 100% !important;
-margin: 0 !important;
+width: min(480px, 100%) !important;
+height: 54px !important;
+min-height: 54px !important;
+margin: 0 auto !important;
 padding: 0 !important;
 border: 0 !important;
 box-sizing: border-box !important;
@@ -10163,21 +10133,19 @@ box-sizing: border-box !important;
 #screen-select .selection-footer .f1-start-button,  #screen-select .selection-footer .btn-start-race  {
 width: 100% !important;
 max-width: 100% !important;
-height: 100% !important;
+height: 54px !important;
 min-height: 54px !important;
-margin: 0 !important;
+margin: 0 auto !important;
 border-radius: 8px !important;
 }
-#screen-select[data-mode='coop'] .select-bottom-bar-shell  {
-grid-template-columns: 1fr 440px !important;
-}
 #screen-select[data-mode='coop'] .selection-footer  {
+width: min(640px, 100%) !important;
 gap: 10px !important;
 }
 #screen-select[data-mode='coop'] .mp-btn-create,  #screen-select[data-mode='coop'] .mp-btn-join  {
 flex: 1 !important;
-height: 100% !important;
-min-height: 52px !important;
+height: 54px !important;
+min-height: 54px !important;
 max-width: 100% !important;
 }
 }
