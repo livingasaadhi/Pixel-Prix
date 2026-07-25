@@ -130,10 +130,14 @@ export class RaceScene extends Phaser.Scene {
     this.turnRate = 4.8;            // max rotation per second toward target heading
     this.gamepadInput = { steer: 0, throttle: 0, brake: 0, boost: false };
 
-    // Tunable physics parameters (scaled by 2.4x for high-speed AAA racing feel).
+    // World-space conversion is deliberately stronger than the displayed
+    // kilometre-per-hour telemetry. The previous 2.4x conversion made a car
+    // show a convincing speed while it still crossed the circuit too slowly.
+    // Keep this as one shared value so HUD, braking, and physics agree.
     // Conditions and the selected setup alter the same native force model,
     // rather than bolting on a separate arcade path for weather.
-    const VEL_MULT = 2.4;
+    this.velocityScale = 3.6;
+    const VEL_MULT = this.velocityScale;
     const weatherPhysics = this.weatherCondition.physics;
     const baseTopSpeed = this.carData.maxSpeed || this.carData.topSpeed || 275;
     const baseBoostTopSpeed = this.carData.boostMaxSpeed || (baseTopSpeed * (this.carData.boostPower || 1.45));
@@ -825,7 +829,7 @@ export class RaceScene extends Phaser.Scene {
     const grassCheck = getNearestSegmentIndex(this.player.x, this.player.y, this.curvePoints, this.nearestSegmentIndex);
     this.nearestSegmentIndex = grassCheck.nearestIndex;
     this.onGrass = isOffRoad(this.player.x, this.player.y, this.curvePoints, this.roadWidth, grassCheck);
-    const displayedSpeed = Math.abs(this.currentSpeed) / 2.4;
+    const displayedSpeed = Math.abs(this.currentSpeed) / this.velocityScale;
     const trackContext = sampleTrackContext(this.trackProfile, this.nearestSegmentIndex, {
       speedKph: displayedSpeed,
       roadWidth: this.roadWidth,
@@ -841,7 +845,7 @@ export class RaceScene extends Phaser.Scene {
 
     const handling = calculateHandling({
       speedKph: displayedSpeed,
-      maxSpeedKph: this.maxSpeed / 2.4,
+      maxSpeedKph: this.maxSpeed / this.velocityScale,
       steerInput: steerDir,
       throttle: gasValue,
       brake: brakeValue,
@@ -931,12 +935,12 @@ export class RaceScene extends Phaser.Scene {
         this.currentSpeed += this.brakeForce * dt;
         if (this.currentSpeed > 0) this.currentSpeed = 0;
       } else if (brakeOn) {
-        this.currentSpeed = Math.max(-85 * 2.4, this.currentSpeed - this.acceleration * 0.8 * brakeValue * dt);
+        this.currentSpeed = Math.max(-85 * this.velocityScale, this.currentSpeed - this.acceleration * 0.8 * brakeValue * dt);
       } else {
         this.currentSpeed = Math.min(0, this.currentSpeed + this.drag * dt);
       }
     } else if (this.currentSpeed === 0 && brakeOn && !gasOn) {
-      this.currentSpeed = Math.max(-85 * 2.4, -this.acceleration * 0.8 * brakeValue * dt);
+      this.currentSpeed = Math.max(-85 * this.velocityScale, -this.acceleration * 0.8 * brakeValue * dt);
     } else {
       const dynamics = advanceVehicleDynamics({
         speedKph: displayedSpeed,
@@ -957,7 +961,7 @@ export class RaceScene extends Phaser.Scene {
         trackContext,
         deltaSeconds: dt
       });
-      this.currentSpeed = dynamics.speedKph * 2.4;
+      this.currentSpeed = dynamics.speedKph * this.velocityScale;
     }
 
     const targetVx = Math.cos(this.player.rotation) * this.currentSpeed;
@@ -986,15 +990,15 @@ export class RaceScene extends Phaser.Scene {
 
     // Smoke and sparks on lateral slide
     const lateralSlip = Math.abs(this.vx - targetVx) + Math.abs(this.vy - targetVy);
-    const hardBraking = brakeOn && Math.abs(this.currentSpeed) > 100 * 2.4;
+    const hardBraking = brakeOn && Math.abs(this.currentSpeed) > 100 * this.velocityScale;
 
-    const needsSkid = (hardBraking && Math.abs(this.currentSpeed) > 100 * 2.4) ||
-                      (lateralSlip > 45 && Math.abs(this.currentSpeed) > 120 * 2.4 && steerDir !== 0);
+    const needsSkid = (hardBraking && Math.abs(this.currentSpeed) > 100 * this.velocityScale) ||
+                      (lateralSlip > 45 && Math.abs(this.currentSpeed) > 120 * this.velocityScale && steerDir !== 0);
     if (needsSkid) {
       this.skidEmitter.emitParticleAt(this.player.x, this.player.y);
     }
 
-    if (lateralSlip > 45 && Math.abs(this.currentSpeed) > 120 * 2.4 && steerDir !== 0) {
+    if (lateralSlip > 45 && Math.abs(this.currentSpeed) > 120 * this.velocityScale && steerDir !== 0) {
       this.smokeEmitter.emitting = true;
       if (Math.random() < 0.15) {
         this.sparkEmitter.emitting = true;
@@ -1004,7 +1008,7 @@ export class RaceScene extends Phaser.Scene {
       this.smokeEmitter.emitting = false;
     }
 
-    if (hardBraking && Math.abs(this.currentSpeed) > 120 * 2.4) {
+    if (hardBraking && Math.abs(this.currentSpeed) > 120 * this.velocityScale) {
       if (Math.random() < 0.2) {
         this.sparkEmitter.emitting = true;
         this.sparkDuration = 0.06;
@@ -1012,7 +1016,7 @@ export class RaceScene extends Phaser.Scene {
     }
 
     const speedLoss = this.prevSpeed - this.currentSpeed;
-    if (speedLoss > 60 * 2.4 && Math.abs(this.currentSpeed) < 20 * 2.4) {
+    if (speedLoss > 60 * this.velocityScale && Math.abs(this.currentSpeed) < 20 * this.velocityScale) {
       this.cameras.main.shake(250, 0.008);
     }
 
@@ -1367,7 +1371,7 @@ export class RaceScene extends Phaser.Scene {
   emitHUDUpdate() {
     window.dispatchEvent(new CustomEvent('pixel-prix:hud', {
       detail: {
-        speed: Math.round(Math.abs(this.currentSpeed) / 2.4),
+        speed: Math.round(Math.abs(this.currentSpeed) / this.velocityScale),
         isReverse: this.currentSpeed < -12,
         lap: this.currentLap,
         totalLaps: this.totalLaps,
