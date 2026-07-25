@@ -8521,3 +8521,32 @@ button[aria-disabled='true']:hover {
     flex: 0 0 40px;
   }
 }
+
+/* Multiplayer broadcast state: racers retain controls, while a finisher
+   follows the remaining live car until the classification is complete. */
+#screen-hud.spectator-mode #hud-steer-left-group,
+#screen-hud.spectator-mode #hud-drive-left-group,
+#screen-hud.spectator-mode #hud-drive-right-group,
+#screen-hud.spectator-mode .hud-joystick-container,
+#screen-hud.spectator-mode .hud-steering-wheel-container {
+  display: none !important;
+}
+
+#screen-hud.spectator-mode .hud-steering-wheel-display {
+  border-color: rgba(130, 232, 180, 0.7);
+}
+
+#hud-mp-status .f1-tel-val {
+  min-width: 56px;
+  color: #a8f4ce;
+  text-align: center;
+}
+
+.f1-results-table .mp-fastest-lap {
+  color: #d7b6ff;
+  font-weight: 900;
+}
+
+.f1-results-table .mp-fastest-lap-row td {
+  background: rgba(155, 102, 221, 0.07);
+}

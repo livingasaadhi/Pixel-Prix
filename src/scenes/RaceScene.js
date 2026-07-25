@@ -104,11 +104,14 @@ export class RaceScene extends Phaser.Scene {
     this.nearestSegmentIndex = -1;
     this.lastHUDUpdate = 0;
     this.sparkDuration = 0;
+    this.spectatorMode = false;
   }
 
   create() {
     // Re-enable keyboard driving
     if (this.input && this.input.keyboard) this.input.keyboard.enabled = true;
+    document.getElementById('screen-hud')?.classList.remove('spectator-mode');
+    document.getElementById('hud-mp-status')?.classList.toggle('hidden', !mpState.isMultiplayer);
 
     // Guard against any control 'active' state leaking across races.
     this.isAccelerating = this.isBraking = this.isBoosting = false;
@@ -385,7 +388,14 @@ export class RaceScene extends Phaser.Scene {
       return;
     }
 
-    if (this.raceFinished) return;
+    if (this.raceFinished) {
+      if (this.spectatorMode && mpState.isMultiplayer) {
+        this.updateMultiplayerView();
+        this.centerCameraOnSpectator();
+        this.updateMultiplayerHUD(true);
+      }
+      return;
+    }
 
     this.elapsedMs = this.time.now - this.startTime;
     if (this.time.now - this.lastHUDUpdate > 33) {
@@ -687,63 +697,104 @@ export class RaceScene extends Phaser.Scene {
     // Checkpoints
     this.checkCheckpoints();
 
-    // -------------------------------------------------------------------------
-    // MULTIPLAYER GHOST RENDERING & LIVE RANKING
-    // -------------------------------------------------------------------------
     if (mpState.isMultiplayer) {
-      const now = Date.now();
+      this.updateMultiplayerView();
+      this.updateMultiplayerHUD(false);
+    }
+  }
 
-      mpState.remotePlayers.forEach((rp, id) => {
-        // Disconnect Timeout (3.5s)
-        if (now - rp.lastUpdate > 3500) {
-          if (rp.sprite) {
-            rp.sprite.destroy();
-            if (rp.nameTag) rp.nameTag.destroy();
-          }
-          mpState.remotePlayers.delete(id);
-          return;
-        }
+  getRaceProgress() {
+    const segmentCount = this.curvePoints?.length || 1;
+    const segmentProgress = this.nearestSegmentIndex >= 0
+      ? Phaser.Math.Clamp(this.nearestSegmentIndex / segmentCount, 0, 0.999)
+      : 0;
+    return Math.max(0, (this.currentLap - 1) + segmentProgress);
+  }
 
-        // Create Ghost Sprite & Name Tag
-        if (!rp.sprite) {
-          const tex = 'car_' + (rp.carId || 'scuderia-furiosa') + '_straight';
-          rp.sprite = this.add.sprite(rp.targetX || startPos.x, rp.targetY || startPos.y, tex);
-          rp.sprite.setOrigin(0.5, 0.5);
-          rp.sprite.setAlpha(0.85);
-          rp.sprite.setDepth(15);
-          rp.sprite.setTint(0x00F0FF); // Neon cyan outline tint for remote ghosts
+  updateMultiplayerView() {
+    const now = Date.now();
+    const startPos = this.trackData.startPos;
 
-          const pInfo = mpState.players.find(p => p.id === id);
-          const gridText = pInfo ? `P${(pInfo.gridPos || 0) + 1} | ` : '';
-
-          rp.nameTag = this.add.text(rp.targetX || startPos.x, (rp.targetY || startPos.y) - 28, `${gridText}${rp.name}`, {
-            fontFamily: 'monospace',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            color: '#00F0FF',
-            backgroundColor: 'rgba(8, 10, 15, 0.8)',
-            padding: { x: 5, y: 2 }
-          });
-          rp.nameTag.setOrigin(0.5, 0.5);
-          rp.nameTag.setDepth(16);
-        }
-
-        // Smooth Lerp Position & Rotation
-        rp.sprite.x = Phaser.Math.Linear(rp.sprite.x, rp.targetX, 0.25);
-        rp.sprite.y = Phaser.Math.Linear(rp.sprite.y, rp.targetY, 0.25);
-        rp.sprite.rotation = Phaser.Math.Angle.Wrap(Phaser.Math.Linear(rp.sprite.rotation, rp.targetRotation, 0.25));
-
-        if (rp.nameTag) {
-          rp.nameTag.setPosition(rp.sprite.x, rp.sprite.y - 28);
-        }
-      });
-
-      // Update Live Position Rank in HUD
-      const rankInfo = calculateLiveRank(this.currentLap, this.nextCheckpointIndex, this.elapsedMs);
-      const lapEl = document.getElementById('hud-lap-text');
-      if (lapEl) {
-        lapEl.innerHTML = `${this.currentLap}/${this.totalLaps} <span style="color:#00F0FF; margin-left:6px; font-weight:900;">P${rankInfo.rank}/${rankInfo.total}</span>`;
+    mpState.remotePlayers.forEach((rp, id) => {
+      if (now - rp.lastUpdate > 3500) {
+        rp.sprite?.destroy();
+        rp.nameTag?.destroy();
+        mpState.remotePlayers.delete(id);
+        return;
       }
+
+      const targetX = Number.isFinite(rp.targetX) ? rp.targetX : startPos.x;
+      const targetY = Number.isFinite(rp.targetY) ? rp.targetY : startPos.y;
+      if (!rp.sprite) {
+        const tex = 'car_' + (rp.carId || 'scuderia-furiosa') + '_straight';
+        rp.sprite = this.add.sprite(targetX, targetY, tex);
+        rp.sprite.setOrigin(0.5, 0.5);
+        rp.sprite.setAlpha(0.85);
+        rp.sprite.setDepth(15);
+        rp.sprite.setTint(0x00F0FF);
+
+        const pInfo = mpState.players.find((player) => player.id === id);
+        const gridText = pInfo ? `P${(pInfo.gridPos || 0) + 1} | ` : '';
+        rp.nameTag = this.add.text(targetX, targetY - 28, `${gridText}${rp.name}`, {
+          fontFamily: 'monospace',
+          fontSize: '10px',
+          fontWeight: 'bold',
+          color: '#00F0FF',
+          backgroundColor: 'rgba(8, 10, 15, 0.8)',
+          padding: { x: 5, y: 2 }
+        });
+        rp.nameTag.setOrigin(0.5, 0.5);
+        rp.nameTag.setDepth(16);
+      }
+
+      rp.sprite.x = Phaser.Math.Linear(rp.sprite.x, targetX, 0.25);
+      rp.sprite.y = Phaser.Math.Linear(rp.sprite.y, targetY, 0.25);
+      rp.sprite.rotation = Phaser.Math.Angle.Wrap(Phaser.Math.Linear(rp.sprite.rotation, rp.targetRotation || 0, 0.25));
+      rp.nameTag?.setPosition(rp.sprite.x, rp.sprite.y - 28);
+    });
+  }
+
+  getSpectatorTarget() {
+    const finishedIds = new Set(mpState.finishedPlayers.map((player) => player.id));
+    return [...mpState.remotePlayers.values()]
+      .filter((player) => player.sprite && !finishedIds.has(player.id) && Date.now() - player.lastUpdate < 3500)
+      .sort((a, b) => (b.progress || 0) - (a.progress || 0))[0] || null;
+  }
+
+  centerCameraOnSpectator() {
+    const target = this.getSpectatorTarget();
+    if (target?.sprite) {
+      this.cameras.main.centerOn(target.sprite.x, target.sprite.y);
+      return;
+    }
+    this.centerCameraOnPlayer();
+  }
+
+  updateMultiplayerHUD(spectating) {
+    const progress = this.getRaceProgress();
+    const rankInfo = calculateLiveRank(this.currentLap, this.nextCheckpointIndex, this.elapsedMs, progress);
+    const lapEl = document.getElementById('hud-lap-text');
+    const status = document.getElementById('hud-mp-status');
+    const statusLabel = document.getElementById('hud-mp-status-label');
+    const statusText = document.getElementById('hud-mp-status-text');
+
+    status?.classList.remove('hidden');
+    if (spectating) {
+      const target = this.getSpectatorTarget();
+      if (lapEl) lapEl.textContent = 'SPECTATING';
+      if (statusLabel) statusLabel.textContent = 'WATCHING';
+      if (statusText) statusText.textContent = target ? target.name.toUpperCase() : 'RACE COMPLETE';
+      return;
+    }
+
+    if (lapEl) {
+      lapEl.innerHTML = `${this.currentLap}/${this.totalLaps} <span style="color:#00F0FF; margin-left:6px; font-weight:900;">P${rankInfo.rank}/${rankInfo.total}</span>`;
+    }
+    if (statusLabel) statusLabel.textContent = 'GAP';
+    if (statusText) {
+      statusText.textContent = rankInfo.rank === 1
+        ? 'LEADER'
+        : (rankInfo.leaderFinished ? 'LEADER FINISHED' : `+${(rankInfo.gapMs / 1000).toFixed(1)}s`);
     }
   }
 
@@ -901,7 +952,13 @@ export class RaceScene extends Phaser.Scene {
 
     if (mpState.isMultiplayer) {
       stopPositionBroadcast();
-      broadcastRaceFinish(finalTime);
+      broadcastRaceFinish(finalTime, bestLapMs);
+      this.spectatorMode = true;
+      mpState.spectating = true;
+      document.getElementById('screen-hud')?.classList.add('spectator-mode');
+      this.showNotification('CHEQUERED FLAG — SPECTATING ACTIVE RACE');
+      this.updateMultiplayerHUD(true);
+      return;
     }
 
     window.dispatchEvent(new CustomEvent('pixel-prix:finish', {

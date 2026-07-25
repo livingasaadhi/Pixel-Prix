@@ -1698,28 +1698,35 @@ function initUI() {
     const rowsEl = document.getElementById('mp-results-rows');
     const modal = document.getElementById('modal-mp-results');
     const localPlayerHasFinished = finishedPlayers.some((player) => player.id === mpState.localPlayer.id);
+    const expectedDrivers = mpState.players.length;
+    const raceComplete = expectedDrivers > 0 && finishedPlayers.length >= expectedDrivers;
 
-    // A remote driver finishing must not interrupt racers who are still on
-    // track. Once this driver has finished, later realtime updates refresh
-    // the same classification in place.
+    // A finisher remains in spectator mode until every connected driver has
+    // crossed the line. Classification then opens for the whole session.
     if (rowsEl && localPlayerHasFinished) {
       const leaderTime = finishedPlayers[0].timeMs;
+      const fastestLapMs = Math.min(...finishedPlayers
+        .map((player) => player.fastestLapMs)
+        .filter((timeMs) => Number.isFinite(timeMs)));
       rowsEl.innerHTML = finishedPlayers.map((p, idx) => {
         const carMatch = CARS.find(c => c.id === p.carId) || CARS[0];
-        const gapStr = idx === 0 ? 'WINNER' : `+${((p.timeMs - leaderTime) / 1000).toFixed(3)}s`;
+        const gapStr = idx === 0 ? '—' : `+${((p.timeMs - leaderTime) / 1000).toFixed(3)}s`;
+        const hasFastestLap = Number.isFinite(fastestLapMs) && p.fastestLapMs === fastestLapMs;
+        const fastestLap = Number.isFinite(p.fastestLapMs) ? formatTime(p.fastestLapMs) : '—';
 
         return `
-          <tr>
+          <tr class="${hasFastestLap ? 'mp-fastest-lap-row' : ''}">
             <td>P${idx + 1}</td>
             <td><strong>${escapeHtml(p.name)}</strong></td>
             <td>${escapeHtml(carMatch.name)}</td>
             <td>${formatTime(p.timeMs)}</td>
             <td>${gapStr}</td>
+            <td class="${hasFastestLap ? 'mp-fastest-lap' : ''}">${fastestLap}</td>
           </tr>
         `;
       }).join('');
 
-      if (modal) modal.classList.remove('hidden');
+      if (modal && raceComplete) modal.classList.remove('hidden');
     }
   });
 

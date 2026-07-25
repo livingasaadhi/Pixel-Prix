@@ -19,6 +19,7 @@ export const mpState = {
   },
   remotePlayers: new Map(), // playerId -> { id, name, carId, targetX, targetY, targetRotation, speed, lap, checkpoint, timeMs, lastUpdate, sprite, nameTag }
   finishedPlayers: [],      // [{ id, name, carId, timeMs }]
+  spectating: false,
   updateTimer: null,
   raceStarted: false,
   startCountDownTime: 0
@@ -162,6 +163,7 @@ export async function createMultiplayerRoom(trackId, carId, playerName) {
   mpState.roomCode = roomCode;
   mpState.trackId = trackId;
   mpState.finishedPlayers = [];
+  mpState.spectating = false;
   mpState.remotePlayers.clear();
 
   mpState.localPlayer = {
@@ -210,6 +212,7 @@ export async function joinMultiplayerRoom(roomCode, trackId, carId, playerName) 
   mpState.roomCode = cleanCode;
   mpState.trackId = trackId;
   mpState.finishedPlayers = [];
+  mpState.spectating = false;
   mpState.remotePlayers.clear();
 
   mpState.localPlayer = {
@@ -317,6 +320,7 @@ function setupChannelListeners(channel) {
       lap: data.lap,
       checkpoint: data.checkpoint,
       timeMs: data.timeMs,
+      progress: Number.isFinite(data.progress) ? data.progress : null,
       lastUpdate: Date.now()
     });
   });
@@ -387,7 +391,8 @@ export function startPositionBroadcast(raceScene) {
         speed: Math.round(raceScene.currentSpeed),
         lap: raceScene.currentLap,
         checkpoint: raceScene.nextCheckpointIndex,
-        timeMs: Math.round(raceScene.elapsedMs || 0)
+        timeMs: Math.round(raceScene.elapsedMs || 0),
+        progress: Number(raceScene.getRaceProgress?.() || 0)
       }
     });
   }, 100); // 10 Hz (every 100ms)
@@ -403,7 +408,7 @@ export function stopPositionBroadcast() {
 /**
  * Broadcast Race Finish for Local Player
  */
-export function broadcastRaceFinish(finalTimeMs) {
+export function broadcastRaceFinish(finalTimeMs, fastestLapMs = null) {
   // Keep the local finish available even if the realtime connection drops at
   // the chequered flag.  Previously the local result was only pushed into
   // state; because this client does not receive its own broadcasts, the UI
@@ -414,7 +419,8 @@ export function broadcastRaceFinish(finalTimeMs) {
     id: LOCAL_PLAYER_ID,
     name: mpState.localPlayer.name,
     carId: mpState.localPlayer.carId,
-    timeMs: Math.round(finalTimeMs)
+    timeMs: Math.round(finalTimeMs),
+    fastestLapMs: Number.isFinite(fastestLapMs) ? Math.round(fastestLapMs) : null
   };
 
   const exists = mpState.finishedPlayers.some(p => p.id === LOCAL_PLAYER_ID);
@@ -439,14 +445,15 @@ export function broadcastRaceFinish(finalTimeMs) {
 /**
  * Computes live real-time position/rank (e.g. 2nd out of 6) for HUD
  */
-export function calculateLiveRank(localLap, localCheckpoint, localTimeMs) {
-  if (!mpState.isMultiplayer) return { rank: 1, total: 1 };
+export function calculateLiveRank(localLap, localCheckpoint, localTimeMs, localProgress = 0) {
+  if (!mpState.isMultiplayer) return { rank: 1, total: 1, gapMs: 0, leaderFinished: false };
 
   const allDrivers = [
     {
       id: LOCAL_PLAYER_ID,
-      score: localLap * 1000 + localCheckpoint,
-      timeMs: localTimeMs
+      score: Number.isFinite(localProgress) ? localProgress : localLap * 1000 + localCheckpoint,
+      timeMs: localTimeMs,
+      progress: Number.isFinite(localProgress) ? localProgress : 0
     }
   ];
 
@@ -454,19 +461,50 @@ export function calculateLiveRank(localLap, localCheckpoint, localTimeMs) {
     if (Date.now() - rp.lastUpdate < 4000) {
       allDrivers.push({
         id: rp.id,
-        score: (rp.lap || 1) * 1000 + (rp.checkpoint || 1),
-        timeMs: rp.timeMs || 0
+        score: Number.isFinite(rp.progress) ? rp.progress : (rp.lap || 1) * 1000 + (rp.checkpoint || 1),
+        timeMs: rp.timeMs || 0,
+        progress: Number.isFinite(rp.progress) ? rp.progress : 0
       });
     }
   });
 
+  const finished = mpState.finishedPlayers.map((player) => ({
+    id: player.id,
+    score: Number.POSITIVE_INFINITY,
+    timeMs: player.timeMs || 0,
+    progress: Number.POSITIVE_INFINITY,
+    finished: true
+  }));
+  // A chequered driver replaces any stale position packet so racing drivers
+  // immediately see that the leader has finished rather than a frozen ghost.
+  const finishedIds = new Set(finished.map((driver) => driver.id));
+  const liveDrivers = allDrivers.filter((driver) => !finishedIds.has(driver.id));
+  allDrivers.length = 0;
+  allDrivers.push(...liveDrivers, ...finished);
+
   allDrivers.sort((a, b) => {
+    if (a.finished !== b.finished) return a.finished ? -1 : 1;
     if (b.score !== a.score) return b.score - a.score;
     return a.timeMs - b.timeMs;
   });
 
   const rank = allDrivers.findIndex(d => d.id === LOCAL_PLAYER_ID) + 1;
-  return { rank: Math.max(1, rank), total: allDrivers.length };
+  const leader = allDrivers[0];
+  const local = allDrivers.find((driver) => driver.id === LOCAL_PLAYER_ID);
+  const leaderFinished = Boolean(leader?.finished && leader.id !== LOCAL_PLAYER_ID);
+  let gapMs = 0;
+  if (!leaderFinished && rank > 1 && leader && local) {
+    const paceMsPerLap = leader.timeMs / Math.max(leader.progress, 0.08);
+    gapMs = Math.max(0, Math.round((leader.progress - local.progress) * paceMsPerLap));
+  }
+
+  return {
+    rank: Math.max(1, rank),
+    total: allDrivers.length,
+    gapMs,
+    leaderFinished,
+    leaderId: leader?.id || LOCAL_PLAYER_ID
+  };
 }
 
 /**
@@ -488,5 +526,6 @@ export function leaveMultiplayerRoom() {
   mpState.players = [];
   mpState.remotePlayers.clear();
   mpState.finishedPlayers = [];
+  mpState.spectating = false;
   mpState.raceStarted = false;
 }
