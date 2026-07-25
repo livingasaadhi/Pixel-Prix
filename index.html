@@ -17,8 +17,8 @@
   <!-- Material Symbols (icon font) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
 
-  <script type="module" crossorigin src="./assets/index-CCs0JRS6.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DIyCXZ_A.css">
+  <script type="module" crossorigin src="./assets/index-CbNNCd69.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-D3kHit8L.css">
 </head>
 <body>
   <!-- Scanline CRT overlay -->
@@ -37,64 +37,97 @@
     <div id="ui-overlay" class="ui-container">
 
       <!-- ============================================================== -->
-      <!-- PERSISTENT TOP APP BAR (hidden during race)                   -->
+      <!-- PERSISTENT CONSOLIDATED TOP APP BAR (Official F1 Game Style)    -->
       <!-- ============================================================== -->
       <header class="top-app-bar" id="top-app-bar">
-        <span class="top-app-bar-brand">PIXEL PRIX</span>
-        <nav class="top-desktop-nav" aria-label="Primary">
-          <button class="top-nav-link" id="top-nav-garage" aria-label="Garage">Garage</button>
-          <button class="top-nav-link" id="top-nav-race" aria-label="Race">Race</button>
-          <button class="top-nav-link" id="top-nav-leaderboard" aria-label="Leaderboard">Leaderboard</button>
+        <div class="top-app-bar-left">
+          <span class="top-app-bar-brand">PIXEL PRIX</span>
+          <span class="top-live-tag"><span class="pulse-dot"></span>F1 BROADCAST</span>
+        </div>
+        <nav class="top-glass-nav" aria-label="Primary Navigation">
+          <button class="top-nav-link active" id="top-nav-garage" aria-label="Home">
+            <span>HOME</span>
+          </button>
+          <button class="top-nav-link" id="top-nav-race" aria-label="Race Hub">
+            <span>RACE HUB</span>
+          </button>
+          <button class="top-nav-link" id="top-nav-leaderboard" aria-label="Leaderboard">
+            <span>LEADERBOARD</span>
+          </button>
+          <button class="top-nav-link top-nav-help" id="top-nav-settings" aria-label="Help and controls" title="Help and controls">
+            <span class="material-symbols-outlined" aria-hidden="true">help</span>
+          </button>
         </nav>
         <div class="top-app-bar-actions">
-          <button class="icon-btn-circle" aria-label="Controls & info" id="top-settings-icon">
-            <span class="material-symbols-outlined">help</span>
-          </button>
+          <div class="f1-driver-profile-chip" id="top-driver-chip">
+            <div class="f1-chip-rank"><span class="material-symbols-outlined icon-small">workspace_premium</span><span id="top-driver-pts">0 XP</span></div>
+            <div class="f1-chip-badge" id="top-driver-level">LEVEL 1</div>
+            <div class="f1-chip-name" id="top-driver-name">DRIVER 1</div>
+            <div class="f1-chip-avatar">
+              <span class="material-symbols-outlined">sports_motorsports</span>
+            </div>
+          </div>
         </div>
       </header>
-
-      <!-- ============================================================== -->
-      <!-- PERSISTENT BOTTOM NAV BAR (hidden during race)                -->
-      <!-- ============================================================== -->
-      <nav class="bottom-nav" id="bottom-nav">
-        <button class="nav-tab active" id="nav-tab-garage" aria-label="Garage">
-          <span class="material-symbols-outlined">home_storage</span>
-        </button>
-        <button class="nav-tab" id="nav-tab-race" aria-label="Race">
-          <span class="material-symbols-outlined">sports_motorsports</span>
-        </button>
-        <button class="nav-tab" id="nav-tab-leaderboard" aria-label="Leaderboard">
-          <span class="material-symbols-outlined">leaderboard</span>
-        </button>
-      </nav>
+      <div class="f1-red-accent-bar" id="f1-red-accent-bar"></div>
 
       <!-- ============================================================== -->
       <!-- MAIN MENU SCREEN                                               -->
       <!-- ============================================================== -->
       <div id="screen-menu" class="ui-screen active">
-        <!-- Ambient particle canvas -->
         <canvas id="ambient-canvas" aria-hidden="true"></canvas>
+        <div class="garage-shell">
+          <div class="garage-heading">
+            <span class="garage-kicker">PIXEL PRIX / SEASON 04</span>
+            <h1>RACE CONTROL</h1>
+            <p>Choose a solo time trial, join a co-op race, or review live timing.</p>
+            <span class="daily-featured-chip" id="daily-featured-chip">DAILY FEATURE: LOADING…</span>
+          </div>
 
-        <div class="brand-header">
-          <div class="logo-badge">Formula 2D</div>
-          <h1 class="logo-title">PIXEL PRIX</h1>
-          <p class="logo-subtitle">High-octane open-wheel racing</p>
-        </div>
+          <div class="garage-grid">
+            <button id="btn-start-game" class="garage-tile garage-car-tile garage-time-trial-tile" aria-label="Set up a Time Trial with a car and circuit">
+              <span class="garage-node" aria-hidden="true"></span>
+              <span class="tile-eyebrow">01 / SOLO</span>
+              <span class="tile-title">TIME<br>TRIAL</span>
+              <span class="tile-meta">SET CAR, CIRCUIT &amp; BEST LAP <span class="tile-key">ENTER</span></span>
+              <span class="garage-car-art" aria-hidden="true">
+                <span class="car-wheel car-wheel-rear"></span>
+                <span class="car-wheel car-wheel-front"></span>
+                <span class="car-chassis"></span>
+                <span class="car-wing"></span>
+              </span>
+            </button>
 
-        <div class="menu-actions">
-          <button id="btn-start-game" class="btn btn-primary btn-large glow-btn">
-            PLAY RACE
-          </button>
-          <button id="btn-open-leaderboard" class="btn btn-secondary">
-            LEADERBOARDS
-          </button>
-          <button id="btn-open-settings-menu" class="btn btn-tertiary">
-            CONTROLS &amp; INFO
-          </button>
-        </div>
+            <button id="btn-open-coop" class="garage-tile garage-coop-tile" aria-label="Set up an online co-op race">
+              <span class="garage-node" aria-hidden="true"></span>
+              <span class="tile-eyebrow">02 / ONLINE</span>
+              <span class="tile-title">CO-OP<br>RACE</span>
+              <span class="tile-meta">HOST OR JOIN A MULTIPLAYER RACE <span class="tile-key">ONLINE</span></span>
+              <span class="coop-lobby-art" aria-hidden="true">
+                <i class="coop-link"></i>
+                <i class="coop-driver coop-driver-one"></i>
+                <i class="coop-driver coop-driver-two"></i>
+                <i class="coop-driver coop-driver-three"></i>
+                <i class="coop-driver coop-driver-four"></i>
+              </span>
+            </button>
 
-        <div class="menu-footer">
-          Responsive · Mobile &amp; Desktop
+            <button id="btn-open-leaderboard" class="garage-tile garage-badge-tile" aria-label="Open leaderboard and lap records">
+              <span class="garage-node" aria-hidden="true"></span>
+              <span class="tile-eyebrow">03 / LEADERBOARD</span>
+              <span class="tile-title">LEADER<br>BOARD</span>
+              <span class="tile-meta">LAP RECORDS &amp; STANDINGS <span class="tile-key">F5</span></span>
+              <span class="badge-field" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </span>
+            </button>
+          </div>
+
+          <div class="garage-shortcuts" aria-label="Keyboard shortcuts">
+            <span><kbd>F3</kbd> HELP</span>
+            <span><kbd>↵</kbd> SELECT</span>
+            <span><kbd>ESC</kbd> BACK</span>
+          </div>
         </div>
       </div>
 
@@ -103,12 +136,12 @@
       <!-- ============================================================== -->
       <div id="screen-select" class="ui-screen hidden">
 
-        <!-- Screen header (sticky) -->
+        <!-- Screen header -->
         <header class="screen-header">
           <button id="btn-select-back" class="icon-btn-circle" aria-label="Go back">
             <span class="material-symbols-outlined">arrow_back</span>
           </button>
-          <h2>SELECT CAR &amp; CIRCUIT</h2>
+          <h2 id="select-screen-title">TIME TRIAL</h2>
           <div class="spacer"></div>
         </header>
 
@@ -117,10 +150,10 @@
           <!-- ---- SELECT CAR (Vehicle Configuration) --------------------- -->
           <div class="select-section">
             <div class="section-header-row">
-              <p class="section-label">Vehicle Configuration</p>
+              <p class="section-label">VEHICLE</p>
               <div class="telemetry-live-badge">
                 <span class="pulse-dot"></span>
-                <span>SYNCING LIVE TELEMETRY</span>
+                <span id="car-selection-count">01 / 14</span>
               </div>
             </div>
 
@@ -131,10 +164,14 @@
 
                 <div class="carousel-content">
                   <div class="car-preview-area">
-                    <canvas id="car-preview-canvas" width="192" height="112"></canvas>
+                    <canvas id="car-preview-canvas" width="220" height="120"></canvas>
                   </div>
                   <h3 id="car-name">Apex Phantom</h3>
                   <p id="car-desc">Balanced speed and precision handling.</p>
+                  <div class="car-drive-profile" aria-live="polite">
+                    <span class="car-drive-label">RACE DNA</span>
+                    <span class="car-drive-value" id="car-drive-style">BALANCED ATTACK</span>
+                  </div>
                   <div class="carousel-dots" id="car-selection-dots">
                     <span class="dot active"></span>
                     <span class="dot"></span>
@@ -145,35 +182,39 @@
                 <button id="car-next" class="nav-arrow" aria-label="Next car">&#8250;</button>
               </div>
 
-              <!-- Stat bars: 2x2 grid with numeric readouts -->
+              <!-- Stat power meters: 2x2 grid with numeric readouts & benchmarks -->
               <div class="stat-bars">
                 <div class="stat-row">
                   <div class="stat-row-header">
                     <span class="stat-label">TOP SPEED</span>
                     <span class="stat-val-mono" id="stat-speed-val">342 KM/H</span>
                   </div>
-                  <div class="bar-bg"><div class="bar-fill" id="stat-speed"></div></div>
+                  <div class="meter-track"><div class="meter-fill" id="stat-speed"></div><div class="meter-ticks"></div></div>
+                  <span class="stat-benchmark" id="bm-speed">+12% vs Circuit Avg</span>
                 </div>
                 <div class="stat-row">
                   <div class="stat-row-header">
                     <span class="stat-label">ACCELERATION</span>
                     <span class="stat-val-mono" id="stat-accel-val">0-100: 2.1S</span>
                   </div>
-                  <div class="bar-bg"><div class="bar-fill" id="stat-accel"></div></div>
+                  <div class="meter-track"><div class="meter-fill" id="stat-accel"></div><div class="meter-ticks"></div></div>
+                  <span class="stat-benchmark" id="bm-accel">Optimal Apex Launch</span>
                 </div>
                 <div class="stat-row">
                   <div class="stat-row-header">
                     <span class="stat-label">HANDLING</span>
                     <span class="stat-val-mono" id="stat-handling-val">GRIP 0.98G</span>
                   </div>
-                  <div class="bar-bg"><div class="bar-fill" id="stat-handling"></div></div>
+                  <div class="meter-track"><div class="meter-fill" id="stat-handling"></div><div class="meter-ticks"></div></div>
+                  <span class="stat-benchmark" id="bm-handling">High Downforce</span>
                 </div>
                 <div class="stat-row">
                   <div class="stat-row-header">
                     <span class="stat-label">BOOST POWER</span>
                     <span class="stat-val-mono" id="stat-boost-val">ERS 150KW</span>
                   </div>
-                  <div class="bar-bg"><div class="bar-fill" id="stat-boost"></div></div>
+                  <div class="meter-track"><div class="meter-fill" id="stat-boost"></div><div class="meter-ticks"></div></div>
+                  <span class="stat-benchmark" id="bm-boost">KERS Kinetic Hybrid</span>
                 </div>
               </div>
             </div>
@@ -182,8 +223,8 @@
           <!-- ---- SELECT CIRCUIT (Circuit Selection) --------------------- -->
           <div class="select-section">
             <div class="section-header-row">
-              <p class="section-label">Select Circuit</p>
-              <span class="circuit-avail-tag">CIRCUITS: ACTIVE</span>
+              <p class="section-label">CIRCUIT</p>
+              <span class="circuit-avail-tag" id="track-selection-count">01 / 09</span>
             </div>
 
             <div class="glass-card track-select-card">
@@ -193,9 +234,15 @@
                 <div class="track-content">
                   <div class="track-preview-row">
                     <div class="track-minimap-box">
-                      <canvas id="track-minimap" width="160" height="120"></canvas>
+                      <canvas id="track-minimap" width="180" height="130" role="img" aria-label="Monaco Oval circuit map"></canvas>
+                      <div class="sector-legend">
+                        <span class="s-dot s1">S1</span>
+                        <span class="s-dot s2">S2</span>
+                        <span class="s-dot s3">S3</span>
+                      </div>
                     </div>
-                    <div class="track-info-col">
+                    <div class="track-info-col" aria-live="polite" aria-atomic="true">
+                      <p class="track-region" id="track-region">RIVIERA / COASTAL</p>
                       <h3 id="track-name">Monaco Oval</h3>
                       <p id="track-desc">Smooth beginner oval track with wide turns.</p>
                       <div class="carousel-dots" id="track-selection-dots">
@@ -210,9 +257,31 @@
                         <span class="track-tag" id="track-difficulty">EASY</span>
                         <span class="track-tag" id="track-laps">2 LAPS</span>
                         <span class="track-tag" id="track-length">1.2 KM</span>
+                        <span class="track-tag track-character" id="track-character">HIGH-SPEED FLOW</span>
                       </div>
                     </div>
                   </div>
+
+                  <!-- Telemetry Weather & Track Details Widget -->
+                  <div class="circuit-telemetry-widget">
+                    <div class="ct-cell">
+                      <span class="ct-label">LAP RECORD</span>
+                      <span class="ct-val" id="ct-lap-record">00:18.117</span>
+                    </div>
+                    <div class="ct-cell">
+                      <span class="ct-label">CORNER COUNT</span>
+                      <span class="ct-val" id="ct-corners">12 TURNS</span>
+                    </div>
+                    <div class="ct-cell">
+                      <span class="ct-label">DRS ZONES</span>
+                      <span class="ct-val" id="ct-drs">2 ZONES</span>
+                    </div>
+                    <div class="ct-cell ct-weather">
+                      <span class="ct-label">WEATHER / TEMP</span>
+                      <span class="ct-val" id="ct-weather">DRY · 38°C</span>
+                    </div>
+                  </div>
+
                 </div>
 
                 <button id="track-next" class="track-carousel-nav" aria-label="Next circuit">&#8250;</button>
@@ -221,26 +290,173 @@
           </div>
         </div>
 
-        <!-- Floating Sticky Bottom-Right CTA -->
-        <div class="selection-footer selection-footer-floating">
-          <button id="btn-launch-race" class="btn btn-primary btn-large glow-btn btn-floating-start">
-            START RACE
-            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">sports_motorsports</span>
+        <!-- Mode-aware race actions -->
+        <div class="selection-footer selection-footer-bar mp-action-bar">
+          <button id="btn-launch-race" class="btn btn-primary btn-large btn-start-race f1-start-button">
+            <div class="start-lights-row">
+              <span class="start-led"></span>
+              <span class="start-led"></span>
+              <span class="start-led"></span>
+              <span class="start-led"></span>
+              <span class="start-led"></span>
+            </div>
+            <div class="start-btn-content">
+              <span>START TIME TRIAL</span>
+              <span class="material-symbols-outlined">sports_motorsports</span>
+            </div>
           </button>
-          <div class="telemetry-session-meta">
-            <span>ID: PX-992-SESSION</span>
-            <span class="dot-sep">•</span>
-            <span>PING: 14MS</span>
-            <span class="dot-sep">•</span>
-            <span class="meta-active">ENCRYPTED CONNECTION ACTIVE</span>
+
+          <button id="btn-create-room" class="btn btn-secondary btn-large mp-btn-create">
+            <span class="material-symbols-outlined">groups</span>
+            <span>CREATE CO-OP LOBBY</span>
+          </button>
+
+          <button id="btn-join-room-modal" class="btn btn-tertiary btn-large mp-btn-join">
+            <span class="material-symbols-outlined">key</span>
+            <span>JOIN WITH CODE</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- MULTIPLAYER LOBBY SCREEN                                       -->
+      <!-- ============================================================== -->
+      <div id="screen-mp-lobby" class="ui-screen hidden">
+        <div class="mp-lobby-container glass-card">
+          <div class="mp-lobby-header">
+            <div class="mp-room-title">
+              <span class="section-label">CO-OP RACE / GRID ASSEMBLY</span>
+              <h2>RACE LOBBY</h2>
+              <p>Lock the grid, then the host starts the session.</p>
+            </div>
+            <div class="mp-room-code-panel">
+              <span class="mp-panel-label">ROOM CODE</span>
+              <strong id="mp-room-code-val">----</strong>
+              <button id="btn-copy-room-code" class="btn btn-small btn-secondary" aria-label="Copy room code">
+                <span class="material-symbols-outlined">content_copy</span>
+                <span>COPY</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="mp-session-strip" aria-label="Co-op race details">
+            <div class="mp-session-cell">
+              <span class="mp-panel-label">FORMAT</span>
+              <strong>CO-OP RACE</strong>
+            </div>
+            <div class="mp-session-cell">
+              <span class="mp-panel-label">CIRCUIT</span>
+              <div class="mp-track-picker">
+                <button id="btn-mp-track-prev" class="mp-track-nav" aria-label="Previous circuit">
+                  <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <strong id="mp-session-track">LOADING…</strong>
+                <button id="btn-mp-track-next" class="mp-track-nav" aria-label="Next circuit">
+                  <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+              </div>
+            </div>
+            <div class="mp-session-cell">
+              <span class="mp-panel-label">GRID</span>
+              <strong><span id="mp-driver-count">1</span> / 8</strong>
+            </div>
+          </div>
+
+          <div class="mp-drivers-section">
+            <div class="mp-section-sub">
+              <span>DRIVER GRID</span>
+              <span id="mp-grid-status">WAITING FOR DRIVERS</span>
+            </div>
+            <div class="mp-drivers-grid" id="mp-drivers-list">
+              <!-- Dynamically populated driver cards -->
+            </div>
+          </div>
+
+          <div class="mp-lobby-footer">
+            <button id="btn-mp-leave-lobby" class="btn btn-secondary">
+              <span class="material-symbols-outlined">arrow_back</span>
+              <span>LEAVE LOBBY</span>
+            </button>
+
+            <button id="btn-mp-start-race" class="btn btn-primary f1-start-button mp-start-btn" disabled>
+              <div class="start-btn-content">
+                <span>START MULTIPLAYER RACE</span>
+                <span class="material-symbols-outlined">flag</span>
+              </div>
+            </button>
+          </div>
+          <div id="mp-non-host-msg" class="mp-non-host-msg hidden">
+            <span>WAITING FOR HOST TO START RACE…</span>
           </div>
         </div>
       </div>
 
       <!-- ============================================================== -->
-      <!-- RACE HUD (TOP + BOTTOM OVERLAYS — transparent over Phaser)    -->
+      <!-- JOIN ONLINE RACE MODAL                                         -->
       <!-- ============================================================== -->
-      <!-- F1 Countdown Lights -->
+      <div id="modal-join-room" class="modal-overlay hidden">
+          <div class="modal-card glass-card">
+            <div class="modal-header">
+            <span class="section-label">CO-OP RACE</span>
+            <h3>JOIN THE GRID</h3>
+            <p>Enter the room code shared by the host.</p>
+          </div>
+          <div class="modal-body">
+            <label class="sr-only" for="input-room-code">Online lobby code</label>
+            <input type="text" id="input-room-code" class="f1-input" maxlength="6" placeholder="LOBBY CODE (e.g. R7K2)" autocomplete="off" spellcheck="false" />
+            <p id="join-room-error" class="error-msg hidden"></p>
+          </div>
+          <div class="modal-footer">
+            <button id="btn-cancel-join" class="btn btn-secondary">CANCEL</button>
+            <button id="btn-confirm-join" class="btn btn-primary">JOIN RACE</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- ONLINE RACE CLASSIFICATION MODAL                               -->
+      <!-- ============================================================== -->
+      <div id="modal-mp-results" class="modal-overlay hidden">
+        <div class="modal-card glass-card mp-results-card">
+          <div class="modal-header modal-header-row">
+            <div>
+              <span class="section-label">ONLINE RACE / LIVE TIMING</span>
+              <h2>FINAL CLASSIFICATION</h2>
+            </div>
+            <button id="btn-close-mp-results-x" class="icon-btn-circle modal-close-btn" aria-label="Close modal">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p id="mp-results-summary" class="mp-results-summary">SESSION COMPLETE</p>
+            <div class="mp-results-table-wrap">
+              <table class="f1-results-table">
+                <thead>
+                  <tr>
+                    <th>POS</th>
+                    <th>DRIVER</th>
+                    <th>CAR</th>
+                    <th>TIME</th>
+                    <th>GAP</th>
+                    <th>FASTEST LAP</th>
+                  </tr>
+                </thead>
+                <tbody id="mp-results-rows">
+                  <!-- Dynamically populated classification rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="btn-mp-results-exit" class="btn btn-primary">RETURN TO LOBBY</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- RACE HUD (F1 Steering Wheel Cockpit Display)                   -->
+      <!-- ============================================================== -->
+      <!-- F1 Countdown Start Lights -->
       <div id="countdown-overlay" aria-hidden="true">
         <div class="countdown-light" id="cl-1"></div>
         <div class="countdown-light" id="cl-2"></div>
@@ -250,8 +466,9 @@
       </div>
 
       <div id="screen-hud" class="ui-screen hidden pointer-through">
+        <div id="hud-steward-toasts" class="hud-steward-toasts" aria-live="polite" aria-atomic="false"></div>
 
-        <!-- Top HUD: Back + Pause buttons (pointer-events re-enabled) -->
+        <!-- Top HUD: Back + Pause buttons -->
         <div class="hud-action-btns">
           <button id="btn-hud-back" class="hud-circle-btn" aria-label="Exit race">
             <span class="material-symbols-outlined">arrow_back</span>
@@ -261,111 +478,105 @@
           </button>
         </div>
 
-        <!-- Connected Telemetry chip bar -->
-        <div class="hud-chip-bar">
-          <!-- LAP chip -->
-          <div class="hud-chip-cell hud-chip-lap">
-            <span class="hud-chip-label">LAP</span>
-            <span class="hud-chip-value" id="hud-lap-text">1<span class="hud-chip-sub">/2</span></span>
+        <!-- Modern F1 Steering Wheel Cockpit Display (Center-Top Unified Telemetry Hub) -->
+        <div class="hud-steering-wheel-display">
+          <!-- RPM Shift Light LED Bar -->
+          <div class="f1-rpm-bar">
+            <span class="rpm-led green"></span><span class="rpm-led green"></span><span class="rpm-led green"></span>
+            <span class="rpm-led red"></span><span class="rpm-led red"></span><span class="rpm-led red"></span>
+            <span class="rpm-led blue"></span><span class="rpm-led blue"></span><span class="rpm-led blue"></span>
           </div>
-          <!-- SESSION TIME chip -->
-          <div class="hud-chip-cell hud-chip-time">
-            <span class="hud-chip-label">SESSION TIME</span>
-            <span class="hud-chip-value digital" id="hud-timer-text">00:00.000</span>
+
+          <div class="f1-wheel-core">
+            <!-- Gear Display -->
+            <div class="f1-gear-box">
+              <span class="f1-gear-label">GEAR</span>
+              <span class="f1-gear-val" id="hud-gear-val">1</span>
+            </div>
+
+            <!-- Digital Speed Gauge -->
+            <div class="f1-speed-box">
+              <span class="f1-speed-val" id="hud-speed-text">0</span>
+              <span class="f1-speed-unit">KM/H</span>
+            </div>
+
+            <!-- Lap & Timer info -->
+            <div class="f1-telemetry-box">
+              <div class="f1-tel-cell">
+                <span class="f1-tel-label">LAP</span>
+                <span class="f1-tel-val" id="hud-lap-text">1/2</span>
+              </div>
+              <div class="f1-tel-cell">
+                <span class="f1-tel-label">TIME</span>
+                <span class="f1-tel-val digital" id="hud-timer-text">00:00.000</span>
+              </div>
+              <div class="f1-tel-cell hidden" id="hud-mp-status">
+                <span class="f1-tel-label" id="hud-mp-status-label">GAP</span>
+                <span class="f1-tel-val digital" id="hud-mp-status-text">LEADER</span>
+              </div>
+            </div>
           </div>
-          <!-- SPEED chip -->
-          <div class="hud-chip-cell hud-chip-speed">
-            <span class="hud-chip-label">KM/H</span>
-            <span class="hud-chip-value" id="hud-speed-text">0</span>
-          </div>
-          <!-- SECTOR chip -->
-          <div class="hud-chip-cell hud-chip-sector">
-            <span class="hud-chip-label" id="hud-sector-label">SECTOR 1</span>
-            <span class="hud-chip-value digital" id="hud-sector-timer">00:00.000</span>
+
+          <!-- Dynamic Broadcast Telemetry & Steward Ticker Strip -->
+          <div class="hud-warning-bar clean" id="hud-penalty-chip">
+            <span class="hud-warning-left">
+              <span class="material-symbols-outlined hud-warning-icon" id="hud-ticker-icon">shield</span>
+              <span id="hud-ticker-label">TRACK LIMITS</span>
+            </span>
+            <span class="hud-warning-right" id="hud-penalty-text">CLEAN</span>
           </div>
         </div>
 
-        <!-- Warning / penalty bar (below chip bar) -->
-        <div class="hud-warning-bar" id="hud-penalty-chip">
-          <span class="hud-warning-left">
-            <span class="material-symbols-outlined hud-warning-icon">warning</span>
-            TRACK LIMITS
-          </span>
-          <span class="hud-warning-right" id="hud-penalty-text">+0.0s</span>
-        </div>
-
-        <!-- Sector completion comparison banner -->
-        <div id="hud-sector-banner" class="hud-sector-banner" aria-live="polite">
-          <span class="sector-name">SECTOR 1</span>
-          <span class="sector-time">00.000s</span>
-          <span class="sector-diff">--</span>
-        </div>
-
-
-
-        <!-- Left-side vertical notification stack -->
-        <div id="hud-notif-container" class="hud-notif-container"></div>
-
-        <!-- Bottom HUD -->
+        <!-- Bottom HUD Touch Controls (Frosted Glass Overlay) -->
         <div class="hud-bottom">
-
           <!-- LEFT: Steering buttons -->
           <div class="hud-steer-group" id="hud-steer-left-group">
-            <button id="btn-touch-left" class="hud-ctrl-btn hud-ctrl-square" aria-label="Steer left">
+            <button id="btn-touch-left" class="hud-ctrl-btn hud-ctrl-square glass-touch" aria-label="Steer left">
               <span class="material-symbols-outlined">arrow_back</span>
               <span class="hud-key-badge">A</span>
             </button>
-            <button id="btn-touch-right" class="hud-ctrl-btn hud-ctrl-square" aria-label="Steer right">
+            <button id="btn-touch-right" class="hud-ctrl-btn hud-ctrl-square glass-touch" aria-label="Steer right">
               <span class="material-symbols-outlined">arrow_forward</span>
               <span class="hud-key-badge">D</span>
             </button>
           </div>
 
-          <!-- RIGHT: Steering joystick control (mobile/touch only) -->
+          <!-- RIGHT: Steering joystick control (touch only) -->
           <div class="hud-joystick-container" id="hud-joystick-container">
             <div id="hud-joystick-base" class="hud-joystick-base" aria-label="Steering Joystick">
               <div id="hud-joystick-handle" class="hud-joystick-handle"></div>
             </div>
           </div>
 
-          <!-- LEFT: Combined Pedals & Boost for touch devices -->
+          <!-- LEFT: Boost + Reverse -->
           <div class="hud-drive-group" id="hud-drive-left-group">
-            <div class="hud-combined-pedals-row">
-              <!-- Combined Vertical Slider -->
-              <div id="hud-pedal-slider" class="hud-pedal-slider" aria-label="Combined accelerator and brake slider">
-                <div class="slider-track-labels">
-                  <span class="label-gas">GAS</span>
-                  <span class="label-neutral">N</span>
-                  <span class="label-brake">BRAKE</span>
-                </div>
-                <div class="pedal-slider-track"></div>
-                <div id="pedal-slider-handle" class="pedal-slider-handle"></div>
-              </div>
+            <button id="btn-touch-boost-left" class="hud-ctrl-btn hud-ctrl-tri-boost glass-touch" aria-label="Boost / ERS">
+              <span class="material-symbols-outlined hud-icon-primary">bolt</span>
+              <span class="hud-ctrl-label">ERS</span>
+              <span class="hud-key-badge">SPACE</span>
+            </button>
 
-              <!-- Boost Button (Conditional Visibility) -->
-              <button id="btn-touch-boost-left" class="hud-ctrl-btn hud-ctrl-tri-boost" aria-label="Boost">
-                <span class="material-symbols-outlined hud-icon-primary">bolt</span>
-                <span class="hud-ctrl-label">BOOST</span>
-                <span class="hud-key-badge">SPACE</span>
-              </button>
-            </div>
+            <button id="btn-touch-reverse" class="hud-ctrl-btn hud-ctrl-tri-brake glass-touch" aria-label="Reverse">
+              <span class="material-symbols-outlined hud-icon-error">eject</span>
+              <span class="hud-ctrl-label hud-ctrl-label-error">REVERSE</span>
+              <span class="hud-key-badge">S</span>
+            </button>
           </div>
 
-          <!-- RIGHT: KERS meter + Triangular Controls (Boost top, Brake bottom-left, Gas bottom-right) -->
+          <!-- RIGHT: Triangular Controls -->
           <div class="hud-drive-group" id="hud-drive-right-group">
-            <!-- Triangular Control Layout -->
             <div class="hud-drive-triangular">
-              <button id="btn-touch-boost" class="hud-ctrl-btn hud-ctrl-tri-boost" aria-label="Boost">
+              <button id="btn-touch-boost" class="hud-ctrl-btn hud-ctrl-tri-boost glass-touch" aria-label="Boost">
                 <span class="material-symbols-outlined hud-icon-primary">bolt</span>
                 <span class="hud-ctrl-label">BOOST</span>
                 <span class="hud-key-badge">SPACE</span>
               </button>
-              <button id="btn-touch-brake" class="hud-ctrl-btn hud-ctrl-tri-brake" aria-label="Brake">
+              <button id="btn-touch-brake" class="hud-ctrl-btn hud-ctrl-tri-brake glass-touch" aria-label="Brake">
                 <span class="material-symbols-outlined hud-icon-error">eject</span>
                 <span class="hud-ctrl-label hud-ctrl-label-error">BRAKE</span>
                 <span class="hud-key-badge">S</span>
               </button>
-              <button id="btn-touch-accel" class="hud-ctrl-btn hud-ctrl-tri-gas" aria-label="Accelerate">
+              <button id="btn-touch-accel" class="hud-ctrl-btn hud-ctrl-tri-gas glass-touch" aria-label="Accelerate">
                 <span class="material-symbols-outlined hud-icon-primary hud-icon-lg">speed</span>
                 <span class="hud-ctrl-label">GAS</span>
                 <span class="hud-key-badge">W</span>
@@ -374,9 +585,9 @@
           </div>
         </div>
 
-        <!-- Unified bottom-center ERS/KERS bar -->
-        <div class="hud-kers-container">
-          <span class="kers-label">ERS BOOST</span>
+        <!-- ERS Battery Gauge -->
+        <div class="hud-kers-container glass-kers">
+          <span class="kers-label">ERS HYBRID BOOST</span>
           <div class="kers-bar-bg">
             <div class="kers-bar-fill" id="hud-boost-fill"></div>
           </div>
@@ -387,7 +598,7 @@
       <!-- PAUSE MENU OVERLAY                                             -->
       <!-- ============================================================== -->
       <div id="screen-pause" class="ui-screen hidden">
-        <div class="pause-card">
+        <div class="pause-card glass-modal">
           <div class="pause-header">
             <h2 class="pause-title">SESSION PAUSED</h2>
           </div>
@@ -399,7 +610,7 @@
             </div>
           </div>
           <div class="pause-footer">
-            <span class="pause-version">Telemetry System v2.0.4</span>
+            <span class="pause-version">Telemetry Broadcast System v3.4</span>
           </div>
         </div>
       </div>
@@ -408,7 +619,7 @@
       <!-- GAME OVER / RACE FINISH SCREEN                                 -->
       <!-- ============================================================== -->
       <div id="screen-gameover" class="ui-screen hidden">
-        <div class="modal-card">
+        <div class="modal-card glass-modal">
           <div class="finish-banner">RACE FINISHED</div>
 
           <div class="time-display-box">
@@ -454,7 +665,7 @@
               </button>
             </div>
             <p id="submit-status" class="status-msg" role="status" aria-live="polite"></p>
-            <p id="submit-hint" class="status-hint">3–16 letters or numbers. Saved to the global leaderboard.</p>
+            <p id="submit-hint" class="status-hint">3–16 letters or numbers. Saved to global broadcast leaderboards.</p>
           </form>
 
           <div class="gameover-actions">
@@ -462,7 +673,7 @@
               RETRY
             </button>
             <button id="btn-view-leaderboard-go" class="btn btn-tertiary">
-              LEADERBOARD
+              TIMING TOWER
             </button>
             <button id="btn-gameover-menu" class="btn btn-outline">
               MENU
@@ -475,7 +686,7 @@
       </div>
 
       <!-- ============================================================== -->
-      <!-- GLOBAL LEADERBOARD SCREEN                                      -->
+      <!-- GLOBAL LEADERBOARD SCREEN (F1 Broadcast Timing Tower)          -->
       <!-- ============================================================== -->
       <div id="screen-leaderboard" class="ui-screen hidden">
 
@@ -486,12 +697,12 @@
               <span class="material-symbols-outlined">menu</span>
             </button>
             <div class="lb-header-brand">
-              <span class="lb-header-context">GLOBAL LEADERBOARD</span>
-              <span class="lb-header-season">SEASON 04</span>
+              <span class="lb-header-context">LEADERBOARD</span>
+              <span class="lb-header-season">SEASON 04 · LAP RECORDS</span>
             </div>
           </div>
           <div class="lb-header-right">
-            <button class="icon-btn" aria-label="Search" id="btn-search-lb" title="Search coming soon">
+            <button class="icon-btn" aria-label="Search live timing (unavailable)" id="btn-search-lb" title="Search live timing is unavailable" disabled aria-disabled="true">
               <span class="material-symbols-outlined">search</span>
             </button>
           </div>
@@ -503,15 +714,21 @@
             <!-- Dynamically populated by main.js -->
           </div>
 
-          <!-- Compact table-row leaderboard -->
+          <!-- Official F1 broadcast timing tower table -->
           <div class="lb-table-wrap">
-            <!-- Header row -->
-            <div class="lb-table-header">
+            <!-- Broadcast header row -->
+            <div class="lb-table-header f1-timing-header">
               <div class="lb-col-pos">POS</div>
+              <div class="lb-col-rank">RANK</div>
+              <div class="lb-col-tire">TYRE</div>
               <div class="lb-col-pilot">PILOT / CONSTRUCTOR</div>
+              <div class="lb-col-sector">S1</div>
+              <div class="lb-col-sector">S2</div>
+              <div class="lb-col-sector">S3</div>
               <div class="lb-col-time">LAP TIME</div>
+              <div class="lb-col-gap">GAP</div>
             </div>
-            <!-- Entries (rendered by main.js) -->
+            <!-- Entries (rendered by main.js with F1 timing tower styling) -->
             <div class="lb-rows scroll-hide" id="lb-table-body">
               <p class="loading-cell">Loading circuit times...</p>
             </div>
@@ -527,12 +744,12 @@
       </div>
 
       <!-- ============================================================== -->
-      <!-- CONTROLS & INFO SCREEN                                         -->
+      <!-- CONTROLS & STEWARDS INFO SCREEN                                -->
       <!-- ============================================================== -->
       <div id="screen-settings" class="ui-screen hidden">
-        <div class="modal-card">
+        <div class="modal-card glass-modal">
           <header class="modal-header">
-            <h2>CONTROLS &amp; F1 STEWARDS</h2>
+            <h2>HELP &amp; CONTROLS</h2>
             <button id="btn-close-settings" class="icon-btn-circle" aria-label="Close settings">
               <span class="material-symbols-outlined">close</span>
             </button>
@@ -556,11 +773,20 @@
                   <li><strong>Boost:</strong> Shift or Spacebar</li>
                 </ul>
               </div>
+              <div class="control-box">
+                <h4>Gamepad</h4>
+                <ul>
+                  <li><strong>Left Stick:</strong> Steering</li>
+                  <li><strong>RT / A:</strong> Accelerate</li>
+                  <li><strong>LT / B:</strong> Brake / Reverse</li>
+                  <li><strong>LB / RB:</strong> ERS Boost</li>
+                </ul>
+              </div>
             </div>
 
             <div class="rules-box">
-              <h4>F1 Stewards &amp; Penalty System</h4>
-              <p>Passing all checkpoints in order is mandatory. Leaving track limits (all 4 wheels on grass) triggers official warnings. 3 track limit offenses add a +5.0s time penalty to your final race time! Shortcut corner cutting adds +10.0s.</p>
+              <h4>FIA Stewards &amp; Penalty System</h4>
+              <p>Passing checkpoints in order is mandatory. Brief run-off and recovery are allowed. Sustained off-track driving is reviewed, with three confirmed warnings before further breaches add a +2.0s penalty. A prolonged high-speed shortcut can add +3.0s.</p>
             </div>
           </div>
         </div>
