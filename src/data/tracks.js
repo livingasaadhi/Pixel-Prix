@@ -352,9 +352,9 @@ const STANDARD_RACE_LAPS = 3;
 const DEFAULT_STEWARD_PROFILE = {
   reviewMs: 1500,
   breachMs: 3500,
-  shortcutMs: 2200,
-  offTrackSpeedKph: 120,
-  shortcutSpeedKph: 210,
+  shortcutMs: 750,
+  offTrackSpeedKph: 90,
+  shortcutSpeedKph: 190,
   recoveryMs: 1400,
   warningLimit: 2,
   trackLimitPenaltyMs: 5000,

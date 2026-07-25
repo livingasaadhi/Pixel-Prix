@@ -75,8 +75,12 @@ export function getNearestSegmentIndex(px, py, curvePoints, prevIndex = -1) {
  * Uses a small kerb tolerance so driving beyond the marked track limits is
  * consistently detected.
  */
-export function isOffRoad(px, py, curvePoints, roadWidth) {
-  const { minDistanceSq } = getNearestSegmentIndex(px, py, curvePoints, -1);
+export function isOffRoad(px, py, curvePoints, roadWidth, segmentCheck = null) {
+  // RaceScene supplies its continuously tracked segment check. Falling back to
+  // a full circuit scan preserves this helper's standalone behavior, but the
+  // active race must not accept a nearby, non-current section of circuit as a
+  // valid shortcut route.
+  const { minDistanceSq } = segmentCheck || getNearestSegmentIndex(px, py, curvePoints, -1);
   const kerbTolerance = Math.max(15, roadWidth * 0.025);
   const effectiveHalfWidth = (roadWidth / 2) + kerbTolerance;
   return minDistanceSq > (effectiveHalfWidth * effectiveHalfWidth);

@@ -31,6 +31,7 @@ export class RaceScene extends Phaser.Scene {
     this.trackLimitsCount = 0;
     this.penaltyMs = 0;
     this.offRoadDurationMs = 0;
+    this.offRoadPeakSpeedKph = 0;
     this.advantageAlertActive = false;
     this.advantageTimerMs = 0;
     this.offRoadGraceMs = 0; // Grace period when returning to track
@@ -499,21 +500,25 @@ export class RaceScene extends Phaser.Scene {
 
     const grassCheck = getNearestSegmentIndex(this.player.x, this.player.y, this.curvePoints, this.nearestSegmentIndex);
     this.nearestSegmentIndex = grassCheck.nearestIndex;
-    // Use the updated track tolerance (+35) as the single source of truth for off-road.
-    this.onGrass = isOffRoad(this.player.x, this.player.y, this.curvePoints, this.roadWidth);
+    // Use the current route segment rather than any nearby section of this
+    // winding circuit. This keeps track-limit calls aligned with the road the
+    // driver is actually following and makes shortcut detection reliable.
+    this.onGrass = isOffRoad(this.player.x, this.player.y, this.curvePoints, this.roadWidth, grassCheck);
 
     const displayedSpeed = Math.abs(this.currentSpeed) / 2.4;
     const isMeaningfulOffTrack = this.onGrass && displayedSpeed >= this.offTrackSpeedKph;
 
     if (isMeaningfulOffTrack) {
       this.offRoadDurationMs += delta;
+      this.offRoadPeakSpeedKph = Math.max(this.offRoadPeakSpeedKph, displayedSpeed);
       this.offRoadGraceMs = 0; // Reset grace when actively off-road
 
       // A high-speed sustained cut is a direct advantage, separate from the
       // normal three-warning track-limit ladder.
-      if (this.offRoadDurationMs >= this.shortcutThresholdMs && displayedSpeed >= this.shortcutSpeedKph) {
+      if (this.offRoadDurationMs >= this.shortcutThresholdMs && this.offRoadPeakSpeedKph >= this.shortcutSpeedKph) {
         this.penaltyMs += this.shortcutPenaltyMs;
         this.offRoadDurationMs = 0;
+        this.offRoadPeakSpeedKph = 0;
         this.offRoadWarningIssued = false;
         this.advantageAlertActive = false;
         this.showStewardsNotification(`STEWARDS: +${(this.shortcutPenaltyMs / 1000).toFixed(1)}s PENALTY (SUSTAINED SHORTCUT)`);
@@ -526,12 +531,14 @@ export class RaceScene extends Phaser.Scene {
         this.showStewardsNotification('STEWARDS: TRACK LIMITS UNDER REVIEW');
       }
     } else {
-      // A brief re-entry cannot erase a repeated cut. Once the driver has
-      // genuinely recovered, accumulated off-track time drains gradually.
+      // Finish each off-track excursion cleanly after a genuine re-entry.
+      // Gradually draining the old timer caused separate corners to combine
+      // into seemingly random later penalties.
       this.offRoadGraceMs += delta;
       if (this.offRoadGraceMs >= this.offRoadRecoveryMs) {
-        this.offRoadDurationMs = Math.max(0, this.offRoadDurationMs - delta * 1.35);
-        if (this.offRoadDurationMs < 250) this.offRoadWarningIssued = false;
+        this.offRoadDurationMs = 0;
+        this.offRoadPeakSpeedKph = 0;
+        this.offRoadWarningIssued = false;
       }
     }
 
@@ -875,6 +882,7 @@ export class RaceScene extends Phaser.Scene {
     }
     // Reset off-road duration after violation to give driver a chance to recover
     this.offRoadDurationMs = 0;
+    this.offRoadPeakSpeedKph = 0;
   }
 
   checkCheckpoints() {
