@@ -6,6 +6,9 @@ const DEFAULT_PROFILE = Object.freeze({
   level: 1,
   racesCompleted: 0,
   cleanRaces: 0,
+  championshipPoints: 0,
+  grandPrixWins: 0,
+  podiums: 0,
   personalBests: {}
 });
 
@@ -17,6 +20,9 @@ function normaliseProfile(profile) {
     level: Math.max(1, Number(source.level) || calculateLevel(xp)),
     racesCompleted: Math.max(0, Number(source.racesCompleted) || 0),
     cleanRaces: Math.max(0, Number(source.cleanRaces) || 0),
+    championshipPoints: Math.max(0, Number(source.championshipPoints) || 0),
+    grandPrixWins: Math.max(0, Number(source.grandPrixWins) || 0),
+    podiums: Math.max(0, Number(source.podiums) || 0),
     personalBests: source.personalBests && typeof source.personalBests === 'object'
       ? source.personalBests
       : {}
@@ -61,26 +67,57 @@ export function saveDriverName(name) {
   return value || getDriverName();
 }
 
-export function recordSoloRace({ trackId, totalTimeMs, penaltyMs = 0 }) {
+const GRAND_PRIX_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+
+export function getGrandPrixPoints(position, fieldSize = 10) {
+  const place = Math.round(Number(position));
+  const field = Math.max(1, Math.round(Number(fieldSize) || 1));
+  if (!Number.isFinite(place) || place < 1 || place > field) return 0;
+  return GRAND_PRIX_POINTS[place - 1] ?? 0;
+}
+
+export function recordSoloRace({
+  trackId,
+  totalTimeMs,
+  penaltyMs = 0,
+  grandPrixPosition = null,
+  grandPrixFieldSize = 0
+}) {
   const profile = loadDriverProfile();
   const cleanRace = penaltyMs <= 0;
   const previousBest = Number(profile.personalBests[trackId]) || null;
   const personalBest = Number.isFinite(totalTimeMs) && totalTimeMs > 0 &&
     (!previousBest || totalTimeMs < previousBest);
+  const parsedGrandPrixPosition = Number(grandPrixPosition);
+  const isGrandPrix = grandPrixPosition !== null &&
+    grandPrixPosition !== undefined &&
+    Number.isFinite(parsedGrandPrixPosition) &&
+    parsedGrandPrixPosition >= 1;
+  const grandPrixPoints = isGrandPrix
+    ? getGrandPrixPoints(parsedGrandPrixPosition, grandPrixFieldSize)
+    : 0;
+  const gpPosition = isGrandPrix ? Math.max(1, Math.round(parsedGrandPrixPosition)) : null;
 
-  const earnedXp = 100 + (cleanRace ? 50 : 0) + (personalBest ? 75 : 0);
+  const earnedXp = 100 + (cleanRace ? 50 : 0) + (personalBest ? 75 : 0) + grandPrixPoints * 4;
   profile.xp += earnedXp;
   profile.level = calculateLevel(profile.xp);
   profile.racesCompleted += 1;
   if (cleanRace) profile.cleanRaces += 1;
   if (personalBest) profile.personalBests[trackId] = Math.round(totalTimeMs);
+  if (isGrandPrix) {
+    profile.championshipPoints += grandPrixPoints;
+    if (gpPosition === 1) profile.grandPrixWins += 1;
+    if (gpPosition <= 3) profile.podiums += 1;
+  }
 
   return {
     profile: saveDriverProfile(profile),
     earnedXp,
     personalBest,
     cleanRace,
-    previousBest
+    previousBest,
+    grandPrixPoints,
+    grandPrixPosition: gpPosition
   };
 }
 

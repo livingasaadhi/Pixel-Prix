@@ -7,6 +7,7 @@ import { drawTrackMinimap } from './utils/trackRenderer.js';
 import { submitScore, fetchTopScores, subscribeToScores, syncLocalScoresToSupabase } from './supabase.js';
 import { mpState, createMultiplayerRoom, joinMultiplayerRoom, leaveMultiplayerRoom, broadcastRaceStart, broadcastLobbyTrackChange, resetMultiplayerRaceState } from './utils/multiplayer.js';
 import { getDailyFeaturedTrackId, getDriverName, loadDriverProfile, recordSoloRace, saveDriverName } from './utils/progression.js';
+import { resolveWeatherCondition } from './utils/grandPrix.js';
 
 // Global App State
 let selectedCarIndex = 0;
@@ -20,6 +21,10 @@ let countdownLightsTimer = null; // F1 countdown lights timeout chain
 let sessionBestSectors = {};     // session best S1, S2, S3 per trackId
 let dailyFeaturedTrackId = null;
 let raceSelectionMode = 'time-trial';
+let selectedWeatherId = 'auto';
+let selectedSetupId = 'balanced';
+let selectedGridSize = 6;
+let lastSessionConfig = null;
 
 // Helper to convert milliseconds to MM:SS.mmm format
 function formatTime(ms) {
@@ -127,14 +132,56 @@ function setRaceMode(enabled) {
 }
 
 function setRaceSelectionMode(mode = 'time-trial') {
-  raceSelectionMode = mode === 'coop' ? 'coop' : 'time-trial';
+  raceSelectionMode = ['coop', 'grand-prix'].includes(mode) ? mode : 'time-trial';
   const selectScreen = document.getElementById('screen-select');
   const title = document.getElementById('select-screen-title');
   const launchLabel = document.querySelector('#btn-launch-race .start-btn-content > span:first-child');
 
   if (selectScreen) selectScreen.dataset.mode = raceSelectionMode;
-  if (title) title.textContent = raceSelectionMode === 'coop' ? 'CO-OP RACE' : 'TIME TRIAL';
-  if (launchLabel) launchLabel.textContent = 'START TIME TRIAL';
+  if (title) {
+    title.textContent = raceSelectionMode === 'coop'
+      ? 'CO-OP RACE'
+      : raceSelectionMode === 'grand-prix'
+        ? 'GRAND PRIX'
+        : 'TIME TRIAL';
+  }
+  if (launchLabel) {
+    launchLabel.textContent = raceSelectionMode === 'grand-prix'
+      ? 'START GRAND PRIX'
+      : 'START TIME TRIAL';
+  }
+  updateSessionConfig();
+}
+
+function updateSessionConfig() {
+  const track = TRACKS[selectedTrackIndex] || TRACKS[0];
+  const weatherInput = selectedWeatherId === 'auto' ? track?.weather : selectedWeatherId;
+  const weather = resolveWeatherCondition(weatherInput);
+  const setupLabel = selectedSetupId === 'rain' ? 'RAIN SETUP' : `${selectedSetupId.toUpperCase()} SETUP`;
+
+  document.querySelectorAll('[data-weather-choice]').forEach((button) => {
+    button.classList.toggle('active', button.dataset.weatherChoice === selectedWeatherId);
+  });
+  document.querySelectorAll('[data-setup-choice]').forEach((button) => {
+    button.classList.toggle('active', button.dataset.setupChoice === selectedSetupId);
+  });
+  document.querySelectorAll('[data-grid-choice]').forEach((button) => {
+    button.classList.toggle('active', Number(button.dataset.gridChoice) === selectedGridSize);
+  });
+
+  const copy = document.getElementById('session-config-copy');
+  if (copy) {
+    copy.textContent = raceSelectionMode === 'grand-prix'
+      ? `GRAND PRIX · ${selectedGridSize + 1}-CAR GRID · ${weather.label.toUpperCase()} · ${setupLabel}`
+      : `TIME TRIAL · ${weather.label.toUpperCase()} · ${setupLabel} · PERSONAL GHOST ENABLED`;
+  }
+
+  const weatherEl = document.getElementById('ct-weather');
+  if (weatherEl && track) {
+    weatherEl.textContent = selectedWeatherId === 'auto'
+      ? `${track.weather} · TRACK CALL`
+      : `${weather.label.toUpperCase()} · SELECTED`;
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -486,6 +533,7 @@ function updateTrackSelection() {
   const canvas = document.getElementById('track-minimap');
   drawTrackMinimap(canvas, track);
   if (canvas) canvas.setAttribute('aria-label', `${track.name} circuit map`);
+  updateSessionConfig();
 }
 
 function updateSelectionDots(containerId, itemCount, activeIndex) {
@@ -502,7 +550,20 @@ function updateSelectionDots(containerId, itemCount, activeIndex) {
   }));
 }
 
-function launchSelectedRace() {
+function launchSelectedRace(restartConfig = null) {
+  const selectedTrack = TRACKS[selectedTrackIndex] || TRACKS[0];
+  const selectedCar = CARS[selectedCarIndex] || CARS[0];
+  const sessionConfig = restartConfig || {
+    carId: selectedCar.id,
+    trackId: selectedTrack.id,
+    raceMode: raceSelectionMode === 'grand-prix' ? 'grand-prix' : 'time-trial',
+    weatherId: selectedWeatherId,
+    setupId: selectedSetupId,
+    gridSize: selectedGridSize,
+    driverName: getDriverName()
+  };
+  lastSessionConfig = { ...sessionConfig };
+
   setRaceMode(true);
   showScreen('screen-hud');
   // Trigger F1 lights-out animation
@@ -511,17 +572,11 @@ function launchSelectedRace() {
   if (phaserGame) {
     phaserGame.scale.refresh();
 
-    const selectedCarId = CARS[selectedCarIndex].id;
-    const selectedTrackId = TRACKS[selectedTrackIndex].id;
-
     if (phaserGame.scene.isActive('RaceScene')) {
       phaserGame.scene.stop('RaceScene');
     }
 
-    phaserGame.scene.start('RaceScene', {
-      carId: selectedCarId,
-      trackId: selectedTrackId
-    });
+    phaserGame.scene.start('RaceScene', sessionConfig);
   }
 }
 
@@ -744,11 +799,69 @@ function showStewardToast(text, type = 'amber') {
   }, 3000);
 }
 
+function renderGrandPrixSummary(result) {
+  const summary = document.getElementById('go-grand-prix-summary');
+  const banner = document.getElementById('go-finish-banner');
+  const positionEl = document.getElementById('go-grand-prix-position');
+  const conditionEl = document.getElementById('go-grand-prix-condition');
+  const rowsEl = document.getElementById('go-grand-prix-rows');
+  const isGrandPrix = result?.raceMode === 'grand-prix';
+
+  if (!isGrandPrix || !Array.isArray(result?.classification)) {
+    summary?.classList.add('hidden');
+    if (banner) banner.textContent = 'RACE FINISHED';
+    rowsEl?.replaceChildren();
+    return;
+  }
+
+  const classification = result.classification.slice(0, 12);
+  const player = classification.find((entry) => entry.isPlayer) || classification.find((entry) => entry.id === 'player');
+  const position = Math.max(1, Number(player?.position) || Number(result.position) || 1);
+  const leader = classification[0];
+  const leaderTime = Number(leader?.finishTimeMs ?? leader?.raceTimeMs);
+
+  if (banner) banner.textContent = position === 1 ? 'GRAND PRIX WIN' : 'GRAND PRIX FINISHED';
+  if (positionEl) positionEl.textContent = `P${position}`;
+  if (conditionEl) {
+    const weather = String(result.weatherLabel || 'TRACK CALL').toUpperCase();
+    const setup = String(result.setupId || 'balanced').toUpperCase();
+    conditionEl.textContent = `${weather} · ${setup} SETUP`;
+  }
+
+  if (rowsEl) {
+    rowsEl.replaceChildren(...classification.map((entry) => {
+      const row = document.createElement('div');
+      row.className = `go-grand-prix-row${entry.isPlayer ? ' is-player' : ''}`;
+
+      const place = document.createElement('span');
+      place.textContent = `P${entry.position || '—'}`;
+      const name = document.createElement('span');
+      name.textContent = entry.isPlayer ? `${entry.name || 'DRIVER'} (YOU)` : (entry.name || 'AI DRIVER');
+      const status = document.createElement('span');
+      status.className = 'gp-gap';
+      const entryTime = Number(entry.finishTimeMs ?? entry.raceTimeMs);
+      if (entry.position === 1) status.textContent = 'WINNER';
+      else if (Number.isFinite(entryTime) && Number.isFinite(leaderTime) && entry.finished) {
+        status.textContent = `+${((entryTime - leaderTime) / 1000).toFixed(3)}s`;
+      } else {
+        status.textContent = entry.finished ? 'FINISHED' : `LAP ${entry.lap || 1}`;
+      }
+      row.append(place, name, status);
+      return row;
+    }));
+  }
+  summary?.classList.remove('hidden');
+}
+
 // LISTEN TO PHASER CUSTOM EVENTS (HUD & RACE FINISH)
 // ----------------------------------------------------------------------------
 function setupGameEventListeners() {
   window.addEventListener('pixel-prix:hud', (e) => {
-    const { speed, isReverse, lap, totalLaps, timeMs, penaltyMs, stewardInvestigation, boostEnergy, boostActive, speedRatio } = e.detail;
+    const {
+      speed, isReverse, lap, totalLaps, timeMs, penaltyMs, stewardInvestigation,
+      boostEnergy, boostActive, speedRatio, raceMode, racePosition, fieldSize,
+      weatherLabel, ghostDeltaMs, ghostActive
+    } = e.detail;
 
     // Speedometer & Gear calculation
     const speedEl = document.getElementById('hud-speed-text');
@@ -785,6 +898,28 @@ function setupGameEventListeners() {
     if (lapEl) lapEl.innerHTML = `${lap}/${totalLaps}`;
     const timerEl = document.getElementById('hud-timer-text');
     if (timerEl) timerEl.innerText = formatTime(timeMs);
+
+    const raceStatus = document.getElementById('hud-race-status');
+    const raceStatusLabel = document.getElementById('hud-race-status-label');
+    const raceStatusText = document.getElementById('hud-race-status-text');
+    if (raceMode === 'grand-prix') {
+      raceStatus?.classList.remove('hidden');
+      if (raceStatusLabel) raceStatusLabel.textContent = weatherLabel ? weatherLabel.toUpperCase() : 'RACE';
+      if (raceStatusText) raceStatusText.textContent = `P${racePosition || 1}/${fieldSize || 1}`;
+    } else if (Number.isFinite(ghostDeltaMs) || ghostActive) {
+      raceStatus?.classList.remove('hidden');
+      if (raceStatusLabel) raceStatusLabel.textContent = 'GHOST';
+      if (raceStatusText) {
+        if (Number.isFinite(ghostDeltaMs)) {
+          const prefix = ghostDeltaMs <= 0 ? '−' : '+';
+          raceStatusText.textContent = `${prefix}${Math.abs(ghostDeltaMs / 1000).toFixed(2)}s`;
+        } else {
+          raceStatusText.textContent = 'LIVE';
+        }
+      }
+    } else {
+      raceStatus?.classList.add('hidden');
+    }
 
     // Integrated Bottom Telemetry Ticker (Only update if no active sector split override)
     if (!window._sectorTickerActive) {
@@ -918,23 +1053,32 @@ function setupGameEventListeners() {
       return;
     }
 
+    const isGrandPrix = lastRaceResult.raceMode === 'grand-prix';
+    const progressionTrackId = lastRaceResult.leaderboardEligible === true
+      ? lastRaceResult.trackId
+      : `${lastRaceResult.trackId}:${lastRaceResult.raceMode}:${lastRaceResult.weatherId}:${lastRaceResult.setupId}`;
     const progression = recordSoloRace({
-      trackId: lastRaceResult.trackId,
+      trackId: progressionTrackId,
       totalTimeMs: lastRaceResult.totalTimeMs,
-      penaltyMs: lastRaceResult.penaltyMs
+      penaltyMs: lastRaceResult.penaltyMs,
+      grandPrixPosition: isGrandPrix ? lastRaceResult.position : null,
+      grandPrixFieldSize: isGrandPrix ? lastRaceResult.fieldSize : 0
     });
     refreshDriverProfileUI();
-    const raceReward = progression.personalBest
-      ? `NEW PERSONAL BEST · +${progression.earnedXp} XP`
-      : progression.cleanRace
-        ? `CLEAN RACE · +${progression.earnedXp} XP`
-        : `RACE COMPLETE · +${progression.earnedXp} XP`;
+    const raceReward = isGrandPrix
+      ? `${lastRaceResult.position === 1 ? 'GRAND PRIX WIN' : `P${lastRaceResult.position} FINISH`} · +${progression.grandPrixPoints} PTS · +${progression.earnedXp} XP`
+      : progression.personalBest
+        ? `NEW PERSONAL BEST · +${progression.earnedXp} XP`
+        : progression.cleanRace
+          ? `CLEAN RACE · +${progression.earnedXp} XP`
+          : `RACE COMPLETE · +${progression.earnedXp} XP`;
     showStewardToast(raceReward, 'amber');
 
     document.getElementById('go-raw-time').innerText = formatTime(lastRaceResult.rawTimeMs);
     document.getElementById('go-penalty-time').innerText = `+${(lastRaceResult.penaltyMs / 1000).toFixed(3)}s`;
     document.getElementById('go-final-time').innerText = formatTime(lastRaceResult.totalTimeMs);
     document.getElementById('go-best-lap').innerText = `Best Lap: ${formatTime(lastRaceResult.bestLapMs)}`;
+    renderGrandPrixSummary(lastRaceResult);
 
     // Render detailed sector breakdown inside the Game Over screen
     const breakdownEl = document.getElementById('go-sector-breakdown');
@@ -992,6 +1136,14 @@ function setupGameEventListeners() {
       breakdownEl.innerHTML = html;
     }
 
+    const leaderboardEligible = lastRaceResult.leaderboardEligible === true;
+    const scoreForm = document.getElementById('score-form');
+    const sessionNote = document.getElementById('go-session-note');
+    const skipScore = document.getElementById('btn-close-score');
+    scoreForm?.classList.toggle('hidden', !leaderboardEligible);
+    sessionNote?.classList.toggle('hidden', leaderboardEligible);
+    skipScore?.classList.toggle('hidden', !leaderboardEligible);
+
     // Stop the race scene
     if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
       phaserGame.scene.stop('RaceScene');
@@ -999,7 +1151,8 @@ function setupGameEventListeners() {
 
     // Trigger finish celebration
     fireCelebrationEffect();
-    openScoreDialog();
+    if (leaderboardEligible) openScoreDialog();
+    else closeScoreDialog();
     showScreen('screen-gameover');
   });
 
@@ -1388,10 +1541,12 @@ function initUI() {
     setRaceSelectionMode(mode);
     updateCarSelection();
     updateTrackSelection();
+    updateSessionConfig();
     showScreen('screen-select');
   };
 
   bindClickOrTouch('btn-start-game', () => openRaceSelect('time-trial'));
+  bindClickOrTouch('btn-open-grand-prix', () => openRaceSelect('grand-prix'));
   bindClickOrTouch('btn-open-coop', () => openRaceSelect('coop'));
 
   const openLeaderboard = () => {
@@ -1445,7 +1600,7 @@ function initUI() {
   });
 
   bindClickOrTouch('btn-restart-race', () => {
-    launchSelectedRace();
+    launchSelectedRace(lastSessionConfig);
   });
 
   bindClickOrTouch('btn-exit-to-menu', () => {
@@ -1472,6 +1627,30 @@ function initUI() {
   bindClickOrTouch('track-next', () => {
     selectedTrackIndex = (selectedTrackIndex + 1) % TRACKS.length;
     updateTrackSelection();
+  });
+
+  document.querySelectorAll('[data-weather-choice]').forEach((button) => {
+    bindClickOrTouch(button, () => {
+      selectedWeatherId = button.dataset.weatherChoice || 'auto';
+      updateSessionConfig();
+    });
+  });
+
+  document.querySelectorAll('[data-setup-choice]').forEach((button) => {
+    bindClickOrTouch(button, () => {
+      selectedSetupId = button.dataset.setupChoice || 'balanced';
+      updateSessionConfig();
+    });
+  });
+
+  document.querySelectorAll('[data-grid-choice]').forEach((button) => {
+    bindClickOrTouch(button, () => {
+      const gridSize = Number(button.dataset.gridChoice);
+      if (Number.isFinite(gridSize) && gridSize >= 2 && gridSize <= Math.min(12, CARS.length)) {
+        selectedGridSize = Math.round(gridSize);
+        updateSessionConfig();
+      }
+    });
   });
 
   bindClickOrTouch('btn-launch-race', () => {
@@ -1774,7 +1953,7 @@ function initUI() {
   // These actions are explicit user intents that dismiss the username dialog.
   bindClickOrTouch('btn-retry-race', () => {
     closeScoreDialog();
-    launchSelectedRace();
+    launchSelectedRace(lastSessionConfig);
   });
 
   bindClickOrTouch('btn-view-leaderboard-go', () => {
@@ -2177,6 +2356,7 @@ function startApp() {
   // game first made that failure look like a blank application because none
   // of the menu handlers or the visible-screen state had been established.
   initUI();
+  updateSessionConfig();
   refreshDriverProfileUI();
   setRaceMode(false);
   showScreen('screen-menu');

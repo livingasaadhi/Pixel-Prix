@@ -9,7 +9,9 @@
     "check:stewards": "node scripts/check-stewarding.js",
     "check:handling": "node scripts/check-handling.js",
     "check:dynamics": "node scripts/check-vehicle-dynamics.js",
-    "build": "npm run check:ui && npm run check:stewards && npm run check:handling && npm run check:dynamics && vite build",
+    "check:grand-prix": "node scripts/check-grand-prix.js",
+    "check:ghost": "node scripts/check-ghost-replay.js",
+    "build": "npm run check:ui && npm run check:stewards && npm run check:handling && npm run check:dynamics && npm run check:grand-prix && npm run check:ghost && vite build",
     "preview": "vite preview",
     "deploy": "vite build && gh-pages -d dist",
     "verify:supabase": "node scripts/verify-supabase.js"

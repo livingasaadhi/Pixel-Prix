@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { getCarById } from '../data/cars.js';
+import { CARS, getCarById } from '../data/cars.js';
 import { getTrackById } from '../data/tracks.js';
 import { renderTrackGraphics } from '../utils/trackRenderer.js';
 import { getNearestSegmentIndex, checkCheckpointProximity, isOffRoad } from '../utils/trackPhysics.js';
@@ -8,6 +8,45 @@ import { calculateHandling } from '../utils/handling.js';
 import { advanceVehicleDynamics, buildTrackProfile, sampleTrackContext } from '../utils/vehicleDynamics.js';
 import { startEngineSound, updateEnginePitch, stopEngineSound, setEngineActive, playBoostSound, playCheckpointSound, playFinishSound } from '../utils/audio.js';
 import { mpState, startPositionBroadcast, stopPositionBroadcast, broadcastRaceFinish, calculateLiveRank } from '../utils/multiplayer.js';
+import { createAiGrid, getGrandPrixClassification, resolveWeatherCondition, updateAiProgress } from '../utils/grandPrix.js';
+import { captureGhostSample, createGhostRecorder, loadGhostReplay, sampleGhostReplay, saveGhostReplay } from '../utils/ghostReplay.js';
+
+const SETUP_PRESETS = Object.freeze({
+  attack: Object.freeze({
+    id: 'attack',
+    label: 'Attack',
+    gripMultiplier: 0.97,
+    accelerationMultiplier: 1.045,
+    topSpeedMultiplier: 1.012,
+    brakingMultiplier: 0.98,
+    ersRecoveryMultiplier: 0.93,
+    boostDrainMultiplier: 0.96
+  }),
+  balanced: Object.freeze({
+    id: 'balanced',
+    label: 'Balanced',
+    gripMultiplier: 1,
+    accelerationMultiplier: 1,
+    topSpeedMultiplier: 1,
+    brakingMultiplier: 1,
+    ersRecoveryMultiplier: 1,
+    boostDrainMultiplier: 1
+  }),
+  rain: Object.freeze({
+    id: 'rain',
+    label: 'Rain',
+    gripMultiplier: 1.08,
+    accelerationMultiplier: 0.97,
+    topSpeedMultiplier: 0.985,
+    brakingMultiplier: 1.08,
+    ersRecoveryMultiplier: 1.05,
+    boostDrainMultiplier: 1.07
+  })
+});
+
+function resolveSetup(id) {
+  return SETUP_PRESETS[String(id || '').toLowerCase()] || SETUP_PRESETS.balanced;
+}
 
 export class RaceScene extends Phaser.Scene {
   constructor() {
@@ -20,6 +59,21 @@ export class RaceScene extends Phaser.Scene {
     this.carData = getCarById(carId);
     this.trackData = getTrackById(trackId);
     this.totalLaps = this.trackData.laps ?? 3;
+    this.raceMode = data?.raceMode === 'grand-prix' && !mpState.isMultiplayer
+      ? 'grand-prix'
+      : 'time-trial';
+    this.isGrandPrix = this.raceMode === 'grand-prix';
+    this.driverName = String(data?.driverName || 'DRIVER 1').trim().toUpperCase().slice(0, 16) || 'DRIVER 1';
+    this.weatherId = data?.weatherId === 'auto' || !data?.weatherId
+      ? this.trackData.weather
+      : data.weatherId;
+    this.weatherCondition = resolveWeatherCondition(this.weatherId);
+    this.defaultWeatherCondition = resolveWeatherCondition(this.trackData.weather);
+    this.setupProfile = resolveSetup(data?.setupId);
+    this.leaderboardEligible = !this.isGrandPrix &&
+      this.weatherCondition.id === this.defaultWeatherCondition.id &&
+      this.setupProfile.id === 'balanced';
+    this.gridSize = Phaser.Math.Clamp(Math.round(Number(data?.gridSize) || 6), 2, Math.min(12, CARS.length));
 
     // Racing state
     this.currentLap = 1;
@@ -73,24 +127,34 @@ export class RaceScene extends Phaser.Scene {
     this.turnRate = 4.8;            // max rotation per second toward target heading
     this.gamepadInput = { steer: 0, throttle: 0, brake: 0, boost: false };
 
-    // Tunable physics parameters (scaled by 2.4x for high-speed AAA racing feel)
+    // Tunable physics parameters (scaled by 2.4x for high-speed AAA racing feel).
+    // Conditions and the selected setup alter the same native force model,
+    // rather than bolting on a separate arcade path for weather.
     const VEL_MULT = 2.4;
-    this.maxSpeed = (this.carData.maxSpeed || this.carData.topSpeed || 275) * VEL_MULT;
-    this.boostMaxSpeed = (this.carData.boostMaxSpeed || (this.maxSpeed * (this.carData.boostPower || 1.45))) * VEL_MULT;
-    this.acceleration = (this.carData.acceleration || 180) * VEL_MULT;
-    this.boostAcceleration = (this.carData.boostAcceleration || 380) * VEL_MULT;
-    this.brakeForce = (this.carData.brakeForce || 450) * VEL_MULT;
+    const weatherPhysics = this.weatherCondition.physics;
+    const baseTopSpeed = this.carData.maxSpeed || this.carData.topSpeed || 275;
+    const baseBoostTopSpeed = this.carData.boostMaxSpeed || (baseTopSpeed * (this.carData.boostPower || 1.45));
+    this.referenceTopSpeedKph = baseTopSpeed * weatherPhysics.topSpeedMultiplier * this.setupProfile.topSpeedMultiplier;
+    this.referenceBoostTopSpeedKph = baseBoostTopSpeed * weatherPhysics.topSpeedMultiplier * this.setupProfile.topSpeedMultiplier;
+    this.accelerationStat = (this.carData.acceleration || 180) * weatherPhysics.accelerationMultiplier * this.setupProfile.accelerationMultiplier;
+    this.boostAccelerationStat = (this.carData.boostAcceleration || 380) * weatherPhysics.accelerationMultiplier * this.setupProfile.accelerationMultiplier;
+    this.brakeForceStat = (this.carData.brakeForce || 450) * weatherPhysics.brakingMultiplier * this.setupProfile.brakingMultiplier;
+    this.maxSpeed = this.referenceTopSpeedKph * VEL_MULT;
+    this.boostMaxSpeed = this.referenceBoostTopSpeedKph * VEL_MULT;
+    this.acceleration = this.accelerationStat * VEL_MULT;
+    this.boostAcceleration = this.boostAccelerationStat * VEL_MULT;
+    this.brakeForce = this.brakeForceStat * VEL_MULT;
     this.drag = (this.carData.drag || 25.0) * VEL_MULT;
-    this.steeringSensitivity = (this.carData.steeringSensitivity || this.carData.handling || 4.4) * 1.48;
+    this.steeringSensitivity = (this.carData.steeringSensitivity || this.carData.handling || 4.4) * 1.48 * weatherPhysics.steeringMultiplier;
     this.highSpeedSteeringMultiplier = this.carData.highSpeedSteeringMultiplier || 0.48;
 
     // Vehicle identity is deliberately expressed through a few intuitive
     // behaviours. Defaults preserve the original roster while newer cars
     // gain meaningful launch, cornering and ERS trade-offs.
-    this.launchGrip = Phaser.Math.Clamp(this.carData.launchGrip ?? 1, 0.92, 1.16);
-    this.corneringGrip = Phaser.Math.Clamp(this.carData.corneringGrip ?? 1, 0.92, 1.14);
-    this.ersRecovery = Phaser.Math.Clamp(this.carData.ersRecovery ?? 12, 8, 16);
-    this.boostDrain = Phaser.Math.Clamp(this.carData.boostDrain ?? 35, 28, 42);
+    this.launchGrip = Phaser.Math.Clamp((this.carData.launchGrip ?? 1) * weatherPhysics.gripMultiplier * this.setupProfile.gripMultiplier, 0.72, 1.22);
+    this.corneringGrip = Phaser.Math.Clamp((this.carData.corneringGrip ?? 1) * weatherPhysics.gripMultiplier * this.setupProfile.gripMultiplier, 0.72, 1.22);
+    this.ersRecovery = Phaser.Math.Clamp((this.carData.ersRecovery ?? 12) * this.setupProfile.ersRecoveryMultiplier, 7, 17);
+    this.boostDrain = Phaser.Math.Clamp((this.carData.boostDrain ?? 35) * this.setupProfile.boostDrainMultiplier, 27, 45);
 
     // Lateral drift physics
     this.vx = 0;
@@ -105,6 +169,30 @@ export class RaceScene extends Phaser.Scene {
     this.sparkDuration = 0;
     this.spectatorMode = false;
     this.lastMultiplayerContactAt = 0;
+    this.startSegmentIndex = 0;
+    this.trackLength = 1;
+    this.aiRivals = [];
+    this.grandPrixClassification = [];
+    this.grandPrixPosition = 1;
+    this.lastAiContactAt = 0;
+    this.weatherOverlay = null;
+    this.rainEmitter = null;
+
+    this.ghostSession = {
+      trackId: this.trackData.id,
+      carId: this.carData.id,
+      weatherId: this.weatherCondition.id,
+      setupId: this.setupProfile.id
+    };
+    this.ghostReplay = !this.isGrandPrix && !mpState.isMultiplayer
+      ? loadGhostReplay(this.ghostSession)
+      : null;
+    this.ghostRecorder = !this.isGrandPrix && !mpState.isMultiplayer
+      ? createGhostRecorder({ carId: this.carData.id })
+      : null;
+    this.ghostSprite = null;
+    this.ghostLabel = null;
+    this.lastGhostSampleAt = -Infinity;
   }
 
   create() {
@@ -125,6 +213,13 @@ export class RaceScene extends Phaser.Scene {
     this.curvePoints = trackResult.curvePoints;
     this.roadWidth = trackResult.roadWidth;
     this.trackProfile = buildTrackProfile(this.curvePoints, this.roadWidth);
+    this.trackLength = Math.max(1, this.trackProfile.worldLength || 1);
+    this.startSegmentIndex = getNearestSegmentIndex(
+      this.trackData.startPos.x,
+      this.trackData.startPos.y,
+      this.curvePoints,
+      -1
+    ).nearestIndex;
 
     // 3. Create player car sprite (with deterministic grid slot placement for multiplayer)
     const startPos = this.trackData.startPos;
@@ -154,6 +249,11 @@ export class RaceScene extends Phaser.Scene {
     // surface without requiring an image asset or expensive post-processing.
     this.playerShadow = this.add.ellipse(startX + 7, startY + 9, 50, 18, 0x000000, 0.34);
     this.playerShadow.setDepth(11);
+
+    if (this.isGrandPrix) {
+      this.createGrandPrixField();
+    }
+    this.createGhostReplay();
 
     // Start 10 Hz multiplayer position broadcast
     if (mpState.isMultiplayer) {
@@ -210,6 +310,8 @@ export class RaceScene extends Phaser.Scene {
       alpha: { start: 0.45, end: 0 },
       emitting: false
     });
+
+    this.createWeatherAtmosphere();
 
     // 6. Keyboard inputs
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -295,6 +397,245 @@ export class RaceScene extends Phaser.Scene {
     this.startCountdown();
   }
 
+  createGrandPrixField() {
+    const aiCount = Phaser.Math.Clamp(this.gridSize, 1, Math.max(1, CARS.length - 1));
+    const sessionSeed = `${this.trackData.id}:${this.carData.id}:${this.weatherCondition.id}:${this.setupProfile.id}:${aiCount}`;
+    const baseLapTimeMs = Phaser.Math.Clamp(this.trackLength * 1.68, 50_000, 112_000);
+
+    this.aiRivals = createAiGrid({
+      cars: CARS,
+      playerCarId: this.carData.id,
+      trackId: this.trackData.id,
+      count: aiCount,
+      seed: sessionSeed
+    }).map((rival) => ({
+      ...rival,
+      baseLapTimeMs
+    }));
+
+    this.aiRivals.forEach((rival) => {
+      const textureKey = `car_${rival.carId}_straight`;
+      const sprite = this.add.sprite(this.player.x, this.player.y, textureKey);
+      sprite.setOrigin(0.5, 0.5);
+      sprite.setAlpha(0.94);
+      sprite.setDepth(14);
+
+      const nameTag = this.add.text(this.player.x, this.player.y - 30, rival.name.toUpperCase(), {
+        fontFamily: 'monospace',
+        fontSize: '10px',
+        fontStyle: 'bold',
+        color: '#f4f7fb',
+        backgroundColor: 'rgba(7, 10, 15, 0.82)',
+        padding: { x: 4, y: 2 }
+      });
+      nameTag.setOrigin(0.5, 0.5);
+      nameTag.setDepth(16);
+      rival.sprite = sprite;
+      rival.nameTag = nameTag;
+      this.positionAiRival(rival, true);
+    });
+
+    this.updateGrandPrixClassification();
+  }
+
+  positionAiRival(rival, onGrid = false) {
+    if (!rival?.sprite || !this.curvePoints?.length) return;
+    const pointCount = Math.max(1, this.curvePoints.length - 1);
+    const lapDistance = Number.isFinite(rival.distance) ? rival.distance : 0;
+    const lapProgress = Phaser.Math.Clamp(lapDistance / Math.max(1, this.trackLength), 0, 1);
+    const rawSegment = this.startSegmentIndex + lapProgress * pointCount;
+    const startIndex = ((Math.floor(rawSegment) % pointCount) + pointCount) % pointCount;
+    const nextIndex = (startIndex + 1) % pointCount;
+    const segmentRatio = rawSegment - Math.floor(rawSegment);
+    const current = this.curvePoints[startIndex];
+    const next = this.curvePoints[nextIndex];
+    const x = Phaser.Math.Linear(current.x, next.x, segmentRatio);
+    const y = Phaser.Math.Linear(current.y, next.y, segmentRatio);
+    const heading = Math.atan2(next.y - current.y, next.x - current.x);
+    const normalX = -Math.sin(heading);
+    const normalY = Math.cos(heading);
+    const slot = Math.max(1, rival.gridPosition || 1);
+    const lane = (slot % 2 === 0 ? 1 : -1) * Math.min(this.roadWidth * 0.18, 70);
+    const gridFade = onGrid ? 1 : Math.max(0, 1 - (rival.raceTimeMs || 0) / 3600);
+    const gridBack = Math.ceil(slot / 2) * 46 * gridFade;
+    const drift = Math.sin((rival.raceTimeMs || 0) / 1350 + (rival.variationSeed || 0) % 17) * this.roadWidth * 0.025;
+    const finalX = x + normalX * (lane + drift) - Math.cos(heading) * gridBack;
+    const finalY = y + normalY * (lane + drift) - Math.sin(heading) * gridBack;
+
+    rival.sprite.setPosition(finalX, finalY);
+    rival.sprite.rotation = heading;
+    rival.nameTag?.setPosition(finalX, finalY - 30);
+    if (rival.finished) rival.nameTag?.setText(`${rival.name.toUpperCase()} ✓`);
+  }
+
+  updateGrandPrixField(deltaMs) {
+    if (!this.isGrandPrix || this.aiRivals.length === 0) return;
+    this.aiRivals = this.aiRivals.map((rival) => {
+      const next = updateAiProgress(rival, deltaMs, this.totalLaps, this.trackLength, this.weatherCondition);
+      this.positionAiRival(next);
+      return next;
+    });
+    this.updateGrandPrixClassification();
+    this.applyGrandPrixCarContacts();
+  }
+
+  buildPlayerGrandPrixEntry() {
+    const totalDistance = this.raceFinished
+      ? this.trackLength * this.totalLaps
+      : Math.min(this.trackLength * this.totalLaps, this.getRaceProgress() * this.trackLength);
+    const completedLaps = this.raceFinished ? this.totalLaps : Math.min(this.totalLaps, Math.floor(totalDistance / this.trackLength));
+    const currentDistance = this.raceFinished
+      ? this.trackLength
+      : Math.max(0, totalDistance - completedLaps * this.trackLength);
+    const finalTimeMs = this.finalTimeMs ?? (this.elapsedMs + this.penaltyMs);
+    return {
+      id: 'player',
+      name: this.driverName,
+      carId: this.carData.id,
+      carName: this.carData.name,
+      isPlayer: true,
+      completedLaps,
+      distance: currentDistance,
+      totalDistance,
+      progress: totalDistance / Math.max(1, this.trackLength * this.totalLaps),
+      lap: this.raceFinished ? this.totalLaps : this.currentLap,
+      raceTimeMs: this.elapsedMs,
+      finished: this.raceFinished,
+      finishTimeMs: this.raceFinished ? finalTimeMs : null
+    };
+  }
+
+  updateGrandPrixClassification() {
+    if (!this.isGrandPrix) return [];
+    this.grandPrixClassification = getGrandPrixClassification(
+      this.buildPlayerGrandPrixEntry(),
+      this.aiRivals
+    ).map((entry) => {
+      const { sprite, nameTag, ...publicEntry } = entry;
+      return publicEntry;
+    });
+    this.grandPrixPosition = this.grandPrixClassification.find((entry) => entry.isPlayer)?.position || 1;
+    return this.grandPrixClassification;
+  }
+
+  applyGrandPrixCarContacts() {
+    if (!this.player || this.time.now - this.lastAiContactAt < 120) return;
+    const contactRadius = 44;
+    const contactRadiusSq = contactRadius * contactRadius;
+    const rival = this.aiRivals.find((entry) => {
+      if (!entry.sprite || entry.finished) return false;
+      const dx = this.player.x - entry.sprite.x;
+      const dy = this.player.y - entry.sprite.y;
+      return dx * dx + dy * dy < contactRadiusSq;
+    });
+    if (!rival?.sprite) return;
+
+    const dx = this.player.x - rival.sprite.x;
+    const dy = this.player.y - rival.sprite.y;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const normalX = dx / distance;
+    const normalY = dy / distance;
+    const overlap = contactRadius - distance;
+    this.player.x += normalX * overlap * 0.55;
+    this.player.y += normalY * overlap * 0.55;
+    this.vx += normalX * Math.min(70, overlap * 5);
+    this.vy += normalY * Math.min(70, overlap * 5);
+    this.currentSpeed *= 0.975;
+    this.lastAiContactAt = this.time.now;
+  }
+
+  createGhostReplay() {
+    if (!this.ghostReplay || !this.player) return;
+    const initial = sampleGhostReplay(this.ghostReplay, 0);
+    if (!initial) return;
+    const textureKey = `car_${this.ghostReplay.carId || this.carData.id}_straight`;
+    this.ghostSprite = this.add.sprite(initial.x, initial.y, textureKey);
+    this.ghostSprite.setOrigin(0.5, 0.5);
+    this.ghostSprite.setAlpha(0.38);
+    this.ghostSprite.setTint(0x78dcff);
+    this.ghostSprite.setDepth(10);
+    this.ghostLabel = this.add.text(initial.x, initial.y - 29, 'PERSONAL GHOST', {
+      fontFamily: 'monospace',
+      fontSize: '9px',
+      fontStyle: 'bold',
+      color: '#a9edff',
+      backgroundColor: 'rgba(8, 35, 52, 0.62)',
+      padding: { x: 4, y: 2 }
+    });
+    this.ghostLabel.setOrigin(0.5, 0.5);
+    this.ghostLabel.setDepth(10);
+  }
+
+  updateGhostReplay() {
+    if (!this.ghostSprite || !this.ghostReplay) return;
+    const sample = sampleGhostReplay(this.ghostReplay, this.elapsedMs);
+    if (!sample) {
+      this.ghostSprite.setVisible(false);
+      this.ghostLabel?.setVisible(false);
+      return;
+    }
+    this.ghostSprite.setVisible(true);
+    this.ghostLabel?.setVisible(true);
+    this.ghostSprite.setPosition(sample.x, sample.y);
+    this.ghostSprite.rotation = sample.rotation;
+    this.ghostLabel?.setPosition(sample.x, sample.y - 29);
+  }
+
+  recordGhostReplay() {
+    if (!this.ghostRecorder || !this.raceStarted || this.raceFinished) return;
+    if (this.elapsedMs - this.lastGhostSampleAt < 90) return;
+    captureGhostSample(this.ghostRecorder, {
+      timeMs: this.elapsedMs,
+      x: this.player.x,
+      y: this.player.y,
+      rotation: this.player.rotation
+    });
+    this.lastGhostSampleAt = this.elapsedMs;
+  }
+
+  createWeatherAtmosphere() {
+    const { width, height } = this.scale;
+    const weatherId = this.weatherCondition.id;
+    const overlayColor = weatherId === 'night'
+      ? 0x020616
+      : weatherId === 'wet'
+        ? 0x183954
+        : weatherId === 'overcast'
+          ? 0x6c8195
+          : null;
+    const overlayAlpha = weatherId === 'night' ? 0.42 : weatherId === 'wet' ? 0.16 : weatherId === 'overcast' ? 0.07 : 0;
+    if (overlayColor !== null && overlayAlpha > 0) {
+      this.weatherOverlay = this.add.rectangle(0, 0, width, height, overlayColor, overlayAlpha)
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDepth(30);
+    }
+
+    if (weatherId !== 'wet') return;
+    const textureKey = 'pixel_prix_rain_drop';
+    if (!this.textures.exists(textureKey)) {
+      const graphic = this.make.graphics({ add: false });
+      graphic.fillStyle(0xd9f7ff, 0.92);
+      graphic.fillRect(0, 0, 2, 14);
+      graphic.generateTexture(textureKey, 2, 14);
+      graphic.destroy();
+    }
+    this.rainEmitter = this.add.particles(0, 0, textureKey, {
+      x: { min: 0, max: width },
+      y: { min: -40, max: 0 },
+      speedX: { min: -95, max: -45 },
+      speedY: { min: 500, max: 730 },
+      scale: { min: 0.7, max: 1.15 },
+      alpha: { start: 0.72, end: 0.18 },
+      lifespan: 1100,
+      frequency: 12,
+      quantity: 2,
+      blendMode: 'ADD'
+    });
+    this.rainEmitter.setScrollFactor(0);
+    this.rainEmitter.setDepth(40);
+  }
+
   frameCamera() {
     const cam = this.cameras.main;
     const pad = (this.roadWidth || 100) + 60;
@@ -314,6 +655,7 @@ export class RaceScene extends Phaser.Scene {
     const vh = this.scale.height || window.innerHeight;
 
     cam.setViewport(0, 0, vw, vh);
+    this.weatherOverlay?.setSize(vw, vh);
 
     const cover = Math.max(vw / trackW, vh / trackH);
     this.baseZoom = Math.max(0.28, Math.min(cover, 0.85));
@@ -399,6 +741,7 @@ export class RaceScene extends Phaser.Scene {
     }
 
     this.elapsedMs = this.time.now - this.startTime;
+    this.updateGhostReplay();
     if (this.time.now - this.lastHUDUpdate > 33) {
       this.emitHUDUpdate();
       this.lastHUDUpdate = this.time.now;
@@ -593,12 +936,12 @@ export class RaceScene extends Phaser.Scene {
         boostActive,
         onGrass: this.onGrass,
         offRoadFactor,
-        accelerationStat: this.carData.acceleration ?? 180,
-        brakeForceStat: this.carData.brakeForce ?? 450,
+        accelerationStat: this.accelerationStat,
+        brakeForceStat: this.brakeForceStat,
         dragStat: this.carData.drag ?? 25,
-        referenceTopSpeedKph: this.carData.topSpeed ?? this.maxSpeed / 2.4,
-        boostAccelerationStat: this.carData.boostAcceleration ?? this.carData.acceleration ?? 180,
-        boostReferenceTopSpeedKph: this.carData.boostMaxSpeed ?? this.carData.topSpeed ?? this.maxSpeed / 2.4,
+        referenceTopSpeedKph: this.referenceTopSpeedKph,
+        boostAccelerationStat: this.boostAccelerationStat,
+        boostReferenceTopSpeedKph: this.referenceBoostTopSpeedKph,
         accelerationFactor: handling.accelerationFactor * (1 / (1 + cornerOverspeed * 0.65)),
         steerInput: steerDir,
         trackContext,
@@ -669,6 +1012,11 @@ export class RaceScene extends Phaser.Scene {
     // Checkpoints
     this.checkCheckpoints();
 
+    if (!this.raceFinished) {
+      this.updateGrandPrixField(delta);
+      this.recordGhostReplay();
+    }
+
     if (mpState.isMultiplayer) {
       this.updateMultiplayerView();
       this.updateMultiplayerHUD(false);
@@ -676,10 +1024,12 @@ export class RaceScene extends Phaser.Scene {
   }
 
   getRaceProgress() {
-    const segmentCount = this.curvePoints?.length || 1;
-    const segmentProgress = this.nearestSegmentIndex >= 0
-      ? Phaser.Math.Clamp(this.nearestSegmentIndex / segmentCount, 0, 0.999)
-      : 0;
+    const segmentCount = Math.max(1, (this.curvePoints?.length || 2) - 1);
+    const currentSegment = this.nearestSegmentIndex >= 0
+      ? this.nearestSegmentIndex
+      : this.startSegmentIndex;
+    const relativeSegment = ((currentSegment - this.startSegmentIndex) % segmentCount + segmentCount) % segmentCount;
+    const segmentProgress = Phaser.Math.Clamp(relativeSegment / segmentCount, 0, 0.999);
     return Math.max(0, (this.currentLap - 1) + segmentProgress);
   }
 
@@ -944,6 +1294,22 @@ export class RaceScene extends Phaser.Scene {
 
     const bestLapMs = this.lapTimes.length > 0 ? Math.min(...this.lapTimes) : this.elapsedMs;
     const finalTime = this.elapsedMs + this.penaltyMs;
+    this.finalTimeMs = finalTime;
+
+    if (this.ghostRecorder && !mpState.isMultiplayer) {
+      captureGhostSample(this.ghostRecorder, {
+        timeMs: this.elapsedMs,
+        x: this.player.x,
+        y: this.player.y,
+        rotation: this.player.rotation
+      });
+      const savedGhost = saveGhostReplay(this.ghostSession, this.ghostRecorder, finalTime);
+      if (savedGhost) this.showNotification('NEW PERSONAL GHOST RECORDED');
+    }
+
+    if (this.isGrandPrix) {
+      this.updateGrandPrixClassification();
+    }
 
     if (mpState.isMultiplayer) {
       stopPositionBroadcast();
@@ -965,7 +1331,15 @@ export class RaceScene extends Phaser.Scene {
         carId: this.carData.id,
         trackId: this.trackData.id,
         lapSectors: this.lapSectors,
-        bestSectors: this.bestSectors
+        bestSectors: this.bestSectors,
+        raceMode: this.raceMode,
+        weatherId: this.weatherCondition.id,
+        weatherLabel: this.weatherCondition.label,
+        setupId: this.setupProfile.id,
+        position: this.isGrandPrix ? this.grandPrixPosition : null,
+        fieldSize: this.isGrandPrix ? this.grandPrixClassification.length : 1,
+        classification: this.isGrandPrix ? this.grandPrixClassification : null,
+        leaderboardEligible: this.leaderboardEligible
       }
     }));
   }
@@ -994,7 +1368,12 @@ export class RaceScene extends Phaser.Scene {
         boostActive: this.boostActive,
         speedRatio: Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275)),
         currentSector: this.currentSector,
-        sectorTimeMs: this.raceStarted && !this.raceFinished ? (this.time.now - this.sectorStartTime) : 0
+        sectorTimeMs: this.raceStarted && !this.raceFinished ? (this.time.now - this.sectorStartTime) : 0,
+        raceMode: this.raceMode,
+        racePosition: this.isGrandPrix ? this.grandPrixPosition : null,
+        fieldSize: this.isGrandPrix ? Math.max(1, this.grandPrixClassification.length) : null,
+        weatherLabel: this.weatherCondition?.label || '',
+        ghostActive: Boolean(this.ghostSprite?.visible)
       }
     }));
   }
@@ -1020,6 +1399,19 @@ export class RaceScene extends Phaser.Scene {
 
   cleanup() {
     stopEngineSound();
+    this.aiRivals.forEach((rival) => {
+      rival.sprite?.destroy();
+      rival.nameTag?.destroy();
+    });
+    this.aiRivals = [];
+    this.ghostSprite?.destroy();
+    this.ghostLabel?.destroy();
+    this.weatherOverlay?.destroy();
+    this.rainEmitter?.destroy();
+    this.ghostSprite = null;
+    this.ghostLabel = null;
+    this.weatherOverlay = null;
+    this.rainEmitter = null;
     if (this._lightsGreenHandler) {
       window.removeEventListener('pixel-prix:lights-green', this._lightsGreenHandler);
       this._lightsGreenHandler = null;

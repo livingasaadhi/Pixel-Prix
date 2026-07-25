@@ -141,6 +141,18 @@ Open [`src/data/tracks.js`](file:///c:/Users/adith/Downloads/Work/Projects/G3%20
 
 ---
 
+## 🏁 Grand Prix, Conditions & Ghosts
+
+Pixel Prix supports three distinct session types while preserving the existing time-trial and online flow:
+
+- **Time Trial:** choose the circuit's default weather or a custom condition, select a setup, and race your personal local ghost. Ghosts are stored separately for each car, weather condition, and setup.
+- **Grand Prix:** race 4, 6, or 8 deterministic offline AI rivals. The result screen shows a live classification and awards championship points, podiums, and wins to the local driver profile.
+- **Co-op:** remains the existing Supabase-backed live multiplayer mode and does not mix AI cars into online sessions.
+
+To keep timing fair, only a standard, balanced time trial in the circuit's default weather can be submitted to the global timing tower. Custom-condition and Grand Prix results remain in your local driver profile.
+
+---
+
 ## 🛠️ Built With
 - [Phaser 3](https://phaser.io/) - 2D HTML5 Game Engine
 - [Supabase](https://supabase.com/) - Open Source Backend Database
