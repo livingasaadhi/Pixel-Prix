@@ -389,8 +389,8 @@ export class RaceScene extends Phaser.Scene {
 
       if (isTryingToDrive && !this.hasFalseStartPenalty) {
         this.hasFalseStartPenalty = true;
-        this.penaltyMs += 2000;
-        this.showStewardsNotification('STEWARDS: +2.0s PENALTY (FALSE START)');
+        this.penaltyMs += 5000;
+        this.showStewardsNotification('STEWARDS: +5.0s PENALTY (FALSE START)');
         this.emitHUDUpdate();
       }
       return;

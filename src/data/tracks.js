@@ -344,35 +344,21 @@ export const TRACKS = [
 // The original circuits were intentionally compact while the core handling
 // was being tuned.  Scale the complete geometry as one unit so a lap is
 // meaningfully longer without changing a circuit's identity or breaking its
-// checkpoint order. Road width is kept proportional to the longer route so
-// drivers retain sensible racing lines and recovery room.
+// checkpoint order. Road width is deliberately narrow to reward precise,
+// disciplined racing lines.
 const CIRCUIT_LENGTH_SCALE = 10;
-const CIRCUIT_WIDTH_SCALE = 8;
+const CIRCUIT_WIDTH_SCALE = 3.2;
 const STANDARD_RACE_LAPS = 3;
 const DEFAULT_STEWARD_PROFILE = {
-  reviewMs: 2600,
-  breachMs: 5400,
-  shortcutMs: 4400,
-  offTrackSpeedKph: 170,
-  shortcutSpeedKph: 275,
-  recoveryMs: 950,
-  warningLimit: 3,
-  trackLimitPenaltyMs: 2000,
-  shortcutPenaltyMs: 3000
-};
-
-// Each venue has an intentional stewarding character. Wide, flowing circuits
-// allow a slightly longer recovery; street and technical layouts are tighter.
-const CIRCUIT_STEWARD_PROFILES = {
-  'monaco-oval': { reviewMs: 3000, breachMs: 6500, shortcutMs: 5200, offTrackSpeedKph: 175, shortcutSpeedKph: 285, recoveryMs: 900 },
-  'serpent-bend': { reviewMs: 2600, breachMs: 5500, shortcutMs: 4500, offTrackSpeedKph: 170, shortcutSpeedKph: 275, recoveryMs: 1000 },
-  'neon-ring': { reviewMs: 1900, breachMs: 4200, shortcutMs: 3400, offTrackSpeedKph: 160, shortcutSpeedKph: 260, recoveryMs: 1100 },
-  'desert-drift': { reviewMs: 3800, breachMs: 7800, shortcutMs: 6200, offTrackSpeedKph: 185, shortcutSpeedKph: 300, recoveryMs: 800 },
-  'cyber-ring': { reviewMs: 1800, breachMs: 4000, shortcutMs: 3200, offTrackSpeedKph: 160, shortcutSpeedKph: 260, recoveryMs: 1100 },
-  'g3-sweden': { reviewMs: 2700, breachMs: 5600, shortcutMs: 4600, offTrackSpeedKph: 170, shortcutSpeedKph: 275, recoveryMs: 950 },
-  'ember-pass': { reviewMs: 2500, breachMs: 5400, shortcutMs: 4300, offTrackSpeedKph: 168, shortcutSpeedKph: 270, recoveryMs: 1000 },
-  'azure-coast': { reviewMs: 3600, breachMs: 7200, shortcutMs: 5800, offTrackSpeedKph: 180, shortcutSpeedKph: 295, recoveryMs: 850 },
-  'ironworks-gp': { reviewMs: 1800, breachMs: 3900, shortcutMs: 3000, offTrackSpeedKph: 158, shortcutSpeedKph: 255, recoveryMs: 1100 }
+  reviewMs: 1500,
+  breachMs: 3500,
+  shortcutMs: 2200,
+  offTrackSpeedKph: 120,
+  shortcutSpeedKph: 210,
+  recoveryMs: 1400,
+  warningLimit: 2,
+  trackLimitPenaltyMs: 5000,
+  shortcutPenaltyMs: 10000
 };
 
 TRACKS.forEach((track) => {
@@ -387,8 +373,7 @@ TRACKS.forEach((track) => {
   track.roadWidth = Math.round(track.roadWidth * CIRCUIT_WIDTH_SCALE);
   track.laps = STANDARD_RACE_LAPS;
   track.stewards = {
-    ...DEFAULT_STEWARD_PROFILE,
-    ...(CIRCUIT_STEWARD_PROFILES[track.id] || {})
+    ...DEFAULT_STEWARD_PROFILE
   };
   track.startPos = scalePoint(track.startPos);
   track.points = track.points.map(scalePoint);

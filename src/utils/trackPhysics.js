@@ -72,15 +72,12 @@ export function getNearestSegmentIndex(px, py, curvePoints, prevIndex = -1) {
  * Checks if a position (px, py) is significantly off the track road surface.
  * Measures distance to the track centerline (nearest segment), not just the
  * nearest sample vertex, so accuracy is consistent along the whole loop.
- * Adds a +35px tolerance buffer so minor kerb touches or riding track edges
- * does NOT count as off-road.
+ * Uses a small kerb tolerance so driving beyond the marked track limits is
+ * consistently detected.
  */
 export function isOffRoad(px, py, curvePoints, roadWidth) {
   const { minDistanceSq } = getNearestSegmentIndex(px, py, curvePoints, -1);
-  // The circuits are scaled in world units, so the kerb tolerance must scale
-  // with the road as well. This keeps small kerb touches penalty-free at every
-  // venue instead of becoming artificially strict on the largest tracks.
-  const kerbTolerance = Math.max(35, roadWidth * 0.055);
+  const kerbTolerance = Math.max(15, roadWidth * 0.025);
   const effectiveHalfWidth = (roadWidth / 2) + kerbTolerance;
   return minDistanceSq > (effectiveHalfWidth * effectiveHalfWidth);
 }
