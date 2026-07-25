@@ -4,6 +4,7 @@ import { getTrackById } from '../data/tracks.js';
 import { renderTrackGraphics } from '../utils/trackRenderer.js';
 import { getNearestSegmentIndex, checkCheckpointProximity, isOffRoad } from '../utils/trackPhysics.js';
 import { assessTrackLimits, createStewardState } from '../utils/stewarding.js';
+import { calculateHandling } from '../utils/handling.js';
 import { startEngineSound, updateEnginePitch, stopEngineSound, setEngineActive, playBoostSound, playCheckpointSound, playFinishSound } from '../utils/audio.js';
 import { mpState, startPositionBroadcast, stopPositionBroadcast, broadcastRaceFinish, calculateLiveRank } from '../utils/multiplayer.js';
 
@@ -403,8 +404,8 @@ export class RaceScene extends Phaser.Scene {
 
     this.prevSpeed = this.currentSpeed;
 
-    const speedRatio = Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275));
-    const targetZoom = (this.baseZoom || 0.7) * (1.0 - speedRatio * 0.10);
+    const cameraSpeedRatio = Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275));
+    const targetZoom = (this.baseZoom || 0.7) * (1.0 - cameraSpeedRatio * 0.10);
     cam.zoom = Phaser.Math.Linear(cam.zoom, targetZoom, 2.5 * dt);
 
     this.updateSpeedVignette(speedRatio);
@@ -469,21 +470,26 @@ export class RaceScene extends Phaser.Scene {
 
     setEngineActive(gasOn || boostActive);
 
-    const steerSpeedRatio = Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275));
-    const speedDamping = Math.max(this.highSpeedSteeringMultiplier, 1.0 - steerSpeedRatio * 0.55);
-    const boostBonus = boostActive ? 1.15 : 1.0;
+    const handling = calculateHandling({
+      speedKph: Math.abs(this.currentSpeed) / 2.4,
+      maxSpeedKph: this.maxSpeed / 2.4,
+      steerInput: steerDir,
+      throttle: gasValue,
+      brake: brakeValue,
+      boostActive,
+      corneringGrip: this.corneringGrip,
+      highSpeedSteeringMultiplier: this.highSpeedSteeringMultiplier
+    });
     if (Math.abs(this.currentSpeed) > 1.0) {
-      // Joystick absolute heading mode (mobile touch)
+      // Every control method uses the same traction-limited authority, so
+      // braking before a turn matters on touch, keyboard, and gamepad alike.
       if (this.joystickActive) {
-        // Compute shortest angular difference toward target heading
         const diff = Phaser.Math.Angle.Wrap(this.joystickHeading - this.player.rotation);
-        // Apply limited turn rate per second for smooth rotation
-        const maxTurn = this.turnRate * speedDamping * boostBonus * dt;
+        const maxTurn = this.turnRate * handling.steeringAuthority * dt;
         const step = Math.sign(diff) * Math.min(Math.abs(diff), maxTurn);
         this.player.rotation += step;
       } else {
-        // Keyboard / button steering: relative delta (existing behavior)
-        this.player.rotation += steerDir * this.steeringSensitivity * speedDamping * boostBonus * dt;
+        this.player.rotation += steerDir * this.steeringSensitivity * handling.steeringAuthority * dt;
       }
     }
 
@@ -574,7 +580,7 @@ export class RaceScene extends Phaser.Scene {
         const ratio = Math.max(0, this.currentSpeed / targetMaxSpeed);
         const launchWindow = Math.max(0, 1 - ratio / 0.24);
         const launchModifier = 1 + (this.launchGrip - 1) * launchWindow;
-        const launchAccel = currentAccel * (1.75 - 0.95 * Math.pow(ratio, 1.3)) * launchModifier;
+        const launchAccel = currentAccel * (1.75 - 0.95 * Math.pow(ratio, 1.3)) * launchModifier * handling.accelerationFactor;
         this.currentSpeed += launchAccel * gasValue * dt;
         if (this.currentSpeed > targetMaxSpeed) {
           this.currentSpeed = targetMaxSpeed;
@@ -587,7 +593,7 @@ export class RaceScene extends Phaser.Scene {
       }
     } else if (boostActive) {
       if (this.currentSpeed < targetMaxSpeed) {
-        this.currentSpeed += currentAccel * dt;
+        this.currentSpeed += currentAccel * handling.accelerationFactor * dt;
         if (this.currentSpeed > targetMaxSpeed) {
           this.currentSpeed = targetMaxSpeed;
         }
@@ -619,10 +625,10 @@ export class RaceScene extends Phaser.Scene {
 
     const targetVx = Math.cos(this.player.rotation) * this.currentSpeed;
     const targetVy = Math.sin(this.player.rotation) * this.currentSpeed;
-    const baseGrip = (boostActive || steerDir !== 0) ? 0.98 : 0.94;
-    const grip = Phaser.Math.Clamp(baseGrip + (this.corneringGrip - 1) * 0.035 - (this.onGrass ? 0.025 : 0), 0.9, 0.992);
-    this.vx = Phaser.Math.Linear(this.vx, targetVx, grip);
-    this.vy = Phaser.Math.Linear(this.vy, targetVy, grip);
+    const terrainResponse = this.onGrass ? 0.82 : 1;
+    const directionResponse = Phaser.Math.Clamp(handling.directionResponse * terrainResponse, 0.06, 0.31);
+    this.vx = Phaser.Math.Linear(this.vx, targetVx, directionResponse);
+    this.vy = Phaser.Math.Linear(this.vy, targetVy, directionResponse);
 
     // Apply movement velocity to Arcade Physics body and sprite position
     if (this.player && this.player.body) {
