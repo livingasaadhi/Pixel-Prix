@@ -10089,6 +10089,34 @@ width: 100% !important;
 margin: 0 !important;
 padding: 8px 14px !important;
 box-sizing: border-box !important;
+overflow: hidden !important;
+border-radius: 8px !important;
+background: rgba(5, 9, 14, 0.72) !important;
+border: 1px solid var(--pp-line) !important;
+}
+#screen-select .session-config-grid  {
+display: grid !important;
+grid-template-columns: 1.15fr 1fr 1fr !important;
+gap: 10px !important;
+align-items: center !important;
+margin-top: 4px !important;
+}
+#screen-select .session-choice-buttons  {
+display: flex !important;
+flex-wrap: nowrap !important;
+gap: 4px !important;
+width: 100% !important;
+margin-top: 4px !important;
+}
+#screen-select .session-choice  {
+flex: 1 !important;
+min-width: 0 !important;
+min-height: 28px !important;
+padding: 4px 5px !important;
+font-size: 0.52rem !important;
+white-space: nowrap !important;
+overflow: hidden !important;
+text-overflow: ellipsis !important;
 }
 #screen-select .selection-footer  {
 position: relative !important;
