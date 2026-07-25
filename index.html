@@ -307,12 +307,12 @@
 
           <button id="btn-create-room" class="btn btn-secondary btn-large mp-btn-create">
             <span class="material-symbols-outlined">groups</span>
-            <span>HOST CO-OP RACE</span>
+            <span>CREATE CO-OP LOBBY</span>
           </button>
 
           <button id="btn-join-room-modal" class="btn btn-tertiary btn-large mp-btn-join">
             <span class="material-symbols-outlined">key</span>
-            <span>JOIN CO-OP RACE</span>
+            <span>JOIN WITH CODE</span>
           </button>
         </div>
       </div>
@@ -324,19 +324,39 @@
         <div class="mp-lobby-container glass-card">
           <div class="mp-lobby-header">
             <div class="mp-room-title">
-              <span class="section-label">ONLINE RACE LOBBY</span>
-              <h2>ROOM CODE: <span id="mp-room-code-val">----</span></h2>
+              <span class="section-label">CO-OP RACE / GRID ASSEMBLY</span>
+              <h2>RACE LOBBY</h2>
+              <p>Lock the grid, then the host starts the session.</p>
             </div>
-            <button id="btn-copy-room-code" class="btn btn-small btn-secondary">
-              <span class="material-symbols-outlined">content_copy</span>
-              <span>COPY CODE</span>
-            </button>
+            <div class="mp-room-code-panel">
+              <span class="mp-panel-label">ROOM CODE</span>
+              <strong id="mp-room-code-val">----</strong>
+              <button id="btn-copy-room-code" class="btn btn-small btn-secondary" aria-label="Copy room code">
+                <span class="material-symbols-outlined">content_copy</span>
+                <span>COPY</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="mp-session-strip" aria-label="Co-op race details">
+            <div class="mp-session-cell">
+              <span class="mp-panel-label">FORMAT</span>
+              <strong>CO-OP RACE</strong>
+            </div>
+            <div class="mp-session-cell">
+              <span class="mp-panel-label">CIRCUIT</span>
+              <strong id="mp-session-track">LOADING…</strong>
+            </div>
+            <div class="mp-session-cell">
+              <span class="mp-panel-label">GRID</span>
+              <strong><span id="mp-driver-count">1</span> / 8</strong>
+            </div>
           </div>
 
           <div class="mp-drivers-section">
             <div class="mp-section-sub">
-              <span>CONNECTED DRIVERS (<span id="mp-driver-count">1</span>/8 MAX)</span>
-              <span class="telemetry-live-badge"><span class="pulse-dot"></span> REALTIME BROADCAST</span>
+              <span>DRIVER GRID</span>
+              <span id="mp-grid-status">WAITING FOR DRIVERS</span>
             </div>
             <div class="mp-drivers-grid" id="mp-drivers-list">
               <!-- Dynamically populated driver cards -->
@@ -366,10 +386,11 @@
       <!-- JOIN ONLINE RACE MODAL                                         -->
       <!-- ============================================================== -->
       <div id="modal-join-room" class="modal-overlay hidden">
-        <div class="modal-card glass-card">
-          <div class="modal-header">
-            <h3>JOIN ONLINE RACE</h3>
-            <p>Enter the 4-character lobby code from the host.</p>
+          <div class="modal-card glass-card">
+            <div class="modal-header">
+            <span class="section-label">CO-OP RACE</span>
+            <h3>JOIN THE GRID</h3>
+            <p>Enter the room code shared by the host.</p>
           </div>
           <div class="modal-body">
             <label class="sr-only" for="input-room-code">Online lobby code</label>
@@ -391,13 +412,14 @@
           <div class="modal-header modal-header-row">
             <div>
               <span class="section-label">ONLINE RACE / LIVE TIMING</span>
-              <h2>RACE CLASSIFICATION</h2>
+              <h2>FINAL CLASSIFICATION</h2>
             </div>
             <button id="btn-close-mp-results-x" class="icon-btn-circle modal-close-btn" aria-label="Close modal">
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
           <div class="modal-body">
+            <p id="mp-results-summary" class="mp-results-summary">SESSION COMPLETE</p>
             <div class="mp-results-table-wrap">
               <table class="f1-results-table">
                 <thead>

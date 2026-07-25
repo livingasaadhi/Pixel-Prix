@@ -8550,3 +8550,453 @@ button[aria-disabled='true']:hover {
 .f1-results-table .mp-fastest-lap-row td {
   background: rgba(155, 102, 221, 0.07);
 }
+
+/* ========================================================================
+   CO-OP RACE COMMAND CENTRE
+   A lobby is a grid briefing, not a generic dialog: code, circuit, grid and
+   host state are each visible at a glance before the race starts.
+   ======================================================================== */
+#screen-select[data-mode='coop'] .selection-footer {
+  align-items: stretch;
+}
+
+#screen-select[data-mode='coop'] .mp-btn-create,
+#screen-select[data-mode='coop'] .mp-btn-join {
+  min-height: 56px;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  background: #17191e !important;
+  color: #f5f5f3 !important;
+  box-shadow: none !important;
+}
+
+#screen-select[data-mode='coop'] .mp-btn-create {
+  border-color: #e10600 !important;
+  background: #d90808 !important;
+}
+
+#screen-select[data-mode='coop'] .mp-btn-create:hover,
+#screen-select[data-mode='coop'] .mp-btn-join:hover {
+  border-color: #fff !important;
+  background: #f4f4f2 !important;
+  color: #111216 !important;
+}
+
+#screen-mp-lobby {
+  background:
+    radial-gradient(ellipse at 18% 100%, rgba(225, 6, 0, 0.11), transparent 42%),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.035), transparent 33%),
+    #08090b;
+}
+
+#screen-mp-lobby .mp-lobby-container {
+  display: grid;
+  width: min(1120px, 100%);
+  min-height: 0;
+  padding: 28px !important;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  gap: 18px;
+  border-radius: 10px !important;
+  background: linear-gradient(145deg, rgba(28, 31, 37, 0.97), rgba(8, 9, 11, 0.99)) !important;
+}
+
+#screen-mp-lobby .mp-lobby-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 24px;
+  margin: 0;
+  padding: 0 0 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+#screen-mp-lobby .mp-room-title h2 {
+  margin-top: 5px;
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+  letter-spacing: 0.025em;
+}
+
+#screen-mp-lobby .mp-room-title p {
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.54);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.045em;
+}
+
+.mp-room-code-panel {
+  display: grid;
+  min-width: 206px;
+  grid-template-columns: 1fr auto;
+  gap: 3px 9px;
+  padding: 10px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 7px;
+  background: #0c0e12;
+}
+
+.mp-panel-label {
+  color: rgba(255, 255, 255, 0.43);
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.mp-room-code-panel .mp-panel-label {
+  grid-column: 1 / -1;
+}
+
+.mp-room-code-panel strong {
+  align-self: center;
+  color: #f5f5f3;
+  font-family: var(--font-mono);
+  font-size: 1.12rem;
+  letter-spacing: 0.17em;
+}
+
+.mp-room-code-panel .btn {
+  min-width: 46px;
+  min-height: 32px;
+  padding: 5px 8px !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.84) !important;
+  font-size: 0.52rem;
+}
+
+.mp-session-strip {
+  display: grid;
+  grid-template-columns: 0.9fr 1.65fr 0.7fr;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.mp-session-cell {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  padding: 12px 15px;
+}
+
+.mp-session-cell + .mp-session-cell {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mp-session-cell strong {
+  overflow: hidden;
+  color: #f4f4f2;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#screen-mp-lobby .mp-drivers-section {
+  min-height: 0;
+  gap: 10px;
+}
+
+#screen-mp-lobby .mp-section-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--font-mono);
+  font-size: 0.61rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
+
+#mp-grid-status {
+  color: #a8f4ce;
+}
+
+#screen-mp-lobby .mp-drivers-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+#screen-mp-lobby .mp-driver-card {
+  min-width: 0;
+  min-height: 76px;
+  padding: 11px;
+  border-color: rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow: none;
+}
+
+#screen-mp-lobby .mp-driver-card.is-local {
+  border-color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#screen-mp-lobby .mp-driver-card.is-host {
+  border-left: 3px solid #e10600;
+}
+
+#screen-mp-lobby .mp-driver-left {
+  min-width: 0;
+  gap: 9px;
+}
+
+#screen-mp-lobby .mp-grid-pos {
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+  border: 1px solid rgba(255, 255, 255, 0.27);
+  border-radius: 50%;
+  background: transparent;
+  color: #f4f4f2;
+  font-size: 0.52rem;
+}
+
+#screen-mp-lobby .mp-driver-info {
+  min-width: 0;
+}
+
+#screen-mp-lobby .mp-driver-info .mp-driver-name {
+  overflow: hidden;
+  font-size: 0.7rem;
+  letter-spacing: 0.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#screen-mp-lobby .mp-driver-info .mp-car-name {
+  overflow: hidden;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.53rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#screen-mp-lobby .mp-badge-host {
+  padding: 3px 5px;
+  border-color: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+  background: #f4f4f2;
+  color: #101116;
+  font-size: 0.48rem;
+}
+
+#screen-mp-lobby .mp-lobby-footer {
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 15px;
+  border-top-color: rgba(255, 255, 255, 0.14);
+}
+
+#screen-mp-lobby .mp-lobby-footer .btn {
+  min-height: 48px;
+}
+
+#screen-mp-lobby .mp-start-btn {
+  min-width: min(410px, 58%);
+  background: #d90808 !important;
+}
+
+#screen-mp-lobby .mp-start-btn:disabled {
+  border-color: rgba(255, 255, 255, 0.13) !important;
+  background: #17191e !important;
+  color: rgba(255, 255, 255, 0.32) !important;
+  opacity: 1;
+}
+
+#screen-mp-lobby .mp-non-host-msg {
+  padding: 0;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.58rem;
+  letter-spacing: 0.09em;
+  animation: none;
+}
+
+#modal-join-room .modal-card,
+#modal-mp-results .mp-results-card {
+  border-radius: 9px !important;
+  background: linear-gradient(145deg, #1a1d22, #090a0c) !important;
+}
+
+#modal-join-room .modal-card {
+  max-width: 440px;
+}
+
+#modal-join-room .modal-header {
+  gap: 6px;
+}
+
+#modal-join-room .modal-header h3 {
+  font-size: 1.3rem;
+}
+
+#modal-mp-results .mp-results-card {
+  width: min(980px, calc(100% - 32px));
+  max-width: 980px;
+}
+
+.mp-results-summary {
+  margin-bottom: 12px;
+  color: #d7b6ff;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+#modal-mp-results .mp-results-table-wrap {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+}
+
+#modal-mp-results .f1-results-table {
+  table-layout: fixed;
+  font-size: 0.72rem;
+}
+
+#modal-mp-results .f1-results-table th,
+#modal-mp-results .f1-results-table td {
+  padding: 11px 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#modal-mp-results .f1-results-table th {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.53rem;
+}
+
+#modal-mp-results .f1-results-table th:nth-child(1) { width: 7%; }
+#modal-mp-results .f1-results-table th:nth-child(2) { width: 22%; }
+#modal-mp-results .f1-results-table th:nth-child(3) { width: 22%; }
+#modal-mp-results .f1-results-table th:nth-child(4) { width: 17%; }
+#modal-mp-results .f1-results-table th:nth-child(5) { width: 13%; }
+#modal-mp-results .f1-results-table th:nth-child(6) { width: 19%; }
+
+@media (max-width: 670px) {
+  #screen-mp-lobby .mp-lobby-container {
+    padding: 14px !important;
+    gap: 10px;
+    transform: none !important;
+  }
+
+  #screen-mp-lobby .mp-lobby-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding-bottom: 10px;
+  }
+
+  #screen-mp-lobby .mp-room-title h2 {
+    font-size: 1rem;
+  }
+
+  #screen-mp-lobby .mp-room-title p {
+    display: none;
+  }
+
+  .mp-room-code-panel {
+    min-width: 130px;
+    padding: 7px;
+  }
+
+  .mp-room-code-panel strong {
+    font-size: 0.78rem;
+  }
+
+  .mp-room-code-panel .btn span:last-child {
+    display: none;
+  }
+
+  .mp-room-code-panel .btn {
+    min-width: 32px;
+    min-height: 30px;
+    padding: 4px !important;
+  }
+
+  .mp-session-strip {
+    grid-template-columns: 0.9fr 1.35fr 0.65fr;
+  }
+
+  .mp-session-cell {
+    gap: 3px;
+    padding: 8px 6px;
+  }
+
+  .mp-session-cell strong {
+    font-size: 0.54rem;
+  }
+
+  #screen-mp-lobby .mp-section-sub {
+    font-size: 0.49rem;
+  }
+
+  #screen-mp-lobby .mp-drivers-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  #screen-mp-lobby .mp-driver-card {
+    min-height: 56px;
+    padding: 6px;
+  }
+
+  #screen-mp-lobby .mp-driver-left {
+    gap: 5px;
+  }
+
+  #screen-mp-lobby .mp-grid-pos {
+    width: 19px;
+    height: 19px;
+    flex-basis: 19px;
+    font-size: 0.4rem;
+  }
+
+  #screen-mp-lobby .mp-driver-info .mp-driver-name {
+    font-size: 0.48rem;
+  }
+
+  #screen-mp-lobby .mp-driver-info .mp-car-name,
+  #screen-mp-lobby .mp-badge-host {
+    font-size: 0.39rem;
+  }
+
+  #screen-mp-lobby .mp-lobby-footer {
+    gap: 7px;
+    padding-top: 9px;
+  }
+
+  #screen-mp-lobby .mp-lobby-footer .btn {
+    min-height: 44px;
+    padding: 6px 8px !important;
+    font-size: 0.49rem;
+  }
+
+  #screen-mp-lobby .mp-start-btn {
+    min-width: 0;
+    flex: 1;
+  }
+
+  #modal-mp-results .mp-results-card {
+    width: calc(100% - 20px);
+    padding: 16px !important;
+  }
+
+  #modal-mp-results .f1-results-table th:nth-child(3),
+  #modal-mp-results .f1-results-table td:nth-child(3) {
+    display: none;
+  }
+
+  #modal-mp-results .f1-results-table th,
+  #modal-mp-results .f1-results-table td {
+    padding: 9px 4px;
+    font-size: 0.5rem;
+  }
+
+  #modal-mp-results .f1-results-table th {
+    font-size: 0.43rem;
+  }
+}

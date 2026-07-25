@@ -1615,9 +1615,17 @@ function initUI() {
   window.addEventListener('pixel-prix:mp-lobby-update', (e) => {
     const { players, isHost, roomCode } = e.detail;
     const hasUniqueCars = new Set(players.map((player) => player.carId)).size === players.length;
+    const selectedTrack = TRACKS.find((track) => track.id === mpState.trackId);
 
     document.getElementById('mp-room-code-val').innerText = roomCode || '----';
     document.getElementById('mp-driver-count').innerText = players.length;
+    document.getElementById('mp-session-track').innerText = selectedTrack?.name?.toUpperCase() || 'UNKNOWN CIRCUIT';
+    const gridStatus = document.getElementById('mp-grid-status');
+    if (gridStatus) {
+      gridStatus.textContent = players.length < 2
+        ? 'WAITING FOR ONE MORE DRIVER'
+        : (hasUniqueCars ? 'GRID READY' : 'ASSIGNING UNIQUE CARS');
+    }
 
     const listEl = document.getElementById('mp-drivers-list');
     if (listEl) {
@@ -1726,7 +1734,15 @@ function initUI() {
         `;
       }).join('');
 
-      if (modal && raceComplete) modal.classList.remove('hidden');
+      if (modal && raceComplete) {
+        const summary = document.getElementById('mp-results-summary');
+        if (summary) {
+          summary.textContent = Number.isFinite(fastestLapMs)
+            ? `FASTEST LAP · ${formatTime(fastestLapMs)}`
+            : 'SESSION COMPLETE';
+        }
+        modal.classList.remove('hidden');
+      }
     }
   });
 
