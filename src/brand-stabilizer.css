@@ -87,14 +87,16 @@
 #screen-select .car-select-card .carousel-header { align-items: center !important; display: grid !important; gap: 12px !important; grid-template-columns: 42px minmax(0, 1fr) 42px !important; }
 #screen-select .car-select-card .nav-arrow { height: 44px !important; min-width: 42px !important; width: 42px !important; }
 #screen-select .car-select-card .carousel-content { text-align: center; }
-#screen-select .car-preview-area { align-content: center !important; background: radial-gradient(ellipse at 50% 48%, rgba(73, 216, 255, .24), rgba(11, 18, 28, .72) 53%, rgba(4, 7, 11, .84)) !important; border-color: rgba(73, 216, 255, .32) !important; box-shadow: inset 0 1px rgba(255, 255, 255, .08), 0 16px 34px rgba(0, 0, 0, .28) !important; height: clamp(142px, 18vh, 178px) !important; margin: 0 auto 12px !important; max-width: 350px !important; min-height: clamp(142px, 18vh, 178px) !important; overflow: hidden !important; position: relative !important; width: 100% !important; }
+#screen-select .car-preview-area { align-content: center !important; background: radial-gradient(ellipse at 50% 48%, rgba(73, 216, 255, .24), rgba(11, 18, 28, .72) 53%, rgba(4, 7, 11, .84)) !important; border-color: rgba(73, 216, 255, .32) !important; box-shadow: inset 0 1px rgba(255, 255, 255, .08), 0 16px 34px rgba(0, 0, 0, .28) !important; height: clamp(122px, 16vh, 158px) !important; margin: 0 auto 8px !important; max-width: 350px !important; min-height: clamp(122px, 16vh, 158px) !important; overflow: hidden !important; position: relative !important; width: 100% !important; }
 #screen-select .car-preview-area::before { border: 1px solid rgba(255, 255, 255, .14); border-radius: 5px; content: "SELECTED VEHICLE"; color: var(--pp-muted); font: 800 9px var(--pp-mono); left: 10px; letter-spacing: .12em; padding: 4px 6px; position: absolute; top: 9px; }
 #screen-select #car-preview-canvas { height: auto !important; image-rendering: pixelated; max-height: 132px !important; max-width: min(86%, 300px) !important; position: relative; width: auto !important; z-index: 1; }
 #screen-select .carousel-content h3 { font-size: clamp(1.1rem, 1.7vw, 1.42rem) !important; margin: 0 !important; }
-#screen-select .carousel-content p { margin: 7px auto 0 !important; max-width: 390px; }
+#screen-select .carousel-content p { margin: 5px auto 0 !important; max-width: 390px; }
 #screen-select .car-drive-profile { align-items: center; justify-content: center; margin-top: 9px !important; }
 #screen-select .car-drive-value { color: var(--pp-text); }
-#screen-select .stat-bars { border-top: 1px solid var(--pp-line); gap: 8px 10px !important; margin-top: 15px !important; padding-top: 14px; }
+#screen-select .car-performance-heading { align-items: center; border-top: 1px solid var(--pp-line); display: flex; justify-content: space-between; margin-top: 12px; padding-top: 10px; }
+#screen-select .car-performance-heading > span:last-child { color: var(--pp-cyan); font: 800 9px var(--pp-mono); letter-spacing: .1em; }
+#screen-select .stat-bars { border-top: 0; gap: 8px 10px !important; margin-top: 8px !important; padding-top: 0; }
 #screen-select .stat-row { border: 1px solid rgba(230, 239, 248, .10); border-radius: 7px; background: rgba(2, 5, 9, .18); padding: 8px 9px; }
 #screen-select .stat-benchmark { display: none; }
 #screen-select .meter-track { margin: 8px 0 0 !important; }
