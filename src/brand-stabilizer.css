@@ -1,0 +1,166 @@
+/* Pixel Prix brand recovery: restores the signature component layer while
+   retaining the 12-column, accessible production layout. */
+:root {
+  --pp-ink: #06080c;
+  --pp-panel: #0d1118;
+  --pp-panel-raised: #181e28;
+  --pp-line: rgba(230, 239, 248, .16);
+  --pp-line-strong: rgba(230, 239, 248, .38);
+  --pp-text: #f4f7fb;
+  --pp-muted: #9aa8b9;
+  --pp-red: #ee2b32;
+  --pp-cyan: #49d8ff;
+  --pp-green: #5ce0a1;
+  --pp-amber: #ffd166;
+  --pp-purple: #c7a4ff;
+  --pp-gutter: 24px;
+  --pp-pad: max(24px, calc((100vw - 1440px) / 2));
+  --pp-display: Orbitron, Inter, sans-serif;
+  --pp-body: Rajdhani, Inter, sans-serif;
+  --pp-mono: "JetBrains Mono", monospace;
+}
+
+/* One scrollable screen surface; this overrides only the legacy viewport locks. */
+#app { background: var(--pp-ink); height: 100dvh; overflow: hidden; }
+.ui-screen {
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  align-content: start !important;
+  column-gap: var(--pp-gutter) !important;
+  min-width: 0 !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  overflow-x: clip !important;
+  overflow-y: auto !important;
+  padding: 92px var(--pp-pad) 42px !important;
+}
+.ui-screen.hidden { display: none !important; }
+.ui-screen > * { min-width: 0; }
+#screen-menu { padding-top: 92px !important; }
+#screen-menu .garage-shell,
+#screen-select .screen-header,
+#screen-select .select-grid,
+#screen-select .select-bottom-bar-shell,
+#screen-lobby .mp-lobby-container,
+#screen-leaderboard .lb-container,
+#screen-gameover .modal-card,
+#screen-settings .modal-card,
+#screen-pause .pause-card { grid-column: 1 / -1 !important; min-width: 0; }
+
+/* Preserve the differentiated Pixel Prix garage on the shared 12-column rail. */
+#screen-menu .garage-shell,
+#screen-menu .garage-grid,
+#screen-select .select-grid,
+#screen-select .select-bottom-bar-shell { display: grid !important; grid-template-columns: repeat(12, minmax(0, 1fr)) !important; gap: var(--pp-gutter) !important; }
+#screen-menu .garage-heading { grid-column: 1 / -1 !important; }
+#screen-menu .garage-tile { min-width: 0; min-height: 260px; }
+#screen-menu .garage-time-trial-tile { grid-column: span 5 !important; }
+#screen-menu .garage-coop-tile { grid-column: span 4 !important; }
+#screen-menu .garage-badge-tile { grid-column: span 3 !important; }
+#screen-menu .garage-grand-prix-strip { grid-column: span 8 !important; }
+#screen-menu .garage-shortcuts { grid-column: span 4 !important; }
+
+/* Selection stays content-driven: 6 + 6 above, 8 + 4 below. */
+#screen-select { height: 100dvh !important; overflow-y: auto !important; transform: none !important; }
+#screen-select .select-section { grid-column: span 6 !important; min-width: 0; }
+#screen-select .glass-card { height: auto !important; min-height: 0 !important; }
+#screen-select .select-bottom-bar-shell { align-items: start !important; margin-top: var(--pp-gutter) !important; }
+#screen-select #session-config { grid-column: span 8 !important; min-width: 0; height: auto !important; }
+#screen-select .selection-footer,
+#screen-select .selection-footer-bar { grid-column: span 4 !important; position: static !important; inset: auto !important; height: auto !important; margin: 0 !important; min-width: 0; }
+#screen-select .selection-footer .btn { min-height: 52px; width: 100%; }
+#screen-select .session-config-grid { display: grid; gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#screen-select .circuit-telemetry-widget { overflow: hidden; }
+#screen-select .ct-cell { min-width: 0; }
+
+/* Non-race components keep their brand surfaces but never clip their content. */
+#screen-lobby .mp-lobby-container,
+#screen-leaderboard .lb-container,
+#screen-gameover .modal-card,
+#screen-settings .modal-card,
+#screen-pause .pause-card { height: auto !important; max-height: none !important; }
+#screen-leaderboard .lb-rows { max-height: min(58dvh, 680px); overflow-y: auto !important; touch-action: pan-y; }
+.modal-overlay { padding: 18px; overflow-y: auto; }
+.modal-overlay .modal-content { max-height: min(92dvh, 760px); overflow-y: auto; }
+
+/* New race-control alert channel: text is always the meaning, colour is support. */
+#screen-hud { display: block !important; height: 100dvh !important; overflow: hidden !important; padding: 0 !important; background: transparent !important; }
+#hud-alert-region { display: flex; justify-content: center; left: 0; pointer-events: none; position: fixed; right: 0; top: clamp(156px, 32vh, 300px); z-index: 66; }
+#hud-alert-region .hud-warning-bar { align-items: center; background: linear-gradient(135deg, rgba(15, 21, 30, .97), rgba(8, 12, 18, .97)); border: 1px solid var(--pp-line-strong); border-left: 4px solid var(--pp-cyan); border-radius: 8px; box-shadow: 0 18px 42px rgba(0, 0, 0, .42); color: var(--pp-text); display: flex; gap: 20px; justify-content: space-between; max-width: calc(100vw - 32px); min-height: 48px; padding: 10px 16px; width: max-content; }
+#hud-alert-region .hud-warning-bar.hidden { display: none !important; }
+#hud-alert-region .hud-warning-left { align-items: center; display: flex; font: 800 12px var(--pp-display); gap: 8px; }
+#hud-alert-region .hud-warning-right { font: 700 13px var(--pp-mono); text-align: right; }
+#hud-alert-region .alert-penalty { border-left-color: var(--pp-red); }
+#hud-alert-region .alert-penalty .hud-warning-icon { color: var(--pp-red); }
+#hud-alert-region .alert-review { border-left-color: var(--pp-amber); }
+#hud-alert-region .alert-review .hud-warning-icon { color: var(--pp-amber); }
+#hud-alert-region .alert-sector { border-left-color: var(--pp-purple); }
+#hud-alert-region .alert-sector .hud-warning-icon { color: var(--pp-purple); }
+#hud-alert-region .alert-neutral { border-left-color: var(--pp-cyan); }
+#screen-hud .hud-steering-wheel-display { pointer-events: none; }
+#screen-hud .hud-action-btns,
+#screen-hud .hud-kers-container { pointer-events: auto; }
+
+/* One mobile driving scheme: joystick + GAS / BRAKE / ERS. */
+#hud-steer-left-group,
+#hud-drive-left-group { display: none !important; }
+#countdown-overlay { display: none; }
+#countdown-overlay.visible { display: flex; }
+
+@media (max-width: 1199px) {
+  :root { --pp-gutter: 16px; --pp-pad: 24px; }
+  #screen-menu .garage-time-trial-tile,
+  #screen-menu .garage-coop-tile { grid-column: span 6 !important; }
+  #screen-menu .garage-badge-tile,
+  #screen-menu .garage-grand-prix-strip,
+  #screen-menu .garage-shortcuts { grid-column: span 12 !important; }
+}
+@media (max-width: 767px) {
+  :root { --pp-gutter: 10px; --pp-pad: 16px; }
+  .ui-screen { padding: 78px var(--pp-pad) 28px !important; }
+  #screen-menu { padding-top: 78px !important; }
+  #screen-menu .garage-tile,
+  #screen-menu .garage-grand-prix-strip,
+  #screen-menu .garage-shortcuts,
+  #screen-select .select-section,
+  #screen-select #session-config,
+  #screen-select .selection-footer,
+  #screen-select .selection-footer-bar { grid-column: span 12 !important; min-width: 0 !important; }
+  #screen-menu .garage-tile { min-height: 210px; }
+  #screen-select .session-config-grid { grid-template-columns: 1fr; }
+  #screen-select .circuit-telemetry-widget { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #screen-select .ct-cell:nth-child(2) { border-right: 0; }
+  #screen-select .ct-cell:nth-child(-n + 2) { border-bottom: 1px solid var(--pp-line); }
+}
+@media (max-width: 860px) and (orientation: landscape) {
+  #screen-hud { padding: 0 !important; }
+  #hud-alert-region { top: 38%; }
+  .touch-device #screen-hud #hud-joystick-container { display: block !important; }
+  .touch-device #screen-hud #hud-drive-right-group { display: flex !important; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* The branded garage uses the same 12-column rail as the app shell. */
+#screen-menu { display: grid !important; overflow-y: auto !important; }
+#screen-menu .garage-shell { display: grid !important; grid-column: 1 / -1 !important; grid-template-columns: repeat(12, minmax(0, 1fr)) !important; gap: var(--pp-gutter) !important; margin: 0 !important; max-width: none !important; width: 100% !important; }
+#screen-menu .garage-heading,
+#screen-menu .garage-grid { grid-column: 1 / -1 !important; min-width: 0 !important; width: 100% !important; }
+#screen-menu .garage-grid { display: grid !important; grid-template-columns: repeat(12, minmax(0, 1fr)) !important; gap: var(--pp-gutter) !important; }
+#screen-menu .garage-grid .garage-tile { grid-column: span 4 !important; left: auto !important; min-width: 0 !important; position: relative !important; top: auto !important; transform: none !important; width: auto !important; }
+#screen-menu .garage-grand-prix-strip { grid-column: span 8 !important; left: auto !important; position: relative !important; transform: none !important; width: auto !important; }
+#screen-menu .garage-shortcuts { align-self: center; grid-column: span 4 !important; left: auto !important; position: relative !important; transform: none !important; width: auto !important; }
+@media (max-width: 1199px) { #screen-menu .garage-grid .garage-tile { grid-column: span 6 !important; } #screen-menu .garage-grid .garage-badge-tile { grid-column: span 12 !important; } #screen-menu .garage-grand-prix-strip, #screen-menu .garage-shortcuts { grid-column: span 12 !important; } }
+@media (max-width: 767px) { #screen-menu .garage-grid .garage-tile, #screen-menu .garage-grand-prix-strip, #screen-menu .garage-shortcuts { grid-column: span 12 !important; } }
+
+@media (max-width: 767px) {
+  .top-app-bar { align-items: center !important; border-left: 0 !important; border-radius: 0 !important; border-right: 0 !important; display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; left: 0 !important; min-height: 58px !important; padding: 8px 12px !important; top: 0 !important; transform: none !important; width: 100% !important; }
+  .top-app-bar-left { display: flex !important; gap: 8px !important; min-width: 0 !important; }
+  .top-app-bar-brand { font-size: .7rem !important; letter-spacing: .04em !important; white-space: nowrap; }
+  .top-live-tag { font-size: .48rem !important; padding: 5px 7px; white-space: nowrap; }
+  .top-glass-nav { display: none !important; }
+  .top-app-bar-actions { margin-left: 0 !important; }
+  .f1-driver-profile-chip { min-height: 38px !important; padding: 3px !important; }
+  .f1-chip-rank, .f1-chip-badge, .f1-chip-name { display: none !important; }
+  .f1-chip-avatar { height: 30px; width: 30px; }
+  #screen-menu, #screen-select, #screen-lobby, #screen-leaderboard, #screen-settings, #screen-gameover { padding-top: 78px !important; }
+}

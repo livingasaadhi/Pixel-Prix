@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-const css = fs.readFileSync(path.join(root, 'src', 'style.css'), 'utf8');
+const css = `${fs.readFileSync(path.join(root, 'src', 'style.css'), 'utf8')}\n${fs.readFileSync(path.join(root, 'src', 'brand-stabilizer.css'), 'utf8')}`;
 const main = fs.readFileSync(path.join(root, 'src', 'main.js'), 'utf8');
 
 assert.match(html, /id="btn-touch-accel"/, 'the touch GAS control must remain in the HUD');
@@ -21,17 +21,17 @@ assert.doesNotMatch(
 );
 assert.match(
   css,
-  /\.ui-screen\s*\{[^}]*overflow-y:\s*auto;/,
+  /\.ui-screen\s*\{[^}]*overflow-y:\s*auto !important;/,
   'menu and setup surfaces must scroll rather than clip on short mobile viewports'
 );
 assert.match(
   css,
-  /\.lb-rows\s*\{[^}]*overflow-y:\s*auto !important;[^}]*touch-action:\s*pan-y;/s,
+  /#screen-leaderboard \.lb-rows\s*\{[^}]*overflow-y:\s*auto !important;[^}]*touch-action:\s*pan-y;/s,
   'leaderboard rows must remain vertically reachable on short touch viewports'
 );
 assert.match(
   css,
-  /\.garage-heading p\s*\{[^}]*overflow-wrap:\s*anywhere;[^}]*white-space:\s*normal;/s,
+  /\.garage-heading p\s*\{[^}]*white-space:\s*normal;[^}]*overflow-wrap:\s*anywhere;/s,
   'mobile menu copy must wrap instead of clipping beyond the viewport'
 );
 assert.match(
