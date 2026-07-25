@@ -136,7 +136,10 @@ export class RaceScene extends Phaser.Scene {
     // Keep this as one shared value so HUD, braking, and physics agree.
     // Conditions and the selected setup alter the same native force model,
     // rather than bolting on a separate arcade path for weather.
-    this.velocityScale = 3.6;
+    // World-space race motion is intentionally 2× the telemetry conversion.
+    // KM/H remains derived by dividing by this same scale, so the HUD continues
+    // to report the car's authentic setup speed while the track feels faster.
+    this.velocityScale = 7.2;
     const VEL_MULT = this.velocityScale;
     const weatherPhysics = this.weatherCondition.physics;
     const baseTopSpeed = this.carData.maxSpeed || this.carData.topSpeed || 275;
@@ -658,8 +661,9 @@ export class RaceScene extends Phaser.Scene {
     this.weatherOverlay?.setSize(vw, vh);
 
     // One tactical camera profile for every viewport. The aspect-aware base is
-    // intentionally wide: the car occupies roughly 6–9% of the viewport height.
-    this.baseZoom = Phaser.Math.Clamp(Math.min(vw / 1550, vh / 980), 0.58, 0.76);
+    // deliberately very wide: more of the next braking zone stays visible as
+    // world-space motion increases, keeping the car near 4–7% of screen height.
+    this.baseZoom = Phaser.Math.Clamp(Math.min(vw / 1750, vh / 1120), 0.46, 0.62);
     cam.setZoom(this.baseZoom);
 
     cam.setRotation(0);
