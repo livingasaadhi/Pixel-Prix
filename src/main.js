@@ -159,7 +159,6 @@ function updateSessionConfig() {
   const track = TRACKS[selectedTrackIndex] || TRACKS[0];
   const weatherInput = selectedWeatherId === 'auto' ? track?.weather : selectedWeatherId;
   const weather = resolveWeatherCondition(weatherInput);
-  const setupLabel = selectedSetupId === 'rain' ? 'RAIN SETUP' : `${selectedSetupId.toUpperCase()} SETUP`;
 
   document.querySelectorAll('[data-weather-choice]').forEach((button) => {
     button.classList.toggle('active', button.dataset.weatherChoice === selectedWeatherId);
@@ -170,13 +169,6 @@ function updateSessionConfig() {
   document.querySelectorAll('[data-grid-choice]').forEach((button) => {
     button.classList.toggle('active', Number(button.dataset.gridChoice) === selectedGridSize);
   });
-
-  const copy = document.getElementById('session-config-copy');
-  if (copy) {
-    copy.textContent = raceSelectionMode === 'grand-prix'
-      ? `GRAND PRIX · ${selectedGridSize + 1}-CAR GRID · ${weather.label.toUpperCase()} · ${setupLabel}`
-      : `TIME TRIAL · ${weather.label.toUpperCase()} · ${setupLabel} · PERSONAL GHOST ENABLED`;
-  }
 
   const weatherEl = document.getElementById('ct-weather');
   if (weatherEl && track) {

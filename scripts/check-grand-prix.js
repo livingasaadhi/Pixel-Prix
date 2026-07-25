@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { CARS } from '../src/data/cars.js';
 import {
   createAiGrid,
@@ -9,6 +11,8 @@ import {
 import { recordSoloRace } from '../src/utils/progression.js';
 
 const storage = new Map();
+const root = path.resolve(import.meta.dirname, '..');
+const raceScene = fs.readFileSync(path.join(root, 'src', 'scenes', 'RaceScene.js'), 'utf8');
 globalThis.localStorage = {
   getItem: (key) => storage.get(key) ?? null,
   setItem: (key, value) => storage.set(key, String(value))
@@ -37,6 +41,8 @@ assert.deepEqual(
 );
 assert.equal(new Set(gridA.map((driver) => driver.carId)).size, gridA.length, 'AI cars must be unique');
 assert.ok(!gridA.some((driver) => driver.carId === CARS[0].id), 'the player car must stay out of the AI field');
+assert.match(raceScene, /targetRaceSpeed = Math\.max\(1, this\.referenceTopSpeedKph \* this\.velocityScale \* 0\.64\)/, 'Grand Prix rivals must use the selected player car package as their pace target');
+assert.match(raceScene, /pace: Phaser\.Math\.Clamp\(0\.985 \+ \(\(rival\.pace - 0\.84\) \/ 0\.26\) \* 0\.03, 0\.985, 1\.015\)/, 'Grand Prix rivals must remain within a close competitive pace band');
 
 const dry = updateAiProgress(gridA[0], 20_000, 3, 25_000, resolveWeatherCondition('dry'));
 const wet = updateAiProgress(gridA[0], 20_000, 3, 25_000, resolveWeatherCondition('wet'));

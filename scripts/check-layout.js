@@ -10,8 +10,10 @@ const scene = fs.readFileSync(path.join(root, 'src', 'scenes', 'RaceScene.js'), 
 
 assert.match(css, /1440px/, 'desktop content must cap at 1440px');
 assert.match(css, /\.select-section\s*\{[^}]*grid-column:\s*span 6/, 'vehicle and circuit must each span six columns');
-assert.match(css, /#session-config\s*\{[^}]*grid-column:\s*span 8/, 'session configuration must span eight columns');
-assert.match(css, /#screen-select \.selection-footer,[\s\S]*?grid-column:\s*span 4 !important;[\s\S]*?position:\s*static !important;/, 'CTA region must occupy four columns in normal flow');
+assert.match(html, /id="car-setup-panel"/, 'car setup must live beneath the vehicle selection');
+assert.doesNotMatch(html, /SESSION CONTROL|data-weather-choice|data-grid-choice/, 'retired session controls must not remain in the selection UI');
+assert.match(css, /\.car-select-card,\s*#screen-select \.track-select-card\s*\{[\s\S]*?min-height:\s*clamp\(480px, 58vh, 620px\)/, 'vehicle and circuit cards must share an equal desktop presentation height');
+assert.match(css, /#screen-select \.selection-footer,[\s\S]*?grid-column:\s*9\s*\/\s*-1 !important;[\s\S]*?position:\s*static !important;/, 'CTA region must occupy the final four columns in normal flow');
 assert.match(css, /#screen-mp-lobby \.mp-lobby-container\s*\{[^}]*grid-column:\s*1\s*\/\s*-1 !important;[^}]*grid-template-columns:\s*repeat\(12, minmax\(0, 1fr\)\)/s, 'co-op lobby must use the full 12-column command surface');
 assert.match(css, /#screen-leaderboard \.lb-body\s*\{[^}]*grid-column:\s*1\s*\/\s*-1 !important;[^}]*grid-template-columns:\s*repeat\(12, minmax\(0, 1fr\)\)/s, 'leaderboard must use the full 12-column timing surface');
 assert.match(css, /#screen-leaderboard \.lb-table-wrap[\s\S]*?width:\s*calc\(100vw - 52px\) !important;/, 'desktop leaderboard table must fill the available width');

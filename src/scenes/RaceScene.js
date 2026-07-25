@@ -429,7 +429,17 @@ export class RaceScene extends Phaser.Scene {
   createGrandPrixField() {
     const aiCount = Phaser.Math.Clamp(this.gridSize, 1, Math.max(1, CARS.length - 1));
     const sessionSeed = `${this.trackData.id}:${this.carData.id}:${this.weatherCondition.id}:${this.setupProfile.id}:${aiCount}`;
-    const baseLapTimeMs = Phaser.Math.Clamp(this.trackLength * 1.68, 50_000, 112_000);
+    // Rival pace must be measured against the selected player's actual race
+    // package, not a generic long-form simulation estimate. The car travels a
+    // lap at roughly 64% of its calibrated top speed once braking, corners and
+    // traction are accounted for. A very small deterministic spread keeps the
+    // field alive without creating uncatchable AI cars.
+    const targetRaceSpeed = Math.max(1, this.referenceTopSpeedKph * this.velocityScale * 0.64);
+    const baseLapTimeMs = Phaser.Math.Clamp(
+      (this.trackLength / targetRaceSpeed) * 1_000,
+      8_000,
+      70_000
+    );
 
     this.aiRivals = createAiGrid({
       cars: CARS,
@@ -439,7 +449,11 @@ export class RaceScene extends Phaser.Scene {
       seed: sessionSeed
     }).map((rival) => ({
       ...rival,
-      baseLapTimeMs
+      baseLapTimeMs,
+      // Preserve the seeded order while constraining performance to a close
+      // three-percent pack around the selected player car.
+      pace: Phaser.Math.Clamp(0.985 + ((rival.pace - 0.84) / 0.26) * 0.03, 0.985, 1.015),
+      consistency: 0.985
     }));
 
     this.aiRivals.forEach((rival) => {
