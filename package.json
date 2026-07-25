@@ -8,7 +8,8 @@
     "check:ui": "node scripts/check-ui.js",
     "check:stewards": "node scripts/check-stewarding.js",
     "check:handling": "node scripts/check-handling.js",
-    "build": "npm run check:ui && npm run check:stewards && npm run check:handling && vite build",
+    "check:dynamics": "node scripts/check-vehicle-dynamics.js",
+    "build": "npm run check:ui && npm run check:stewards && npm run check:handling && npm run check:dynamics && vite build",
     "preview": "vite preview",
     "deploy": "vite build && gh-pages -d dist",
     "verify:supabase": "node scripts/verify-supabase.js"

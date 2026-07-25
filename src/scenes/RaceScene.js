@@ -5,6 +5,7 @@ import { renderTrackGraphics } from '../utils/trackRenderer.js';
 import { getNearestSegmentIndex, checkCheckpointProximity, isOffRoad } from '../utils/trackPhysics.js';
 import { assessTrackLimits, createStewardState } from '../utils/stewarding.js';
 import { calculateHandling } from '../utils/handling.js';
+import { advanceVehicleDynamics, buildTrackProfile, sampleTrackContext } from '../utils/vehicleDynamics.js';
 import { startEngineSound, updateEnginePitch, stopEngineSound, setEngineActive, playBoostSound, playCheckpointSound, playFinishSound } from '../utils/audio.js';
 import { mpState, startPositionBroadcast, stopPositionBroadcast, broadcastRaceFinish, calculateLiveRank } from '../utils/multiplayer.js';
 
@@ -123,6 +124,7 @@ export class RaceScene extends Phaser.Scene {
     const trackResult = renderTrackGraphics(this, this.trackData);
     this.curvePoints = trackResult.curvePoints;
     this.roadWidth = trackResult.roadWidth;
+    this.trackProfile = buildTrackProfile(this.curvePoints, this.roadWidth);
 
     // 3. Create player car sprite (with deterministic grid slot placement for multiplayer)
     const startPos = this.trackData.startPos;
@@ -408,7 +410,7 @@ export class RaceScene extends Phaser.Scene {
     const targetZoom = (this.baseZoom || 0.7) * (1.0 - cameraSpeedRatio * 0.10);
     cam.zoom = Phaser.Math.Linear(cam.zoom, targetZoom, 2.5 * dt);
 
-    this.updateSpeedVignette(speedRatio);
+    this.updateSpeedVignette(cameraSpeedRatio);
 
     // Steering
     let steerDir = 0;
@@ -468,10 +470,25 @@ export class RaceScene extends Phaser.Scene {
     const gasOn = gasValue > 0;
     const brakeOn = brakeValue > 0;
 
+    const grassCheck = getNearestSegmentIndex(this.player.x, this.player.y, this.curvePoints, this.nearestSegmentIndex);
+    this.nearestSegmentIndex = grassCheck.nearestIndex;
+    this.onGrass = isOffRoad(this.player.x, this.player.y, this.curvePoints, this.roadWidth, grassCheck);
+    const displayedSpeed = Math.abs(this.currentSpeed) / 2.4;
+    const trackContext = sampleTrackContext(this.trackProfile, this.nearestSegmentIndex, {
+      speedKph: displayedSpeed,
+      roadWidth: this.roadWidth,
+      distanceFromCenter: Math.sqrt(grassCheck.minDistanceSq),
+      corneringGrip: this.corneringGrip,
+      onGrass: this.onGrass
+    });
+    const cornerOverspeed = Number.isFinite(trackContext.cornerSpeedKph)
+      ? Math.max(0, (displayedSpeed - trackContext.cornerSpeedKph) / Math.max(30, trackContext.cornerSpeedKph))
+      : 0;
+
     setEngineActive(gasOn || boostActive);
 
     const handling = calculateHandling({
-      speedKph: Math.abs(this.currentSpeed) / 2.4,
+      speedKph: displayedSpeed,
       maxSpeedKph: this.maxSpeed / 2.4,
       steerInput: steerDir,
       throttle: gasValue,
@@ -485,22 +502,13 @@ export class RaceScene extends Phaser.Scene {
       // braking before a turn matters on touch, keyboard, and gamepad alike.
       if (this.joystickActive) {
         const diff = Phaser.Math.Angle.Wrap(this.joystickHeading - this.player.rotation);
-        const maxTurn = this.turnRate * handling.steeringAuthority * dt;
+        const maxTurn = this.turnRate * handling.steeringAuthority / (1 + cornerOverspeed * 0.45) * dt;
         const step = Math.sign(diff) * Math.min(Math.abs(diff), maxTurn);
         this.player.rotation += step;
       } else {
-        this.player.rotation += steerDir * this.steeringSensitivity * handling.steeringAuthority * dt;
+        this.player.rotation += steerDir * this.steeringSensitivity * handling.steeringAuthority / (1 + cornerOverspeed * 0.45) * dt;
       }
     }
-
-    const grassCheck = getNearestSegmentIndex(this.player.x, this.player.y, this.curvePoints, this.nearestSegmentIndex);
-    this.nearestSegmentIndex = grassCheck.nearestIndex;
-    // Use the current route segment rather than any nearby section of this
-    // winding circuit. This keeps track-limit calls aligned with the road the
-    // driver is actually following and makes shortcut detection reliable.
-    this.onGrass = isOffRoad(this.player.x, this.player.y, this.curvePoints, this.roadWidth, grassCheck);
-
-    const displayedSpeed = Math.abs(this.currentSpeed) / 2.4;
     const stewardDecision = assessTrackLimits(this.stewardState, {
       onGrass: this.onGrass,
       speedKph: displayedSpeed,
@@ -528,10 +536,9 @@ export class RaceScene extends Phaser.Scene {
       }
     }
 
-    // Speed physics with momentum
-    let targetMaxSpeed = boostActive ? this.boostMaxSpeed : this.maxSpeed;
-    let currentAccel = boostActive ? this.boostAcceleration : this.acceleration;
-
+    // Engine, aero, braking, surface resistance, and corner scrub determine
+    // speed continuously. Car top-speed stats calibrate this balance but no
+    // longer act as a hard speed clamp.
     if (boostActive) {
       this.boostEnergy = Math.max(0, this.boostEnergy - this.boostDrain * dt);
       this.smokeEmitter.emitting = true;
@@ -564,69 +571,50 @@ export class RaceScene extends Phaser.Scene {
       this.smokeEmitter.setPosition(rx, ry);
     }
 
-    // Apply car-specific off-road behavior based on handling characteristic
-    // offRoadFactor: higher = better grip on grass (handling cars), lower = struggles more (speed cars)
     const offRoadFactor = (this.carData.offRoadFactor ?? 0.55);
-    if (this.onGrass) {
-      targetMaxSpeed *= offRoadFactor;
-      currentAccel *= 0.6 + (offRoadFactor - 0.55) * 0.5; // More handling = slightly better acceleration on grass
-    }
-
-    if (gasOn) {
-      if (this.currentSpeed < 0) {
+    if (this.currentSpeed < 0) {
+      // Keep reverse behaviour intentionally simple and separate from the
+      // forward force model.
+      if (gasOn) {
         this.currentSpeed += this.brakeForce * dt;
         if (this.currentSpeed > 0) this.currentSpeed = 0;
-      } else if (this.currentSpeed < targetMaxSpeed) {
-        const ratio = Math.max(0, this.currentSpeed / targetMaxSpeed);
-        const launchWindow = Math.max(0, 1 - ratio / 0.24);
-        const launchModifier = 1 + (this.launchGrip - 1) * launchWindow;
-        const launchAccel = currentAccel * (1.75 - 0.95 * Math.pow(ratio, 1.3)) * launchModifier * handling.accelerationFactor;
-        this.currentSpeed += launchAccel * gasValue * dt;
-        if (this.currentSpeed > targetMaxSpeed) {
-          this.currentSpeed = targetMaxSpeed;
-        }
-      } else if (this.currentSpeed > targetMaxSpeed) {
-        this.currentSpeed -= (this.onGrass ? this.drag * 3.5 : this.drag) * dt;
-        if (this.currentSpeed < targetMaxSpeed) {
-          this.currentSpeed = targetMaxSpeed;
-        }
-      }
-    } else if (boostActive) {
-      if (this.currentSpeed < targetMaxSpeed) {
-        this.currentSpeed += currentAccel * handling.accelerationFactor * dt;
-        if (this.currentSpeed > targetMaxSpeed) {
-          this.currentSpeed = targetMaxSpeed;
-        }
-      }
-    } else if (brakeOn) {
-      if (this.currentSpeed > 0) {
-        this.currentSpeed -= this.brakeForce * brakeValue * dt;
-        if (this.currentSpeed < 0) this.currentSpeed = 0;
+      } else if (brakeOn) {
+        this.currentSpeed = Math.max(-85 * 2.4, this.currentSpeed - this.acceleration * 0.8 * brakeValue * dt);
       } else {
-        if (this.currentSpeed > -85 * 2.4) {
-          this.currentSpeed -= this.acceleration * 0.8 * brakeValue * dt;
-        }
+        this.currentSpeed = Math.min(0, this.currentSpeed + this.drag * dt);
       }
+    } else if (this.currentSpeed === 0 && brakeOn && !gasOn) {
+      this.currentSpeed = Math.max(-85 * 2.4, -this.acceleration * 0.8 * brakeValue * dt);
     } else {
-      const currentDrag = this.onGrass ? (this.drag * 3.5) : this.drag;
-      if (this.currentSpeed > targetMaxSpeed) {
-        this.currentSpeed -= currentDrag * dt;
-        if (this.currentSpeed < targetMaxSpeed) {
-          this.currentSpeed = targetMaxSpeed;
-        }
-      } else if (this.currentSpeed > 0) {
-        this.currentSpeed -= currentDrag * dt;
-        if (this.currentSpeed < 0) this.currentSpeed = 0;
-      } else if (this.currentSpeed < 0) {
-        this.currentSpeed += currentDrag * dt;
-        if (this.currentSpeed > 0) this.currentSpeed = 0;
-      }
+      const dynamics = advanceVehicleDynamics({
+        speedKph: displayedSpeed,
+        throttle: Math.max(gasValue, boostActive ? 0.45 : 0),
+        brake: brakeValue,
+        boostActive,
+        onGrass: this.onGrass,
+        offRoadFactor,
+        accelerationStat: this.carData.acceleration ?? 180,
+        brakeForceStat: this.carData.brakeForce ?? 450,
+        dragStat: this.carData.drag ?? 25,
+        referenceTopSpeedKph: this.carData.topSpeed ?? this.maxSpeed / 2.4,
+        boostAccelerationStat: this.carData.boostAcceleration ?? this.carData.acceleration ?? 180,
+        boostReferenceTopSpeedKph: this.carData.boostMaxSpeed ?? this.carData.topSpeed ?? this.maxSpeed / 2.4,
+        accelerationFactor: handling.accelerationFactor * (1 / (1 + cornerOverspeed * 0.65)),
+        steerInput: steerDir,
+        trackContext,
+        deltaSeconds: dt
+      });
+      this.currentSpeed = dynamics.speedKph * 2.4;
     }
 
     const targetVx = Math.cos(this.player.rotation) * this.currentSpeed;
     const targetVy = Math.sin(this.player.rotation) * this.currentSpeed;
     const terrainResponse = this.onGrass ? 0.82 : 1;
-    const directionResponse = Phaser.Math.Clamp(handling.directionResponse * terrainResponse, 0.06, 0.31);
+    const directionResponse = Phaser.Math.Clamp(
+      handling.directionResponse * terrainResponse * trackContext.surfaceGrip / (1 + cornerOverspeed * 0.6),
+      0.045,
+      0.31
+    );
     this.vx = Phaser.Math.Linear(this.vx, targetVx, directionResponse);
     this.vy = Phaser.Math.Linear(this.vy, targetVy, directionResponse);
 
@@ -634,8 +622,6 @@ export class RaceScene extends Phaser.Scene {
     if (this.player && this.player.body) {
       this.player.body.setVelocity(this.vx, this.vy);
     }
-    this.player.x += this.vx * dt;
-    this.player.y += this.vy * dt;
 
     // Spark emitter countdown timer to avoid setTimeout GC allocations
     if (this.sparkDuration > 0) {
