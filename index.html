@@ -17,8 +17,8 @@
   <!-- Material Symbols (icon font) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
 
-  <script type="module" crossorigin src="./assets/index-BAv3Jbs_.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-D3kHit8L.css">
+  <script type="module" crossorigin src="./assets/index-Bx2f3UaP.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-D17-hzDs.css">
 </head>
 <body>
   <!-- Scanline CRT overlay -->
@@ -80,7 +80,7 @@
           <div class="garage-heading">
             <span class="garage-kicker">PIXEL PRIX / SEASON 04</span>
             <h1>RACE CONTROL</h1>
-            <p>Choose a solo time trial, join a co-op race, or review live timing.</p>
+            <p>Choose a solo time trial, race an AI grid, join a co-op race, or review live timing.</p>
             <span class="daily-featured-chip" id="daily-featured-chip">DAILY FEATURE: LOADING…</span>
           </div>
 
@@ -122,6 +122,13 @@
               </span>
             </button>
           </div>
+
+          <button id="btn-open-grand-prix" class="garage-grand-prix-strip" aria-label="Set up an offline Grand Prix against AI drivers">
+            <span class="garage-node" aria-hidden="true"></span>
+            <span class="material-symbols-outlined" aria-hidden="true">flag</span>
+            <span><strong>GRAND PRIX</strong><small>RACE A LIVE AI GRID · WEATHER, SETUP &amp; CLASSIFICATION</small></span>
+            <span class="garage-grand-prix-arrow material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+          </button>
 
           <div class="garage-shortcuts" aria-label="Keyboard shortcuts">
             <span><kbd>F3</kbd> HELP</span>
@@ -289,6 +296,40 @@
             </div>
           </div>
         </div>
+
+        <section id="session-config" class="session-config" aria-label="Race session setup">
+          <div class="session-config-heading">
+            <span class="section-label">SESSION CONTROL</span>
+            <span id="session-config-copy">TIME TRIAL · PERSONAL GHOST ENABLED</span>
+          </div>
+          <div class="session-config-grid">
+            <div class="session-choice-group">
+              <span class="session-choice-label">CONDITIONS</span>
+              <div class="session-choice-buttons" role="group" aria-label="Weather conditions">
+                <button id="btn-weather-auto" class="session-choice active" data-weather-choice="auto" type="button">TRACK CALL</button>
+                <button id="btn-weather-clear" class="session-choice" data-weather-choice="clear" type="button">CLEAR</button>
+                <button id="btn-weather-wet" class="session-choice" data-weather-choice="wet" type="button">WET</button>
+                <button id="btn-weather-night" class="session-choice" data-weather-choice="night" type="button">NIGHT</button>
+              </div>
+            </div>
+            <div class="session-choice-group">
+              <span class="session-choice-label">CAR SETUP</span>
+              <div class="session-choice-buttons" role="group" aria-label="Car setup">
+                <button id="btn-setup-attack" class="session-choice" data-setup-choice="attack" type="button">ATTACK</button>
+                <button id="btn-setup-balanced" class="session-choice active" data-setup-choice="balanced" type="button">BALANCED</button>
+                <button id="btn-setup-rain" class="session-choice" data-setup-choice="rain" type="button">RAIN</button>
+              </div>
+            </div>
+            <div id="gp-grid-config" class="session-choice-group gp-grid-config">
+              <span class="session-choice-label">AI GRID</span>
+              <div class="session-choice-buttons" role="group" aria-label="Grand Prix grid size">
+                <button id="btn-grid-4" class="session-choice" data-grid-choice="4" type="button">4 RIVALS</button>
+                <button id="btn-grid-6" class="session-choice active" data-grid-choice="6" type="button">6 RIVALS</button>
+                <button id="btn-grid-8" class="session-choice" data-grid-choice="8" type="button">8 RIVALS</button>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <!-- Mode-aware race actions -->
         <div class="selection-footer selection-footer-bar mp-action-bar">
@@ -514,6 +555,10 @@
                 <span class="f1-tel-label" id="hud-mp-status-label">GAP</span>
                 <span class="f1-tel-val digital" id="hud-mp-status-text">LEADER</span>
               </div>
+              <div class="f1-tel-cell hidden" id="hud-race-status">
+                <span class="f1-tel-label" id="hud-race-status-label">STATUS</span>
+                <span class="f1-tel-val digital" id="hud-race-status-text">READY</span>
+              </div>
             </div>
           </div>
 
@@ -620,7 +665,7 @@
       <!-- ============================================================== -->
       <div id="screen-gameover" class="ui-screen hidden">
         <div class="modal-card glass-modal">
-          <div class="finish-banner">RACE FINISHED</div>
+          <div class="finish-banner" id="go-finish-banner">RACE FINISHED</div>
 
           <div class="time-display-box">
             <div class="penalty-breakdown">
@@ -638,6 +683,17 @@
             <div class="final-time-value" id="go-final-time">00:45.320</div>
             <div class="best-lap-sub" id="go-best-lap">Best Lap: 00:22.100</div>
           </div>
+
+          <section id="go-grand-prix-summary" class="go-grand-prix-summary hidden" aria-live="polite">
+            <div class="go-grand-prix-headline">
+              <span id="go-grand-prix-position">P1</span>
+              <span>
+                <strong>GRAND PRIX CLASSIFICATION</strong>
+                <small id="go-grand-prix-condition">TRACK CALL · BALANCED</small>
+              </span>
+            </div>
+            <div id="go-grand-prix-rows" class="go-grand-prix-rows"></div>
+          </section>
 
           <!-- Sector Timing Breakdown -->
           <div id="go-sector-breakdown"></div>
@@ -667,6 +723,7 @@
             <p id="submit-status" class="status-msg" role="status" aria-live="polite"></p>
             <p id="submit-hint" class="status-hint">3–16 letters or numbers. Saved to global broadcast leaderboards.</p>
           </form>
+          <p id="go-session-note" class="go-session-note hidden">CUSTOM SESSION RESULT — SAVED TO YOUR DRIVER PROFILE, NOT THE STANDARD TIMING TOWER.</p>
 
           <div class="gameover-actions">
             <button id="btn-retry-race" class="btn btn-secondary">
