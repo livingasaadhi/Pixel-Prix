@@ -344,10 +344,10 @@ export const TRACKS = [
 // The original circuits were intentionally compact while the core handling
 // was being tuned.  Scale the complete geometry as one unit so a lap is
 // meaningfully longer without changing a circuit's identity or breaking its
-// checkpoint order. Road width is deliberately narrow to reward precise,
-// disciplined racing lines.
-const CIRCUIT_LENGTH_SCALE = 10;
-const CIRCUIT_WIDTH_SCALE = 3.2;
+// checkpoint order. Routes are compact enough for quick races while the road
+// remains deliberately narrow to reward precise, disciplined racing lines.
+const CIRCUIT_LENGTH_SCALE = 5;
+const CIRCUIT_WIDTH_SCALE = 2.56;
 const STANDARD_RACE_LAPS = 3;
 const DEFAULT_STEWARD_PROFILE = {
   reviewMs: 1500,
@@ -355,7 +355,7 @@ const DEFAULT_STEWARD_PROFILE = {
   shortcutMs: 750,
   offTrackSpeedKph: 90,
   shortcutSpeedKph: 190,
-  recoveryMs: 1400,
+  recoveryMs: 400,
   warningLimit: 2,
   trackLimitPenaltyMs: 5000,
   shortcutPenaltyMs: 10000

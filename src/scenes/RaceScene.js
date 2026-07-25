@@ -32,6 +32,7 @@ export class RaceScene extends Phaser.Scene {
     this.penaltyMs = 0;
     this.offRoadDurationMs = 0;
     this.offRoadPeakSpeedKph = 0;
+    this.offRoadInfractionIssued = false;
     this.advantageAlertActive = false;
     this.advantageTimerMs = 0;
     this.offRoadGraceMs = 0; // Grace period when returning to track
@@ -515,22 +516,24 @@ export class RaceScene extends Phaser.Scene {
 
       // A high-speed sustained cut is a direct advantage, separate from the
       // normal three-warning track-limit ladder.
-      if (this.offRoadDurationMs >= this.shortcutThresholdMs && this.offRoadPeakSpeedKph >= this.shortcutSpeedKph) {
+      if (!this.offRoadInfractionIssued && this.offRoadDurationMs >= this.shortcutThresholdMs && this.offRoadPeakSpeedKph >= this.shortcutSpeedKph) {
         this.penaltyMs += this.shortcutPenaltyMs;
         this.offRoadDurationMs = 0;
         this.offRoadPeakSpeedKph = 0;
+        this.offRoadInfractionIssued = true;
         this.offRoadWarningIssued = false;
         this.advantageAlertActive = false;
         this.showStewardsNotification(`STEWARDS: +${(this.shortcutPenaltyMs / 1000).toFixed(1)}s PENALTY (SUSTAINED SHORTCUT)`);
-      } else if (this.offRoadDurationMs >= this.penaltyThresholdMs) {
+      } else if (!this.offRoadInfractionIssued && this.offRoadDurationMs >= this.penaltyThresholdMs) {
         this.handleTrackLimitsViolation();
         this.offRoadDurationMs = 0; // Reset after penalty
+        this.offRoadInfractionIssued = true;
         this.offRoadWarningIssued = false;
       } else if (this.offRoadDurationMs >= this.warningThresholdMs && !this.offRoadWarningIssued) {
         this.offRoadWarningIssued = true;
         this.showStewardsNotification('STEWARDS: TRACK LIMITS UNDER REVIEW');
       }
-    } else {
+    } else if (!this.onGrass) {
       // Finish each off-track excursion cleanly after a genuine re-entry.
       // Gradually draining the old timer caused separate corners to combine
       // into seemingly random later penalties.
@@ -538,6 +541,7 @@ export class RaceScene extends Phaser.Scene {
       if (this.offRoadGraceMs >= this.offRoadRecoveryMs) {
         this.offRoadDurationMs = 0;
         this.offRoadPeakSpeedKph = 0;
+        this.offRoadInfractionIssued = false;
         this.offRoadWarningIssued = false;
       }
     }
