@@ -21,17 +21,17 @@ assert.doesNotMatch(
 );
 assert.match(
   css,
-  /#screen-menu,[\s\S]*?#screen-gameover\s*\{[^}]*overflow-y:\s*auto !important;/,
+  /\.ui-screen\s*\{[^}]*overflow-y:\s*auto;/,
   'menu and setup surfaces must scroll rather than clip on short mobile viewports'
 );
 assert.match(
   css,
-  /#screen-leaderboard \.lb-rows\s*\{[^}]*overflow-y:\s*auto !important;[^}]*touch-action:\s*pan-y;/s,
+  /\.lb-rows\s*\{[^}]*overflow-y:\s*auto !important;[^}]*touch-action:\s*pan-y;/s,
   'leaderboard rows must remain vertically reachable on short touch viewports'
 );
 assert.match(
   css,
-  /#screen-menu \.garage-heading p\s*\{[^}]*white-space:\s*normal;[^}]*overflow-wrap:\s*anywhere;/s,
+  /\.garage-heading p\s*\{[^}]*overflow-wrap:\s*anywhere;[^}]*white-space:\s*normal;/s,
   'mobile menu copy must wrap instead of clipping beyond the viewport'
 );
 assert.match(

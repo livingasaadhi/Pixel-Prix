@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = path.resolve(import.meta.dirname, '..');
+const css = fs.readFileSync(path.join(root, 'src', 'style.css'), 'utf8');
+const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const main = fs.readFileSync(path.join(root, 'src', 'main.js'), 'utf8');
+const scene = fs.readFileSync(path.join(root, 'src', 'scenes', 'RaceScene.js'), 'utf8');
+
+assert.match(css, /--content-max:\s*1440px/, 'desktop content must cap at 1440px');
+assert.match(css, /\.select-section\s*\{[^}]*grid-column:\s*span 6/, 'vehicle and circuit must each span six columns');
+assert.match(css, /#session-config\s*\{[^}]*grid-column:\s*span 8/, 'session configuration must span eight columns');
+assert.match(css, /\.selection-footer, \.selection-actions\s*\{[^}]*grid-column:\s*span 4[^}]*position:\s*static/s, 'CTA region must occupy four columns in normal flow');
+assert.match(html, /id="hud-alert-region"/, 'alerts must be structurally independent from telemetry');
+assert.doesNotMatch(main, /_sectorTickerActive/, 'legacy shared ticker state must not return');
+assert.match(main, /label: 'TRACK LIMITS', message: 'UNDER REVIEW'/, 'review alerts must include plain-language meaning');
+assert.match(scene, /updateRaceCamera\(deltaSeconds = 0\.1\)/, 'race view must use one camera controller');
+assert.doesNotMatch(scene, /centerCameraOnPlayer/, 'legacy competing player camera controller must not return');
+assert.match(scene, /1 - speedRatio \* 0\.06/, 'speed zoom-out must stay below the approved six percent');
+assert.match(css, /#hud-steer-left-group, #hud-drive-left-group \{ display: none !important; \}/, 'duplicate touch controls must remain hidden');
+
+console.log('Layout checks passed: 12-column shell, independent HUD alerts, single camera, and deliberate touch controls verified.');

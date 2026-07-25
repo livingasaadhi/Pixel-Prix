@@ -651,29 +651,20 @@ export class RaceScene extends Phaser.Scene {
 
   frameCamera() {
     const cam = this.cameras.main;
-    const pad = (this.roadWidth || 100) + 60;
-
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const p of this.curvePoints) {
-      if (p.x < minX) minX = p.x;
-      if (p.x > maxX) maxX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.y > maxY) maxY = p.y;
-    }
-
     const vw = this.scale.width || window.innerWidth;
     const vh = this.scale.height || window.innerHeight;
 
     cam.setViewport(0, 0, vw, vh);
     this.weatherOverlay?.setSize(vw, vh);
 
-    // Tight high-speed camera framing (baseZoom ~1.12) so vehicle movement feels punchy & fast
-    this.baseZoom = Math.max(0.95, Math.min(1.25, vw / 1150));
+    // One tactical camera profile for every viewport. The aspect-aware base is
+    // intentionally wide: the car occupies roughly 6–9% of the viewport height.
+    this.baseZoom = Phaser.Math.Clamp(Math.min(vw / 1550, vh / 980), 0.58, 0.76);
     cam.setZoom(this.baseZoom);
 
     cam.setRotation(0);
     cam.removeBounds();
-    this.centerCameraOnPlayer();
+    this.updateRaceCamera(1);
     if (this.playerShadow) {
       this.playerShadow.setPosition(this.player.x + 7, this.player.y + 9);
       this.playerShadow.rotation = this.player.rotation;
@@ -692,28 +683,28 @@ export class RaceScene extends Phaser.Scene {
     this.emitHUDUpdate();
   }
 
-  centerCameraOnPlayer() {
+  updateRaceCamera(deltaSeconds = 0.1) {
     if (!this.player || !this.cameras.main) return;
     const cam = this.cameras.main;
     cam.rotation = 0;
 
-    // Speed ratio relative to reference top speed
-    const speedRatio = Math.min(1.4, Math.abs(this.currentSpeed) / Math.max(1, 275 * this.velocityScale));
+    const speedRatio = Phaser.Math.Clamp(
+      Math.abs(this.currentSpeed) / Math.max(1, this.maxSpeed || 275 * this.velocityScale), 0, 1
+    );
+    const targetZoom = (this.baseZoom || 0.68) * (1 - speedRatio * 0.06);
+    const interpolation = Phaser.Math.Clamp(deltaSeconds * 7, 0, 1);
+    cam.zoom = Phaser.Math.Linear(cam.zoom || targetZoom, targetZoom, interpolation);
 
-    // Dynamic optical speed zoom: widens slightly at high speed for motion FOV effect
-    const targetZoom = (this.baseZoom || 1.12) - speedRatio * 0.14;
-    cam.zoom = Phaser.Math.Linear(cam.zoom || targetZoom, targetZoom, 0.08);
-
-    // Forward camera lead along vehicle heading so driver sees the road coming at them
-    const leadDist = speedRatio * 75;
+    // A proportional forward lead exposes the next corner without making the
+    // car feel glued to the lower edge of the display.
+    const leadDist = 28 + speedRatio * 88;
     const leadX = Math.cos(this.player.rotation) * leadDist;
     const leadY = Math.sin(this.player.rotation) * leadDist;
 
     let ox = 0;
     let oy = 0;
     if (this.onGrass && Math.abs(this.currentSpeed) > 100) {
-      // Simulate grass off-road vibration based on vehicle speed
-      const intensity = (Math.abs(this.currentSpeed) / (this.maxSpeed || 1000)) * 12;
+      const intensity = speedRatio * 5;
       ox = (Math.random() - 0.5) * intensity;
       oy = (Math.random() - 0.5) * intensity;
     }
@@ -727,14 +718,7 @@ export class RaceScene extends Phaser.Scene {
 
   update(time, delta) {
     const dt = delta / 1000;
-    const cam = this.cameras.main;
     this.gamepadInput = this.readGamepadInputs();
-
-    this.centerCameraOnPlayer();
-    if (this.playerShadow) {
-      this.playerShadow.setPosition(this.player.x + 7, this.player.y + 9);
-      this.playerShadow.rotation = this.player.rotation;
-    }
 
     if (!this.lightsGreen) {
       const isTryingToDrive = this.isAccelerating || this.touchGas > 0.1 ||
@@ -746,9 +730,10 @@ export class RaceScene extends Phaser.Scene {
       if (isTryingToDrive && !this.hasFalseStartPenalty) {
         this.hasFalseStartPenalty = true;
         this.penaltyMs += 5000;
-        this.showStewardsNotification('STEWARDS: +5.0s PENALTY (FALSE START)');
+        this.showStewardsNotification('STEWARDS: +5.0s PENALTY (FALSE START)', 'penalty');
         this.emitHUDUpdate();
       }
+      this.updateRaceCamera(dt);
       return;
     }
 
@@ -771,9 +756,6 @@ export class RaceScene extends Phaser.Scene {
     this.prevSpeed = this.currentSpeed;
 
     const cameraSpeedRatio = Math.min(1.0, Math.abs(this.currentSpeed) / (this.maxSpeed || 275));
-    const targetZoom = (this.baseZoom || 0.7) * (1.0 - cameraSpeedRatio * 0.10);
-    cam.zoom = Phaser.Math.Linear(cam.zoom, targetZoom, 2.5 * dt);
-
     this.updateSpeedVignette(cameraSpeedRatio);
 
     // Steering
@@ -885,18 +867,18 @@ export class RaceScene extends Phaser.Scene {
     if (stewardDecision.event) {
       const { type, penaltyMs = 0 } = stewardDecision.event;
       if (type === 'review') {
-        this.showStewardsNotification('STEWARDS: TRACK LIMITS UNDER REVIEW');
+        this.showStewardsNotification('STEWARDS: TRACK LIMITS UNDER REVIEW', 'review');
       } else if (type === 'warning') {
-        this.showStewardsNotification(`STEWARDS: TRACK LIMITS WARNING ${this.trackLimitsCount}/${this.stewardProfile.warningLimit}`);
+        this.showStewardsNotification(`STEWARDS: TRACK LIMITS WARNING ${this.trackLimitsCount}/${this.stewardProfile.warningLimit}`, 'review');
       } else if (type === 'final-warning') {
-        this.showStewardsNotification(`STEWARDS: FINAL WARNING ${this.trackLimitsCount}/${this.stewardProfile.warningLimit}`);
+        this.showStewardsNotification(`STEWARDS: FINAL WARNING ${this.trackLimitsCount}/${this.stewardProfile.warningLimit}`, 'review');
       } else if (type === 'track-limit-penalty') {
         this.penaltyMs += penaltyMs;
-        this.showStewardsNotification(`STEWARDS: +${(penaltyMs / 1000).toFixed(1)}s TIME PENALTY (TRACK LIMITS)`);
+        this.showStewardsNotification(`STEWARDS: +${(penaltyMs / 1000).toFixed(1)}s TIME PENALTY (TRACK LIMITS)`, 'penalty');
       } else if (type === 'shortcut-penalty') {
         this.penaltyMs += penaltyMs;
         this.advantageAlertActive = false;
-        this.showStewardsNotification(`STEWARDS: +${(penaltyMs / 1000).toFixed(1)}s PENALTY (SUSTAINED SHORTCUT)`);
+        this.showStewardsNotification(`STEWARDS: +${(penaltyMs / 1000).toFixed(1)}s PENALTY (SUSTAINED SHORTCUT)`, 'penalty');
       }
     }
 
@@ -1043,6 +1025,12 @@ export class RaceScene extends Phaser.Scene {
       this.updateMultiplayerView();
       this.updateMultiplayerHUD(false);
     }
+
+    if (this.playerShadow) {
+      this.playerShadow.setPosition(this.player.x + 7, this.player.y + 9);
+      this.playerShadow.rotation = this.player.rotation;
+    }
+    this.updateRaceCamera(dt);
   }
 
   getRaceProgress() {
@@ -1150,7 +1138,7 @@ export class RaceScene extends Phaser.Scene {
       this.cameras.main.centerOn(target.sprite.x, target.sprite.y);
       return;
     }
-    this.centerCameraOnPlayer();
+    this.updateRaceCamera();
   }
 
   updateMultiplayerHUD(spectating) {
@@ -1372,8 +1360,8 @@ export class RaceScene extends Phaser.Scene {
     }));
   }
 
-  showStewardsNotification(msg) {
-    this.showNotification(msg, 'stewards');
+  showStewardsNotification(msg, severity = 'review') {
+    this.showNotification(msg, severity);
   }
 
   emitHUDUpdate() {

@@ -523,7 +523,7 @@
           </button>
         </div>
 
-        <!-- Modern F1 Steering Wheel Cockpit Display (Center-Top Unified Telemetry Hub) -->
+        <!-- Compact race telemetry: data stays separate from temporary alerts. -->
         <div class="hud-steering-wheel-display">
           <!-- RPM Shift Light LED Bar -->
           <div class="f1-rpm-bar">
@@ -566,25 +566,27 @@
             </div>
           </div>
 
-          <!-- Dynamic Broadcast Telemetry & Steward Ticker Strip -->
-          <div class="hud-warning-bar clean" id="hud-penalty-chip">
+        </div>
+
+        <div id="hud-alert-region" aria-live="polite" aria-atomic="true">
+          <div class="hud-warning-bar hidden" id="hud-penalty-chip" role="status">
             <span class="hud-warning-left">
-              <span class="material-symbols-outlined hud-warning-icon" id="hud-ticker-icon">shield</span>
-              <span id="hud-ticker-label">TRACK LIMITS</span>
+              <span class="material-symbols-outlined hud-warning-icon" id="hud-ticker-icon">flag</span>
+              <span id="hud-ticker-label">RACE CONTROL</span>
             </span>
-            <span class="hud-warning-right" id="hud-penalty-text">CLEAN</span>
+            <span class="hud-warning-right" id="hud-penalty-text"></span>
           </div>
         </div>
 
         <!-- Bottom HUD Touch Controls (Frosted Glass Overlay) -->
         <div class="hud-bottom">
-          <!-- LEFT: Steering buttons -->
-          <div class="hud-steer-group" id="hud-steer-left-group">
-            <button id="btn-touch-left" class="hud-ctrl-btn hud-ctrl-square glass-touch" aria-label="Steer left">
+          <!-- Legacy button bindings are retained but intentionally hidden: touch uses one joystick. -->
+          <div class="hud-steer-group" id="hud-steer-left-group" aria-hidden="true">
+            <button id="btn-touch-left" class="hud-ctrl-btn hud-ctrl-square glass-touch" aria-label="Steer left" tabindex="-1">
               <span class="material-symbols-outlined">arrow_back</span>
               <span class="hud-key-badge">A</span>
             </button>
-            <button id="btn-touch-right" class="hud-ctrl-btn hud-ctrl-square glass-touch" aria-label="Steer right">
+            <button id="btn-touch-right" class="hud-ctrl-btn hud-ctrl-square glass-touch" aria-label="Steer right" tabindex="-1">
               <span class="material-symbols-outlined">arrow_forward</span>
               <span class="hud-key-badge">D</span>
             </button>
@@ -597,15 +599,15 @@
             </div>
           </div>
 
-          <!-- LEFT: Boost + Reverse -->
-          <div class="hud-drive-group" id="hud-drive-left-group">
-            <button id="btn-touch-boost-left" class="hud-ctrl-btn hud-ctrl-tri-boost glass-touch" aria-label="Boost / ERS">
+          <!-- Legacy bindings are retained; ERS and brake live in the right control cluster. -->
+          <div class="hud-drive-group" id="hud-drive-left-group" aria-hidden="true">
+            <button id="btn-touch-boost-left" class="hud-ctrl-btn hud-ctrl-tri-boost glass-touch" aria-label="Boost / ERS" tabindex="-1">
               <span class="material-symbols-outlined hud-icon-primary">bolt</span>
               <span class="hud-ctrl-label">ERS</span>
               <span class="hud-key-badge">SPACE</span>
             </button>
 
-            <button id="btn-touch-reverse" class="hud-ctrl-btn hud-ctrl-tri-brake glass-touch" aria-label="Reverse">
+            <button id="btn-touch-reverse" class="hud-ctrl-btn hud-ctrl-tri-brake glass-touch" aria-label="Reverse" tabindex="-1">
               <span class="material-symbols-outlined hud-icon-error">eject</span>
               <span class="hud-ctrl-label hud-ctrl-label-error">REVERSE</span>
               <span class="hud-key-badge">S</span>
@@ -615,9 +617,9 @@
           <!-- RIGHT: Triangular Controls -->
           <div class="hud-drive-group" id="hud-drive-right-group">
             <div class="hud-drive-triangular">
-              <button id="btn-touch-boost" class="hud-ctrl-btn hud-ctrl-tri-boost glass-touch" aria-label="Boost">
+              <button id="btn-touch-boost" class="hud-ctrl-btn hud-ctrl-tri-boost glass-touch" aria-label="ERS boost">
                 <span class="material-symbols-outlined hud-icon-primary">bolt</span>
-                <span class="hud-ctrl-label">BOOST</span>
+                <span class="hud-ctrl-label">ERS</span>
                 <span class="hud-key-badge">SPACE</span>
               </button>
               <button id="btn-touch-brake" class="hud-ctrl-btn hud-ctrl-tri-brake glass-touch" aria-label="Brake">
@@ -762,11 +764,6 @@
               <span class="lb-header-season">SEASON 04 · LAP RECORDS</span>
             </div>
           </div>
-          <div class="lb-header-right">
-            <button class="icon-btn" aria-label="Search live timing (unavailable)" id="btn-search-lb" title="Search live timing is unavailable" disabled aria-disabled="true">
-              <span class="material-symbols-outlined">search</span>
-            </button>
-          </div>
         </div>
 
         <div class="lb-body">
@@ -822,7 +819,7 @@
                 <h4>Touch Screen (Mobile)</h4>
                 <ul>
                   <li><strong>Left Thumb:</strong> Steering Left / Right</li>
-                  <li><strong>Right Thumb:</strong> REVERSE (left), GAS (right), BOOST (top)</li>
+                  <li><strong>Right Thumb:</strong> GAS, BRAKE, and ERS. Brake reverses only at low speed.</li>
                 </ul>
               </div>
               <div class="control-box">
@@ -848,6 +845,10 @@
             <div class="rules-box">
               <h4>RACE STEWARDS &amp; PENALTY SYSTEM</h4>
               <p>Passing checkpoints in order is mandatory. Brief run-off and recovery are allowed. Sustained off-track driving is reviewed, with three confirmed warnings before further breaches add a +2.0s penalty. A prolonged high-speed shortcut can add +3.0s.</p>
+            </div>
+            <div class="rules-box timing-key">
+              <h4>TIMING KEY</h4>
+              <p><strong>Session best</strong> is the quickest sector in this session. <strong>Personal best</strong> improves your own prior split. <strong>+0.214s</strong> means time lost against the session benchmark. Purple, green, amber, and red alerts always include this plain-language label.</p>
             </div>
           </div>
         </div>

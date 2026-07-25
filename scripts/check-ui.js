@@ -36,11 +36,14 @@ if (missing.length > 0) {
 
 assert.match(html, /LIVE TIMING/, 'the app chrome must use original live-timing branding');
 assert.doesNotMatch(html, />F1 BROADCAST</, 'the public UI must not present copied Formula 1 branding');
-assert.match(css, /PRODUCTION CASCADE LOCK/, 'the production visual system must remain the final style layer');
+assert.match(css, /PIXEL PRIX · RACE CONTROL DESIGN SYSTEM/, 'the unified Pixel Prix design system must remain in place');
+assert.match(css, /grid-template-columns:\s*repeat\(12, var\(--shell\)\)/, 'all screens must use the shared 12-column shell');
+assert.match(html, /id="hud-alert-region"[^>]*aria-live="polite"/, 'race-control alerts must have their own live region');
+assert.match(html, /id="hud-penalty-chip"[^>]*role="status"/, 'the stable penalty chip must remain an explicit alert presenter');
 assert.match(css, /@media \(max-width: 860px\) and \(orientation: landscape\)/, 'the touch race HUD must retain a landscape-specific layout');
 assert.match(
   css,
-  /\.touch-device #hud-steer-left-group, \.touch-device #hud-drive-left-group \{ display: none !important; \}/,
+  /#hud-steer-left-group, #hud-drive-left-group \{ display: none !important; \}/,
   'touch racers must see one deliberate steering/control scheme rather than duplicate inputs'
 );
 assert.match(css, /@media \(prefers-reduced-motion: reduce\)/, 'the production UI must respect reduced-motion preferences');

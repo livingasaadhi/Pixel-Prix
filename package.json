@@ -8,6 +8,8 @@
     "check:ui": "node scripts/check-ui.js",
     "check:controls": "node scripts/check-controls.js",
     "check:responsive-ui": "node scripts/check-responsive-ui.js",
+    "check:layout": "node scripts/check-layout.js",
+    "check:viewports": "node scripts/ui-viewport-smoke.mjs",
     "check:multiplayer": "node scripts/check-multiplayer-lifecycle.js",
     "check:stewards": "node scripts/check-stewarding.js",
     "check:handling": "node scripts/check-handling.js",
@@ -15,7 +17,7 @@
     "check:race-pace": "node scripts/check-race-pace.js",
     "check:grand-prix": "node scripts/check-grand-prix.js",
     "check:ghost": "node scripts/check-ghost-replay.js",
-    "build": "npm run check:ui && npm run check:controls && npm run check:responsive-ui && npm run check:multiplayer && npm run check:stewards && npm run check:handling && npm run check:dynamics && npm run check:race-pace && npm run check:grand-prix && npm run check:ghost && vite build",
+    "build": "npm run check:ui && npm run check:controls && npm run check:responsive-ui && npm run check:layout && npm run check:multiplayer && npm run check:stewards && npm run check:handling && npm run check:dynamics && npm run check:race-pace && npm run check:grand-prix && npm run check:ghost && vite build",
     "preview": "vite preview",
     "deploy": "vite build && gh-pages -d dist",
     "verify:supabase": "node scripts/verify-supabase.js"

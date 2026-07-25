@@ -875,6 +875,70 @@ function renderGrandPrixSummary(result) {
   summary?.classList.remove('hidden');
 }
 
+// RACE CONTROL ALERT PRESENTER
+// One visible, priority-aware channel keeps timing, penalties, and steward calls
+// readable without competing with primary telemetry.
+// ----------------------------------------------------------------------------
+const HUD_ALERT_PRIORITY = Object.freeze({ neutral: 1, sector: 2, review: 3, penalty: 4 });
+let activeHudAlert = null;
+let hudAlertTimeout = null;
+
+function clearHudAlert(expectedKind) {
+  if (expectedKind && activeHudAlert?.kind !== expectedKind) return;
+  if (hudAlertTimeout) clearTimeout(hudAlertTimeout);
+  hudAlertTimeout = null;
+  activeHudAlert = null;
+  const chip = document.getElementById('hud-penalty-chip');
+  if (chip) {
+    chip.className = 'hud-warning-bar hidden';
+    chip.setAttribute('aria-hidden', 'true');
+  }
+}
+
+function presentHudAlert({ kind, label, message, icon, duration = 0, persistent = false }) {
+  const priority = HUD_ALERT_PRIORITY[kind] ?? HUD_ALERT_PRIORITY.neutral;
+  if (activeHudAlert && activeHudAlert.priority > priority) return false;
+  if (activeHudAlert?.persistent && activeHudAlert.priority === priority && !persistent) return false;
+
+  if (hudAlertTimeout) clearTimeout(hudAlertTimeout);
+  activeHudAlert = { kind, priority, persistent };
+
+  const chip = document.getElementById('hud-penalty-chip');
+  const labelEl = document.getElementById('hud-ticker-label');
+  const messageEl = document.getElementById('hud-penalty-text');
+  const iconEl = document.getElementById('hud-ticker-icon');
+  if (!chip || !labelEl || !messageEl || !iconEl) return false;
+
+  labelEl.textContent = label;
+  messageEl.textContent = message;
+  iconEl.textContent = icon;
+  chip.className = `hud-warning-bar alert-${kind}`;
+  chip.removeAttribute('aria-hidden');
+
+  if (!persistent && duration > 0) {
+    hudAlertTimeout = setTimeout(() => clearHudAlert(kind), duration);
+  }
+  return true;
+}
+
+function syncRaceControlAlert(penaltyMs, stewardInvestigation) {
+  if (penaltyMs > 0) {
+    presentHudAlert({
+      kind: 'penalty', label: 'PENALTY', message: `+${(penaltyMs / 1000).toFixed(1)}s`,
+      icon: 'gavel', persistent: true
+    });
+    return;
+  }
+  if (stewardInvestigation) {
+    presentHudAlert({
+      kind: 'review', label: 'TRACK LIMITS', message: 'UNDER REVIEW',
+      icon: 'policy', persistent: true
+    });
+    return;
+  }
+  if (activeHudAlert?.persistent) clearHudAlert();
+}
+
 // LISTEN TO PHASER CUSTOM EVENTS (HUD & RACE FINISH)
 // ----------------------------------------------------------------------------
 function setupGameEventListeners() {
@@ -943,33 +1007,8 @@ function setupGameEventListeners() {
       raceStatus?.classList.add('hidden');
     }
 
-    // Integrated Bottom Telemetry Ticker (Only update if no active sector split override)
-    if (!window._sectorTickerActive) {
-      const penaltyVal = (penaltyMs / 1000).toFixed(1);
-      const penaltyChip = document.getElementById('hud-penalty-chip');
-      const penaltyTextEl = document.getElementById('hud-penalty-text');
-      const tickerLabelEl = document.getElementById('hud-ticker-label');
-      const tickerIconEl = document.getElementById('hud-ticker-icon');
-
-      if (tickerLabelEl) tickerLabelEl.innerText = 'TRACK LIMITS';
-      if (tickerIconEl) tickerIconEl.innerText = 'shield';
-
-      if (penaltyTextEl) {
-        if (penaltyMs > 0) {
-          penaltyTextEl.innerText = `+${penaltyVal}s PENALTY`;
-        } else if (stewardInvestigation) {
-          penaltyTextEl.innerText = 'STEWARD INVESTIGATION';
-        } else {
-          penaltyTextEl.innerText = 'CLEAN';
-        }
-      }
-      if (penaltyChip) {
-        penaltyChip.className = 'hud-warning-bar';
-        if (penaltyMs > 0) penaltyChip.classList.add('penalty');
-        else if (stewardInvestigation) penaltyChip.classList.add('investigating');
-        else penaltyChip.classList.add('clean');
-      }
-    }
+    // Clean running is deliberately quiet. Only actionable race-control states interrupt.
+    syncRaceControlAlert(penaltyMs, stewardInvestigation);
 
     // ERS Battery gauge fill
     const fillPercent = `${Math.max(0, Math.min(100, boostEnergy))}%`;
@@ -989,34 +1028,29 @@ function setupGameEventListeners() {
     }
   });
 
-  // Steward & Race Notifications (Ignore redundant lap notifications)
+  // Steward & race notifications, presented in the separate lower-third alert channel.
   window.addEventListener('pixel-prix:notify', (e) => {
     const { text, type } = e.detail;
     // Suppress redundant LAP popups since LAP counter is integrated into core HUD
     if (text && text.toUpperCase().startsWith('LAP')) return;
 
-    // Route critical notifications into the integrated HUD ticker strip
-    const penaltyChip = document.getElementById('hud-penalty-chip');
-    const penaltyTextEl = document.getElementById('hud-penalty-text');
-    const tickerLabelEl = document.getElementById('hud-ticker-label');
-    const tickerIconEl = document.getElementById('hud-ticker-icon');
-
-    if (tickerLabelEl) tickerLabelEl.innerText = 'STEWARD ALERT';
-    if (tickerIconEl) tickerIconEl.innerText = type === 'penalty' ? 'gavel' : 'warning';
-    if (penaltyTextEl) penaltyTextEl.innerText = text;
-
-    if (penaltyChip) {
-      penaltyChip.className = `hud-warning-bar ${type === 'penalty' ? 'penalty' : 'investigating'}`;
+    const isPenalty = type === 'penalty' || /\bPENALTY\b/i.test(text || '');
+    const isStewardCall = type === 'stewards' || type === 'review' || /\bSTEWARDS?\b|TRACK LIMITS/i.test(text || '');
+    if (isPenalty) {
+      const amount = text?.match(/\+\d+(?:\.\d+)?s/i)?.[0]?.toUpperCase() || 'TIME ADDED';
+      presentHudAlert({ kind: 'penalty', label: 'PENALTY', message: amount, icon: 'gavel', duration: 4200 });
+    } else if (isStewardCall) {
+      const warning = text?.match(/(?:FINAL )?WARNING\s*\d*\/?\d*/i)?.[0]?.toUpperCase();
+      presentHudAlert({
+        kind: 'review', label: 'TRACK LIMITS', message: warning || 'UNDER REVIEW',
+        icon: 'policy', duration: 3600
+      });
+    } else {
+      presentHudAlert({ kind: 'neutral', label: 'RACE CONTROL', message: text, icon: 'flag', duration: 2200 });
     }
-
-    window._sectorTickerActive = true;
-    if (window._sectorTickerTimeout) clearTimeout(window._sectorTickerTimeout);
-    window._sectorTickerTimeout = setTimeout(() => {
-      window._sectorTickerActive = false;
-    }, 3000);
   });
 
-  // Integrated Sector Split Telemetry (Renders directly inside Top HUD Ticker Strip)
+  // Sector splits remain explicit: their colour is decoration, never the only meaning.
   window.addEventListener('pixel-prix:sector-complete', (e) => {
     const { sector, timeMs, isBest } = e.detail;
     const trackId = TRACKS[selectedTrackIndex].id;
@@ -1025,41 +1059,27 @@ function setupGameEventListeners() {
       sessionBestSectors[trackId] = [null, null, null];
     }
 
-    let colorClass = 'sector-yellow';
-    let deltaStr = '';
+    let outcome = ' +0.000s';
+    let icon = 'timer';
 
     const overallBest = sessionBestSectors[trackId][sector - 1];
     if (overallBest === null || timeMs < overallBest) {
       sessionBestSectors[trackId][sector - 1] = timeMs;
-      colorClass = 'sector-purple';
-      deltaStr = 'NEW SESSION BEST';
+      outcome = 'SESSION BEST';
+      icon = 'workspace_premium';
     } else if (isBest) {
-      colorClass = 'sector-green';
       const diff = (timeMs - overallBest) / 1000;
-      deltaStr = `PERSONAL BEST${diff > 0 ? ` · +${diff.toFixed(3)}s` : ''}`;
+      outcome = `PERSONAL BEST${diff > 0 ? ` · +${diff.toFixed(3)}s` : ''}`;
+      icon = 'trending_up';
     } else {
       const diff = (timeMs - overallBest) / 1000;
-      deltaStr = `+${diff.toFixed(3)}s`;
+      outcome = `+${diff.toFixed(3)}s`;
+      icon = 'schedule';
     }
-
-    const penaltyChip = document.getElementById('hud-penalty-chip');
-    const penaltyTextEl = document.getElementById('hud-penalty-text');
-    const tickerLabelEl = document.getElementById('hud-ticker-label');
-    const tickerIconEl = document.getElementById('hud-ticker-icon');
-
-    if (tickerLabelEl) tickerLabelEl.innerText = `SECTOR ${sector} SPLIT`;
-    if (tickerIconEl) tickerIconEl.innerText = 'timer';
-    if (penaltyTextEl) penaltyTextEl.innerText = `${(timeMs / 1000).toFixed(3)}s · ${deltaStr}`;
-
-    if (penaltyChip) {
-      penaltyChip.className = `hud-warning-bar ${colorClass}`;
-    }
-
-    window._sectorTickerActive = true;
-    if (window._sectorTickerTimeout) clearTimeout(window._sectorTickerTimeout);
-    window._sectorTickerTimeout = setTimeout(() => {
-      window._sectorTickerActive = false;
-    }, 3500);
+    presentHudAlert({
+      kind: 'sector', label: `SECTOR ${sector}`, message: `${(timeMs / 1000).toFixed(3)}s · ${outcome}`,
+      icon, duration: 3400
+    });
   });
 
   window.addEventListener('pixel-prix:finish', (e) => {
