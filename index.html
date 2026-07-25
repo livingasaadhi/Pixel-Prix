@@ -296,65 +296,67 @@
           </div>
         </div>
 
-        <section id="session-config" class="session-config" aria-label="Race session setup">
-          <div class="session-config-heading">
-            <span class="section-label">SESSION CONTROL</span>
-            <span id="session-config-copy">TIME TRIAL · PERSONAL GHOST ENABLED</span>
+        <div class="select-bottom-bar-shell">
+          <section id="session-config" class="session-config" aria-label="Race session setup">
+            <div class="session-config-heading">
+              <span class="section-label">SESSION CONTROL</span>
+              <span id="session-config-copy">TIME TRIAL · PERSONAL GHOST ENABLED</span>
+            </div>
+            <div class="session-config-grid">
+              <div class="session-choice-group">
+                <span class="session-choice-label">CONDITIONS</span>
+                <div class="session-choice-buttons" role="group" aria-label="Weather conditions">
+                  <button id="btn-weather-auto" class="session-choice active" data-weather-choice="auto" type="button">TRACK CALL</button>
+                  <button id="btn-weather-clear" class="session-choice" data-weather-choice="clear" type="button">CLEAR</button>
+                  <button id="btn-weather-wet" class="session-choice" data-weather-choice="wet" type="button">WET</button>
+                  <button id="btn-weather-night" class="session-choice" data-weather-choice="night" type="button">NIGHT</button>
+                </div>
+              </div>
+              <div class="session-choice-group">
+                <span class="session-choice-label">CAR SETUP</span>
+                <div class="session-choice-buttons" role="group" aria-label="Car setup">
+                  <button id="btn-setup-attack" class="session-choice" data-setup-choice="attack" type="button">ATTACK</button>
+                  <button id="btn-setup-balanced" class="session-choice active" data-setup-choice="balanced" type="button">BALANCED</button>
+                  <button id="btn-setup-rain" class="session-choice" data-setup-choice="rain" type="button">RAIN</button>
+                </div>
+              </div>
+              <div id="gp-grid-config" class="session-choice-group gp-grid-config">
+                <span class="session-choice-label">AI GRID</span>
+                <div class="session-choice-buttons" role="group" aria-label="Grand Prix grid size">
+                  <button id="btn-grid-4" class="session-choice" data-grid-choice="4" type="button">4 RIVALS</button>
+                  <button id="btn-grid-6" class="session-choice active" data-grid-choice="6" type="button">6 RIVALS</button>
+                  <button id="btn-grid-8" class="session-choice" data-grid-choice="8" type="button">8 RIVALS</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Mode-aware race actions -->
+          <div class="selection-footer selection-footer-bar mp-action-bar">
+            <button id="btn-launch-race" class="btn btn-primary btn-large btn-start-race f1-start-button">
+              <div class="start-lights-row">
+                <span class="start-led"></span>
+                <span class="start-led"></span>
+                <span class="start-led"></span>
+                <span class="start-led"></span>
+                <span class="start-led"></span>
+              </div>
+              <div class="start-btn-content">
+                <span>START TIME TRIAL</span>
+                <span class="material-symbols-outlined">sports_motorsports</span>
+              </div>
+            </button>
+
+            <button id="btn-create-room" class="btn btn-secondary btn-large mp-btn-create">
+              <span class="material-symbols-outlined">groups</span>
+              <span>CREATE CO-OP LOBBY</span>
+            </button>
+
+            <button id="btn-join-room-modal" class="btn btn-tertiary btn-large mp-btn-join">
+              <span class="material-symbols-outlined">key</span>
+              <span>JOIN WITH CODE</span>
+            </button>
           </div>
-          <div class="session-config-grid">
-            <div class="session-choice-group">
-              <span class="session-choice-label">CONDITIONS</span>
-              <div class="session-choice-buttons" role="group" aria-label="Weather conditions">
-                <button id="btn-weather-auto" class="session-choice active" data-weather-choice="auto" type="button">TRACK CALL</button>
-                <button id="btn-weather-clear" class="session-choice" data-weather-choice="clear" type="button">CLEAR</button>
-                <button id="btn-weather-wet" class="session-choice" data-weather-choice="wet" type="button">WET</button>
-                <button id="btn-weather-night" class="session-choice" data-weather-choice="night" type="button">NIGHT</button>
-              </div>
-            </div>
-            <div class="session-choice-group">
-              <span class="session-choice-label">CAR SETUP</span>
-              <div class="session-choice-buttons" role="group" aria-label="Car setup">
-                <button id="btn-setup-attack" class="session-choice" data-setup-choice="attack" type="button">ATTACK</button>
-                <button id="btn-setup-balanced" class="session-choice active" data-setup-choice="balanced" type="button">BALANCED</button>
-                <button id="btn-setup-rain" class="session-choice" data-setup-choice="rain" type="button">RAIN</button>
-              </div>
-            </div>
-            <div id="gp-grid-config" class="session-choice-group gp-grid-config">
-              <span class="session-choice-label">AI GRID</span>
-              <div class="session-choice-buttons" role="group" aria-label="Grand Prix grid size">
-                <button id="btn-grid-4" class="session-choice" data-grid-choice="4" type="button">4 RIVALS</button>
-                <button id="btn-grid-6" class="session-choice active" data-grid-choice="6" type="button">6 RIVALS</button>
-                <button id="btn-grid-8" class="session-choice" data-grid-choice="8" type="button">8 RIVALS</button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Mode-aware race actions -->
-        <div class="selection-footer selection-footer-bar mp-action-bar">
-          <button id="btn-launch-race" class="btn btn-primary btn-large btn-start-race f1-start-button">
-            <div class="start-lights-row">
-              <span class="start-led"></span>
-              <span class="start-led"></span>
-              <span class="start-led"></span>
-              <span class="start-led"></span>
-              <span class="start-led"></span>
-            </div>
-            <div class="start-btn-content">
-              <span>START TIME TRIAL</span>
-              <span class="material-symbols-outlined">sports_motorsports</span>
-            </div>
-          </button>
-
-          <button id="btn-create-room" class="btn btn-secondary btn-large mp-btn-create">
-            <span class="material-symbols-outlined">groups</span>
-            <span>CREATE CO-OP LOBBY</span>
-          </button>
-
-          <button id="btn-join-room-modal" class="btn btn-tertiary btn-large mp-btn-join">
-            <span class="material-symbols-outlined">key</span>
-            <span>JOIN WITH CODE</span>
-          </button>
         </div>
       </div>
 
