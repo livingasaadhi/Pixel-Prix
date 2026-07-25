@@ -61,20 +61,38 @@
 #screen-menu .garage-shortcuts { grid-column: span 4 !important; }
 
 /* Selection stays content-driven: equal 6 + 6 cards, then one clear action. */
-#screen-select { align-content: start !important; box-sizing: border-box !important; column-gap: var(--pp-gutter) !important; display: grid !important; grid-template-columns: repeat(12, minmax(0, 1fr)) !important; height: 100dvh !important; margin: 0 !important; max-width: none !important; overflow-x: clip !important; overflow-y: auto !important; padding: 92px var(--pp-pad) 42px !important; transform: none !important; width: 100% !important; }
+#screen-select { align-content: start !important; box-sizing: border-box !important; column-gap: var(--pp-gutter) !important; display: grid !important; grid-template-columns: repeat(12, minmax(0, 1fr)) !important; height: 100dvh !important; margin: 0 !important; max-width: none !important; overflow-x: clip !important; overflow-y: auto !important; padding: 78px var(--pp-pad) 24px !important; transform: none !important; width: 100% !important; }
 #screen-select .screen-header,
 #screen-select .select-grid,
 #screen-select .select-bottom-bar-shell { grid-column: 1 / -1 !important; width: 100% !important; }
 #screen-select .select-section { display: flex !important; grid-column: span 6 !important; min-width: 0; }
 #screen-select .car-select-card,
-#screen-select .track-select-card { display: flex !important; flex: 1 1 auto !important; flex-direction: column !important; min-height: clamp(480px, 58vh, 620px) !important; }
+#screen-select .track-select-card { display: flex !important; flex: 1 1 auto !important; flex-direction: column !important; min-height: clamp(440px, 54vh, 580px) !important; }
 #screen-select .track-select-card .circuit-telemetry-widget { margin-top: auto !important; }
-#screen-select .select-bottom-bar-shell { align-items: start !important; margin-top: var(--pp-gutter) !important; }
+
+#screen-select .select-bottom-bar-shell { display: flex !important; justify-content: center !important; align-items: center !important; margin-top: 14px !important; grid-column: 1 / -1 !important; width: 100% !important; }
 #screen-select .selection-footer,
-#screen-select .selection-footer-bar { grid-column: 9 / -1 !important; position: static !important; inset: auto !important; height: auto !important; margin: 0 !important; min-width: 0; }
-#screen-select .selection-footer .btn { min-height: 52px; width: 100%; }
-#screen-select .circuit-telemetry-widget { overflow: hidden; }
-#screen-select .ct-cell { min-width: 0; }
+#screen-select .selection-footer-bar { grid-column: auto !important; display: flex !important; justify-content: center !important; align-items: center !important; width: min(480px, 100%) !important; height: 54px !important; min-height: 54px !important; margin: 0 auto !important; position: static !important; inset: auto !important; }
+#screen-select .selection-footer .btn { min-height: 54px; height: 54px; width: 100%; border-radius: 8px; }
+
+/* Enlarge Circuit Minimap Canvas Box */
+#screen-select .track-preview-row { display: flex !important; align-items: center !important; gap: 16px !important; width: 100% !important; }
+#screen-select .track-minimap-box { width: 210px !important; height: 130px !important; flex: 0 0 210px !important; display: flex !important; align-items: center !important; justify-content: center !important; border: 1px solid var(--pp-line-strong) !important; border-radius: 10px !important; background: #06090e !important; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px rgba(255, 255, 255, 0.08) !important; overflow: hidden !important; position: relative !important; }
+#screen-select #track-minimap { width: 100% !important; height: 100% !important; object-fit: contain !important; }
+#screen-select .track-info-col { flex: 1 !important; min-width: 0 !important; display: flex !important; flex-direction: column !important; justify-content: center !important; }
+
+/* 2x2 Telemetry Grid (No Text Cutoff) */
+#screen-select .circuit-telemetry-widget { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; grid-template-rows: auto auto !important; gap: 0 !important; border: 1px solid var(--pp-line) !important; border-radius: 8px !important; overflow: hidden !important; }
+#screen-select .ct-cell { padding: 6px 10px !important; min-width: 0 !important; border-right: 1px solid var(--pp-line) !important; border-bottom: 1px solid var(--pp-line) !important; box-sizing: border-box !important; }
+#screen-select .ct-cell:nth-child(2n) { border-right: 0 !important; }
+#screen-select .ct-cell:nth-child(n + 3) { border-bottom: 0 !important; }
+#screen-select .ct-val { color: #ffffff !important; font: 800 0.68rem var(--pp-mono) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+
+/* Stat Row Truncation Protection */
+#screen-select .stat-row-header { display: flex !important; justify-content: space-between !important; align-items: center !important; gap: 4px !important; width: 100% !important; overflow: hidden !important; }
+#screen-select .stat-label { font-size: 0.55rem !important; color: var(--pp-muted) !important; font-family: var(--pp-mono) !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+#screen-select .stat-val-mono { font-size: 0.65rem !important; color: #ffffff !important; font-weight: 800 !important; font-family: var(--pp-mono) !important; flex-shrink: 0 !important; margin-left: auto !important; white-space: nowrap !important; }
+
 #screen-select .car-setup-panel { border-top: 1px solid var(--pp-line); margin-top: 14px; padding-top: 12px; }
 #screen-select .car-setup-heading { align-items: baseline; display: flex; gap: 12px; justify-content: space-between; margin-bottom: 10px; }
 #screen-select .car-setup-copy { color: var(--pp-muted); font: 700 10px var(--pp-mono); letter-spacing: .08em; text-align: right; }
