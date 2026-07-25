@@ -11,7 +11,7 @@ const viewports = [
 const server = spawn(process.platform === 'win32' ? 'cmd.exe' : 'npx', process.platform === 'win32'
   ? ['/d', '/s', '/c', 'npx vite --host 127.0.0.1 --port 4173 --strictPort']
   : ['vite', '--host', '127.0.0.1', '--port', '4173', '--strictPort'], { cwd: root, stdio: 'ignore' });
-const output = await mkdtemp(path.join(os.tmpdir(), 'pixel-prix-viewports-'));
+const output = process.env.KEEP_VIEWPORT_SHOTS || await mkdtemp(path.join(os.tmpdir(), 'pixel-prix-viewports-'));
 
 async function waitForServer() {
   for (let i = 0; i < 40; i += 1) {
@@ -50,5 +50,5 @@ try {
   console.log(`Viewport smoke passed: ${viewports.map(([name]) => name).join(', ')}.`);
 } finally {
   server.kill();
-  await rm(output, { recursive: true, force: true });
+  if (!process.env.KEEP_VIEWPORT_SHOTS) await rm(output, { recursive: true, force: true });
 }
