@@ -296,10 +296,19 @@ function setupChannelListeners(channel) {
   // 2. Broadcast Listener: Race Start Command
   channel.on('broadcast', { event: 'race_start' }, (payload) => {
     const data = payload.payload;
+    resetMultiplayerRaceState();
     mpState.startCountDownTime = data.startTimestamp;
     mpState.raceStarted = true;
+    mpState.trackId = data.trackId || mpState.trackId;
 
     window.dispatchEvent(new CustomEvent('pixel-prix:mp-race-start', { detail: data }));
+  });
+
+  channel.on('broadcast', { event: 'lobby_track_update' }, (payload) => {
+    const trackId = payload.payload?.trackId;
+    if (!trackId) return;
+    mpState.trackId = trackId;
+    window.dispatchEvent(new CustomEvent('pixel-prix:mp-track-update', { detail: { trackId } }));
   });
 
   // 3. Broadcast Listener: Position Updates (10 Hz)
@@ -348,6 +357,7 @@ export function broadcastRaceStart() {
   const uniqueCars = new Set(mpState.players.map((player) => player.carId));
   if (mpState.players.length < 2 || uniqueCars.size !== mpState.players.length) return;
 
+  resetMultiplayerRaceState();
   const startTimestamp = Date.now() + 3000;
   mpState.startCountDownTime = startTimestamp;
   mpState.raceStarted = true;
@@ -365,6 +375,25 @@ export function broadcastRaceStart() {
   window.dispatchEvent(new CustomEvent('pixel-prix:mp-race-start', {
     detail: { startTimestamp, trackId: mpState.trackId, players: mpState.players }
   }));
+}
+
+export function broadcastLobbyTrackChange(trackId) {
+  if (!mpState.channel || !mpState.isHost || !trackId) return;
+  mpState.trackId = trackId;
+  mpState.channel.send({
+    type: 'broadcast',
+    event: 'lobby_track_update',
+    payload: { trackId }
+  });
+  window.dispatchEvent(new CustomEvent('pixel-prix:mp-track-update', { detail: { trackId } }));
+}
+
+export function resetMultiplayerRaceState() {
+  stopPositionBroadcast();
+  mpState.finishedPlayers = [];
+  mpState.remotePlayers.clear();
+  mpState.raceStarted = false;
+  mpState.spectating = false;
 }
 
 /**
@@ -511,7 +540,7 @@ export function calculateLiveRank(localLap, localCheckpoint, localTimeMs, localP
  * Leave / Unsubscribe from Multiplayer Channel
  */
 export function leaveMultiplayerRoom() {
-  stopPositionBroadcast();
+  resetMultiplayerRaceState();
 
   if (mpState.channel) {
     try {
@@ -524,8 +553,4 @@ export function leaveMultiplayerRoom() {
   mpState.isHost = false;
   mpState.roomCode = null;
   mpState.players = [];
-  mpState.remotePlayers.clear();
-  mpState.finishedPlayers = [];
-  mpState.spectating = false;
-  mpState.raceStarted = false;
 }

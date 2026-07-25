@@ -105,6 +105,7 @@ export class RaceScene extends Phaser.Scene {
     this.lastHUDUpdate = 0;
     this.sparkDuration = 0;
     this.spectatorMode = false;
+    this.lastMultiplayerContactAt = 0;
   }
 
   create() {
@@ -751,6 +752,45 @@ export class RaceScene extends Phaser.Scene {
       rp.sprite.y = Phaser.Math.Linear(rp.sprite.y, targetY, 0.25);
       rp.sprite.rotation = Phaser.Math.Angle.Wrap(Phaser.Math.Linear(rp.sprite.rotation, rp.targetRotation || 0, 0.25));
       rp.nameTag?.setPosition(rp.sprite.x, rp.sprite.y - 28);
+    });
+
+    if (!this.spectatorMode && !this.raceFinished) {
+      this.applyMultiplayerCarContacts();
+    }
+  }
+
+  applyMultiplayerCarContacts() {
+    if (!this.player) return;
+    const contactRadius = 46;
+    const contactRadiusSq = contactRadius * contactRadius;
+
+    mpState.remotePlayers.forEach((remote) => {
+      if (!remote.sprite) return;
+      const dx = this.player.x - remote.sprite.x;
+      const dy = this.player.y - remote.sprite.y;
+      const distanceSq = dx * dx + dy * dy;
+      if (distanceSq >= contactRadiusSq) return;
+
+      const distance = Math.max(1, Math.sqrt(distanceSq));
+      const overlap = contactRadius - distance;
+      const normalX = dx / distance;
+      const normalY = dy / distance;
+
+      // Contact is intentionally soft: each local simulation resolves its own
+      // car away from the remote snapshot, avoiding network authority fights
+      // while making side-by-side contact tangible instead of pass-through.
+      this.player.x += normalX * overlap * 0.56;
+      this.player.y += normalY * overlap * 0.56;
+      remote.sprite.x -= normalX * overlap * 0.18;
+      remote.sprite.y -= normalY * overlap * 0.18;
+      this.vx += normalX * Math.min(95, overlap * 7);
+      this.vy += normalY * Math.min(95, overlap * 7);
+
+      const now = this.time.now;
+      if (now - this.lastMultiplayerContactAt > 170) {
+        this.currentSpeed *= 0.94;
+        this.lastMultiplayerContactAt = now;
+      }
     });
   }
 

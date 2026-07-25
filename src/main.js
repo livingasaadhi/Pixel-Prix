@@ -5,7 +5,7 @@ import { CARS } from './data/cars.js';
 import { TRACKS } from './data/tracks.js';
 import { drawTrackMinimap } from './utils/trackRenderer.js';
 import { submitScore, fetchTopScores, subscribeToScores, syncLocalScoresToSupabase } from './supabase.js';
-import { mpState, createMultiplayerRoom, joinMultiplayerRoom, leaveMultiplayerRoom, broadcastRaceStart } from './utils/multiplayer.js';
+import { mpState, createMultiplayerRoom, joinMultiplayerRoom, leaveMultiplayerRoom, broadcastRaceStart, broadcastLobbyTrackChange, resetMultiplayerRaceState } from './utils/multiplayer.js';
 import { getDailyFeaturedTrackId, getDriverName, loadDriverProfile, recordSoloRace, saveDriverName } from './utils/progression.js';
 
 // Global App State
@@ -1590,11 +1590,11 @@ function initUI() {
     closeScoreDialog();
     document.getElementById('modal-mp-results')?.classList.add('hidden');
     document.getElementById('mp-results-rows')?.replaceChildren();
-    leaveMultiplayerRoom();
+    resetMultiplayerRaceState();
     if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
       phaserGame.scene.stop('RaceScene');
     }
-    showScreen('screen-select');
+    showScreen('screen-mp-lobby');
   };
 
   bindClickOrTouch('btn-mp-results-exit', closeMpResults);
@@ -1626,6 +1626,12 @@ function initUI() {
         ? 'WAITING FOR ONE MORE DRIVER'
         : (hasUniqueCars ? 'GRID READY' : 'ASSIGNING UNIQUE CARS');
     }
+    ['btn-mp-track-prev', 'btn-mp-track-next'].forEach((id) => {
+      const control = document.getElementById(id);
+      if (!control) return;
+      control.classList.toggle('hidden', !isHost);
+      control.disabled = !isHost;
+    });
 
     const listEl = document.getElementById('mp-drivers-list');
     if (listEl) {
@@ -1678,6 +1684,24 @@ function initUI() {
     updateCarSelection();
     showStewardToast(`CAR ALREADY CLAIMED — ASSIGNED ${CARS[assignedIndex].name.toUpperCase()}`, 'amber');
   });
+
+  window.addEventListener('pixel-prix:mp-track-update', (e) => {
+    const trackIndex = TRACKS.findIndex((track) => track.id === e.detail?.trackId);
+    if (trackIndex < 0) return;
+    selectedTrackIndex = trackIndex;
+    updateTrackSelection();
+    const trackName = document.getElementById('mp-session-track');
+    if (trackName) trackName.textContent = TRACKS[trackIndex].name.toUpperCase();
+  });
+
+  const changeLobbyTrack = (direction) => {
+    if (!mpState.isHost) return;
+    selectedTrackIndex = (selectedTrackIndex + direction + TRACKS.length) % TRACKS.length;
+    updateTrackSelection();
+    broadcastLobbyTrackChange(TRACKS[selectedTrackIndex].id);
+  };
+  bindClickOrTouch('btn-mp-track-prev', () => changeLobbyTrack(-1));
+  bindClickOrTouch('btn-mp-track-next', () => changeLobbyTrack(1));
 
   // Handle Race Start Event
   window.addEventListener('pixel-prix:mp-race-start', (e) => {

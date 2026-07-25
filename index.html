@@ -345,7 +345,15 @@
             </div>
             <div class="mp-session-cell">
               <span class="mp-panel-label">CIRCUIT</span>
-              <strong id="mp-session-track">LOADING…</strong>
+              <div class="mp-track-picker">
+                <button id="btn-mp-track-prev" class="mp-track-nav" aria-label="Previous circuit">
+                  <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <strong id="mp-session-track">LOADING…</strong>
+                <button id="btn-mp-track-next" class="mp-track-nav" aria-label="Next circuit">
+                  <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+              </div>
             </div>
             <div class="mp-session-cell">
               <span class="mp-panel-label">GRID</span>
@@ -439,7 +447,7 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button id="btn-mp-results-exit" class="btn btn-primary">RETURN TO GARAGE</button>
+            <button id="btn-mp-results-exit" class="btn btn-primary">RETURN TO LOBBY</button>
           </div>
         </div>
       </div>
