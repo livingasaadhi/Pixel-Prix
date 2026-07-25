@@ -661,21 +661,17 @@ export class RaceScene extends Phaser.Scene {
       if (p.y > maxY) maxY = p.y;
     }
 
-    const trackW = (maxX - minX) + pad * 2;
-    const trackH = (maxY - minY) + pad * 2;
-
     const vw = this.scale.width || window.innerWidth;
     const vh = this.scale.height || window.innerHeight;
 
     cam.setViewport(0, 0, vw, vh);
     this.weatherOverlay?.setSize(vw, vh);
 
-    const cover = Math.max(vw / trackW, vh / trackH);
-    this.baseZoom = Math.max(0.28, Math.min(cover, 0.85));
+    // Tight high-speed camera framing (baseZoom ~1.12) so vehicle movement feels punchy & fast
+    this.baseZoom = Math.max(0.95, Math.min(1.25, vw / 1150));
     cam.setZoom(this.baseZoom);
 
     cam.setRotation(0);
-    cam.setFollowOffset(0, 0);
     cam.removeBounds();
     this.centerCameraOnPlayer();
     if (this.playerShadow) {
@@ -701,16 +697,28 @@ export class RaceScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.rotation = 0;
 
+    // Speed ratio relative to reference top speed
+    const speedRatio = Math.min(1.4, Math.abs(this.currentSpeed) / Math.max(1, 275 * this.velocityScale));
+
+    // Dynamic optical speed zoom: widens slightly at high speed for motion FOV effect
+    const targetZoom = (this.baseZoom || 1.12) - speedRatio * 0.14;
+    cam.zoom = Phaser.Math.Linear(cam.zoom || targetZoom, targetZoom, 0.08);
+
+    // Forward camera lead along vehicle heading so driver sees the road coming at them
+    const leadDist = speedRatio * 75;
+    const leadX = Math.cos(this.player.rotation) * leadDist;
+    const leadY = Math.sin(this.player.rotation) * leadDist;
+
     let ox = 0;
     let oy = 0;
     if (this.onGrass && Math.abs(this.currentSpeed) > 100) {
       // Simulate grass off-road vibration based on vehicle speed
-      const intensity = (Math.abs(this.currentSpeed) / this.maxSpeed) * 12;
+      const intensity = (Math.abs(this.currentSpeed) / (this.maxSpeed || 1000)) * 12;
       ox = (Math.random() - 0.5) * intensity;
       oy = (Math.random() - 0.5) * intensity;
     }
 
-    cam.centerOn(this.player.x + ox, this.player.y + oy);
+    cam.centerOn(this.player.x + leadX + ox, this.player.y + leadY + oy);
   }
 
   startCountdown() {
@@ -969,8 +977,8 @@ export class RaceScene extends Phaser.Scene {
     const terrainResponse = this.onGrass ? 0.82 : 1;
     const directionResponse = Phaser.Math.Clamp(
       handling.directionResponse * terrainResponse * trackContext.surfaceGrip / (1 + cornerOverspeed * 0.6),
-      0.14,
-      0.45
+      0.22,
+      0.65
     );
     this.vx = Phaser.Math.Linear(this.vx, targetVx, directionResponse);
     this.vy = Phaser.Math.Linear(this.vy, targetVy, directionResponse);
