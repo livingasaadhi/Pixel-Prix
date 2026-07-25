@@ -697,8 +697,8 @@ export class RaceScene extends Phaser.Scene {
     cam.setViewport(0, 0, vw, vh);
     this.weatherOverlay?.setSize(vw, vh);
 
-    // Doubled camera zoom scale (2x gameplay zoom level) for close-up action.
-    this.baseZoom = Phaser.Math.Clamp(Math.min(vw / 1700, vh / 1080), 0.20, 0.28);
+    // Doubled camera zoom scale (2x gameplay zoom level) for close-up car action.
+    this.baseZoom = Phaser.Math.Clamp(Math.min(vw / 850, vh / 540), 0.45, 0.60);
     cam.setZoom(this.baseZoom);
 
     cam.setRotation(0);
@@ -730,7 +730,7 @@ export class RaceScene extends Phaser.Scene {
     const speedRatio = Phaser.Math.Clamp(
       Math.abs(this.currentSpeed) / Math.max(1, this.maxSpeed || 275 * this.velocityScale), 0, 1
     );
-    const targetZoom = (this.baseZoom || 0.28) * (1 - speedRatio * 0.06);
+    const targetZoom = (this.baseZoom || 0.55) * (1 - speedRatio * 0.05);
     const interpolation = Phaser.Math.Clamp(deltaSeconds * 7, 0, 1);
     cam.zoom = Phaser.Math.Linear(cam.zoom || targetZoom, targetZoom, interpolation);
 
