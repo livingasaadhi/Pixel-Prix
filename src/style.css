@@ -9748,7 +9748,7 @@ body {
   top: 14px !important;
   left: 50% !important;
   z-index: 1100 !important;
-  display: grid !important;
+  display: grid;
   grid-template-columns: auto 1fr auto !important;
   width: var(--pp-content) !important;
   min-height: 58px !important;
@@ -9762,6 +9762,14 @@ body {
   box-shadow: var(--pp-shadow), inset 0 1px rgba(255, 255, 255, 0.08) !important;
   backdrop-filter: blur(18px) !important;
   box-sizing: border-box !important;
+}
+
+/* Force Navbar to hide completely during active race mode */
+html.race-mode .top-app-bar,
+.race-mode #top-app-bar,
+#top-app-bar.hidden,
+#top-app-bar[style*="display: none"] {
+  display: none !important;
 }
 
 .top-app-bar-left {
@@ -10118,18 +10126,80 @@ input:focus-visible,
   margin: 0 auto !important;
 }
 
+.select-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+}
+
+.section-header-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 4px !important;
+}
+
 .car-select-card,
 .track-select-card {
-  min-height: 418px !important;
-  padding: 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  min-height: 440px !important;
+  padding: 22px !important;
   box-sizing: border-box !important;
+}
+
+/* 3-Column Structured Carousel Header for Car Select */
+.carousel-header,
+.track-carousel-row {
+  display: grid !important;
+  grid-template-columns: 44px minmax(0, 1fr) 44px !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+.nav-arrow,
+.track-carousel-nav {
+  display: grid !important;
+  place-items: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border: 1px solid var(--pp-line-strong) !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ffffff !important;
+  font-size: 1.4rem !important;
+  cursor: pointer !important;
+  transition: border-color 150ms ease, background 150ms ease !important;
+}
+
+.nav-arrow:hover,
+.track-carousel-nav:hover {
+  border-color: var(--pp-cyan) !important;
+  background: rgba(73, 216, 255, 0.16) !important;
+}
+
+.carousel-content {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
 }
 
 .car-preview-area {
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
-  min-height: 155px !important;
+  width: 100% !important;
+  max-width: 280px !important;
+  height: 130px !important;
+  min-height: 130px !important;
+  margin: 0 auto 6px !important;
   border: 1px solid rgba(73, 216, 255, 0.13) !important;
   border-radius: 8px !important;
   background: radial-gradient(circle, rgba(73, 216, 255, 0.11), transparent 68%) !important;
@@ -10137,26 +10207,46 @@ input:focus-visible,
 
 .carousel-content h3,
 .track-info-col h3 {
+  margin: 0 !important;
   color: #ffffff !important;
   font-family: var(--font-display) !important;
+  font-size: 1.35rem !important;
+  letter-spacing: 0.03em !important;
 }
 
 .carousel-content p,
 .track-info-col p {
+  margin: 0 !important;
   color: var(--pp-muted) !important;
+  font-size: 0.8rem !important;
 }
 
 /* 2x2 Stat Meter Grid */
 .stat-bars {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 13px 18px !important;
+  gap: 14px 18px !important;
+  margin-top: 14px !important;
+}
+
+.stat-row {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+}
+
+.stat-row-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
 }
 
 .stat-val-mono,
 .ct-val {
   color: #ffffff !important;
   font-family: var(--font-mono) !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
 }
 
 .meter-track {
@@ -10171,20 +10261,65 @@ input:focus-visible,
   height: 100% !important;
 }
 
+.track-content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  min-width: 0 !important;
+}
+
+.track-preview-row {
+  display: grid !important;
+  grid-template-columns: 140px minmax(0, 1fr) !important;
+  gap: 16px !important;
+  align-items: center !important;
+  min-width: 0 !important;
+}
+
 .track-minimap-box {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 140px !important;
+  height: 110px !important;
   border: 1px solid var(--pp-line) !important;
   border-radius: 8px !important;
   background: #0a0f17 !important;
+  position: relative !important;
 }
 
-.circuit-telemetry-widget,
-.session-config {
+.track-info-col {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+.track-tags {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  margin-top: 4px !important;
+}
+
+.circuit-telemetry-widget {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 1px !important;
+  margin-top: 14px !important;
   border: 1px solid var(--pp-line) !important;
   border-radius: 8px !important;
   background: rgba(5, 9, 14, 0.52) !important;
+  overflow: hidden !important;
 }
 
 .ct-cell {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  padding: 10px 12px !important;
   border-color: var(--pp-line) !important;
 }
 
@@ -10219,8 +10354,8 @@ input:focus-visible,
 
 .selection-footer {
   display: flex !important;
-  gap: 12px !important;
-  margin-top: 20px !important;
+  gap: 14px !important;
+  margin-top: 22px !important;
 }
 
 .selection-footer .btn-start-race {

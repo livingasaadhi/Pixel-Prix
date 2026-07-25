@@ -969,8 +969,8 @@ export class RaceScene extends Phaser.Scene {
     const terrainResponse = this.onGrass ? 0.82 : 1;
     const directionResponse = Phaser.Math.Clamp(
       handling.directionResponse * terrainResponse * trackContext.surfaceGrip / (1 + cornerOverspeed * 0.6),
-      0.045,
-      0.31
+      0.14,
+      0.45
     );
     this.vx = Phaser.Math.Linear(this.vx, targetVx, directionResponse);
     this.vy = Phaser.Math.Linear(this.vy, targetVy, directionResponse);
