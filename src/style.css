@@ -8501,3 +8501,23 @@ button[aria-disabled='true']:hover {
   background: rgba(56, 185, 126, 0.06);
   border-top-color: rgba(130, 232, 180, 0.3);
 }
+
+/* Help is a utility action, not a peer game destination. Keep it compact
+   while preserving a descriptive accessible name and normal keyboard focus. */
+.top-nav-help {
+  min-width: 36px;
+  justify-content: center;
+  padding-inline: 8px;
+}
+
+.top-nav-help .material-symbols-outlined {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+@media (max-width: 670px) {
+  .top-nav-help {
+    min-width: 40px;
+    flex: 0 0 40px;
+  }
+}
