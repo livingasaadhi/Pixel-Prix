@@ -98,7 +98,9 @@ export function renderTrackGraphics(scene, track) {
   drawPath(graphics, roadWidth + 28, 0x3a3848, 1);
   drawPath(graphics, roadWidth + 22, 0x1e1c2a, 1);
 
-  // === COLORED CURB STRIPES (red-white alternating) ===
+  // === MUTED CURB STRIPES ===
+  // Deliberately subdued so the player car, not the circuit paint, carries
+  // the primary contrast and focal priority at race speed.
   // Outer curb
   for (let i = 0; i < curvePoints.length - 1; i++) {
     const segmentIndex = Math.floor(i * 20 / curvePoints.length);
@@ -107,17 +109,17 @@ export function renderTrackGraphics(scene, track) {
     const nextPt = curvePoints[i + 1];
     const angle = Math.atan2(nextPt.y - pt.y, nextPt.x - pt.x) + Math.PI / 2;
     const outerDist = (roadWidth / 2) + 10;
-    const curbWidth = 9;
+    const curbWidth = 7;
 
-    const curbColor = isRedStripe ? 0xe8002d : 0xffffff;
-    graphics.lineStyle(curbWidth, curbColor, 0.85);
+    const curbColor = isRedStripe ? 0x7d3540 : 0x9ba3ad;
+    graphics.lineStyle(curbWidth, curbColor, 0.46);
     graphics.lineBetween(
       pt.x + Math.cos(angle) * outerDist, pt.y + Math.sin(angle) * outerDist,
       nextPt.x + Math.cos(angle) * outerDist, nextPt.y + Math.sin(angle) * outerDist
     );
-    // Inner curb (opposite color for contrast)
-    const innerCurbColor = isRedStripe ? 0xffffff : 0xe8002d;
-    graphics.lineStyle(curbWidth, innerCurbColor, 0.85);
+    // Inner curb keeps the alternating pattern, at the same restrained contrast.
+    const innerCurbColor = isRedStripe ? 0x9ba3ad : 0x7d3540;
+    graphics.lineStyle(curbWidth, innerCurbColor, 0.46);
     graphics.lineBetween(
       pt.x - Math.cos(angle) * outerDist, pt.y - Math.sin(angle) * outerDist,
       nextPt.x - Math.cos(angle) * outerDist, nextPt.y - Math.sin(angle) * outerDist
