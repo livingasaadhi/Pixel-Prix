@@ -3,6 +3,7 @@ import { getCarById } from '../data/cars.js';
 import { getTrackById } from '../data/tracks.js';
 import { renderTrackGraphics } from '../utils/trackRenderer.js';
 import { getNearestSegmentIndex, checkCheckpointProximity, isOffRoad } from '../utils/trackPhysics.js';
+import { assessTrackLimits, createStewardState } from '../utils/stewarding.js';
 import { startEngineSound, updateEnginePitch, stopEngineSound, setEngineActive, playBoostSound, playCheckpointSound, playFinishSound } from '../utils/audio.js';
 import { mpState, startPositionBroadcast, stopPositionBroadcast, broadcastRaceFinish, calculateLiveRank } from '../utils/multiplayer.js';
 
@@ -28,25 +29,12 @@ export class RaceScene extends Phaser.Scene {
     this.hasFalseStartPenalty = false;
 
     // Penalty state
+    this.stewardState = createStewardState();
     this.trackLimitsCount = 0;
     this.penaltyMs = 0;
-    this.offRoadDurationMs = 0;
-    this.offRoadPeakSpeedKph = 0;
-    this.offRoadInfractionIssued = false;
     this.advantageAlertActive = false;
-    this.advantageTimerMs = 0;
-    this.offRoadGraceMs = 0; // Grace period when returning to track
     this.offRoadWarningIssued = false;
-    const stewardProfile = this.trackData.stewards || {};
-    this.warningThresholdMs = stewardProfile.reviewMs ?? 2600;
-    this.penaltyThresholdMs = stewardProfile.breachMs ?? 5400;
-    this.shortcutThresholdMs = stewardProfile.shortcutMs ?? 4400;
-    this.offTrackSpeedKph = stewardProfile.offTrackSpeedKph ?? 170;
-    this.shortcutSpeedKph = stewardProfile.shortcutSpeedKph ?? 275;
-    this.offRoadRecoveryMs = stewardProfile.recoveryMs ?? 950;
-    this.trackLimitsWarningLimit = stewardProfile.warningLimit ?? 3;
-    this.trackLimitPenaltyMs = stewardProfile.trackLimitPenaltyMs ?? 2000;
-    this.shortcutPenaltyMs = stewardProfile.shortcutPenaltyMs ?? 3000;
+    this.stewardProfile = this.trackData.stewards || {};
 
     // Timer state
     this.startTime = 0;
@@ -507,42 +495,30 @@ export class RaceScene extends Phaser.Scene {
     this.onGrass = isOffRoad(this.player.x, this.player.y, this.curvePoints, this.roadWidth, grassCheck);
 
     const displayedSpeed = Math.abs(this.currentSpeed) / 2.4;
-    const isMeaningfulOffTrack = this.onGrass && displayedSpeed >= this.offTrackSpeedKph;
+    const stewardDecision = assessTrackLimits(this.stewardState, {
+      onGrass: this.onGrass,
+      speedKph: displayedSpeed,
+      deltaMs: delta
+    }, this.stewardProfile);
+    this.stewardState = stewardDecision.state;
+    this.trackLimitsCount = this.stewardState.trackLimitsCount;
+    this.offRoadWarningIssued = this.stewardState.reviewIssued;
 
-    if (isMeaningfulOffTrack) {
-      this.offRoadDurationMs += delta;
-      this.offRoadPeakSpeedKph = Math.max(this.offRoadPeakSpeedKph, displayedSpeed);
-      this.offRoadGraceMs = 0; // Reset grace when actively off-road
-
-      // A high-speed sustained cut is a direct advantage, separate from the
-      // normal three-warning track-limit ladder.
-      if (!this.offRoadInfractionIssued && this.offRoadDurationMs >= this.shortcutThresholdMs && this.offRoadPeakSpeedKph >= this.shortcutSpeedKph) {
-        this.penaltyMs += this.shortcutPenaltyMs;
-        this.offRoadDurationMs = 0;
-        this.offRoadPeakSpeedKph = 0;
-        this.offRoadInfractionIssued = true;
-        this.offRoadWarningIssued = false;
-        this.advantageAlertActive = false;
-        this.showStewardsNotification(`STEWARDS: +${(this.shortcutPenaltyMs / 1000).toFixed(1)}s PENALTY (SUSTAINED SHORTCUT)`);
-      } else if (!this.offRoadInfractionIssued && this.offRoadDurationMs >= this.penaltyThresholdMs) {
-        this.handleTrackLimitsViolation();
-        this.offRoadDurationMs = 0; // Reset after penalty
-        this.offRoadInfractionIssued = true;
-        this.offRoadWarningIssued = false;
-      } else if (this.offRoadDurationMs >= this.warningThresholdMs && !this.offRoadWarningIssued) {
-        this.offRoadWarningIssued = true;
+    if (stewardDecision.event) {
+      const { type, penaltyMs = 0 } = stewardDecision.event;
+      if (type === 'review') {
         this.showStewardsNotification('STEWARDS: TRACK LIMITS UNDER REVIEW');
-      }
-    } else if (!this.onGrass) {
-      // Finish each off-track excursion cleanly after a genuine re-entry.
-      // Gradually draining the old timer caused separate corners to combine
-      // into seemingly random later penalties.
-      this.offRoadGraceMs += delta;
-      if (this.offRoadGraceMs >= this.offRoadRecoveryMs) {
-        this.offRoadDurationMs = 0;
-        this.offRoadPeakSpeedKph = 0;
-        this.offRoadInfractionIssued = false;
-        this.offRoadWarningIssued = false;
+      } else if (type === 'warning') {
+        this.showStewardsNotification(`STEWARDS: TRACK LIMITS WARNING ${this.trackLimitsCount}/${this.stewardProfile.warningLimit}`);
+      } else if (type === 'final-warning') {
+        this.showStewardsNotification(`STEWARDS: FINAL WARNING ${this.trackLimitsCount}/${this.stewardProfile.warningLimit}`);
+      } else if (type === 'track-limit-penalty') {
+        this.penaltyMs += penaltyMs;
+        this.showStewardsNotification(`STEWARDS: +${(penaltyMs / 1000).toFixed(1)}s TIME PENALTY (TRACK LIMITS)`);
+      } else if (type === 'shortcut-penalty') {
+        this.penaltyMs += penaltyMs;
+        this.advantageAlertActive = false;
+        this.showStewardsNotification(`STEWARDS: +${(penaltyMs / 1000).toFixed(1)}s PENALTY (SUSTAINED SHORTCUT)`);
       }
     }
 
@@ -872,21 +848,6 @@ export class RaceScene extends Phaser.Scene {
       // Shoulder buttons activate ERS boost.
       boost: buttonPressed(4) || buttonPressed(5)
     };
-  }
-
-  handleTrackLimitsViolation() {
-    this.trackLimitsCount++;
-    if (this.trackLimitsCount < this.trackLimitsWarningLimit) {
-      this.showStewardsNotification(`STEWARDS: TRACK LIMITS WARNING ${this.trackLimitsCount}/${this.trackLimitsWarningLimit}`);
-    } else if (this.trackLimitsCount === this.trackLimitsWarningLimit) {
-      this.showStewardsNotification(`STEWARDS: FINAL WARNING ${this.trackLimitsWarningLimit}/${this.trackLimitsWarningLimit}`);
-    } else {
-      this.penaltyMs += this.trackLimitPenaltyMs;
-      this.showStewardsNotification(`STEWARDS: +${(this.trackLimitPenaltyMs / 1000).toFixed(1)}s TIME PENALTY (TRACK LIMITS)`);
-    }
-    // Reset off-road duration after violation to give driver a chance to recover
-    this.offRoadDurationMs = 0;
-    this.offRoadPeakSpeedKph = 0;
   }
 
   checkCheckpoints() {

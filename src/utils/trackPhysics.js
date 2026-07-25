@@ -1,6 +1,6 @@
 /**
  * Calculates physics checks for off-road grass surface and checkpoint validation.
- * Includes a generous tolerance buffer so clipping kerbs or track edges is penalty-free.
+ * Uses a narrow kerb tolerance so circuit limits remain clear and consistent.
  */
 
 /**
