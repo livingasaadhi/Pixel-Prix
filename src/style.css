@@ -1,14 +1,6 @@
-/* ==========================================================================   PIXEL PRIX — AAA RACING DESIGN SYSTEM v3   Full cinematic motorsport visual language   ========================================================================== *//* --- GOOGLE FONTS -------------------------------------------------------- */@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;
-700;
-800;
-900&family=Rajdhani:wght@400;
-500;
-600;
-700&family=Inter:wght@400;
-600;
-700;
-800;
-900&family=JetBrains+Mono:wght@500&display=swap');
+/* ==========================================================================   PIXEL PRIX — AAA RACING DESIGN SYSTEM v3   Full cinematic motorsport visual language   ========================================================================== */
+/* --- GOOGLE FONTS -------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block');
 /* --- DESIGN TOKENS ------------------------------------------------------- */:root  {
 /* Background */  --bg: #0a0a0c;
