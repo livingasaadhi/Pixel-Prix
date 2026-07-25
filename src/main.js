@@ -17,7 +17,9 @@ let phaserGame = null;
 let leaderboardUnsubscribe = null;
 let leaderboardTrackId = null;
 let ambientAnimId = null;      // requestAnimationFrame for menu particles
-let countdownLightsTimer = null; // F1 countdown lights timeout chain
+let countdownLightsTimers = [];  // F1 countdown timer handles
+let countdownLightsFrame = null; // pending requestAnimationFrame handle
+let countdownLightsGeneration = 0; // invalidates stale countdown callbacks
 let sessionBestSectors = {};     // session best S1, S2, S3 per trackId
 let dailyFeaturedTrackId = null;
 let raceSelectionMode = 'time-trial';
@@ -566,18 +568,21 @@ function launchSelectedRace(restartConfig = null) {
 
   setRaceMode(true);
   showScreen('screen-hud');
-  // Trigger F1 lights-out animation
-  playCountdownLights();
 
   if (phaserGame) {
     phaserGame.scale.refresh();
 
-    if (phaserGame.scene.isActive('RaceScene')) {
+    if (phaserGame.scene.isActive('RaceScene') || phaserGame.scene.isPaused('RaceScene')) {
       phaserGame.scene.stop('RaceScene');
     }
 
     phaserGame.scene.start('RaceScene', sessionConfig);
   }
+
+  // Wait until RaceScene has attached its lights-out listener before starting
+  // the presentation countdown. The scene also owns a safe fallback if a
+  // renderer cannot schedule this frame.
+  queueCountdownLights();
 }
 
 // ----------------------------------------------------------------------------
@@ -590,29 +595,75 @@ function setupTouchControls() {
     const btn = document.getElementById(id);
     if (!btn) return;
 
+    let isPressed = false;
+    let activePointerId = null;
+
     const start = (e) => {
-      e.preventDefault();
+      // Ignore right-clicks and a second finger/mouse button while this
+      // control is already held. Pointer capture keeps a held pedal active
+      // even when the finger drifts just outside its visual bounds.
+      if (typeof e?.button === 'number' && e.button !== 0) return;
+      if (typeof e?.pointerId === 'number') {
+        if (activePointerId !== null && activePointerId !== e.pointerId) return;
+        activePointerId = e.pointerId;
+        try { btn.setPointerCapture?.(e.pointerId); } catch (_) { /* capture is best-effort */ }
+      }
+      if (isPressed) return;
+      if (e?.cancelable) e.preventDefault();
+      isPressed = true;
       btn.classList.add('active');
       const sc = raceScene();
       if (sc) onStart(sc);
     };
 
     const end = (e) => {
-      e.preventDefault();
+      if (!isPressed) return;
+      if (typeof e?.pointerId === 'number' && activePointerId !== null && e.pointerId !== activePointerId) return;
+      if (e?.cancelable) e.preventDefault();
+      isPressed = false;
+      activePointerId = null;
       btn.classList.remove('active');
       const sc = raceScene();
       if (sc) onEnd(sc);
     };
 
-    btn.addEventListener('touchstart', start, { passive: false });
-    btn.addEventListener('touchend', end, { passive: false });
-    btn.addEventListener('touchcancel', end, { passive: false });
+    // Pointer events give every modern browser the same hold/release path
+    // for mouse, touch, pen, and multi-touch. The legacy fallback remains
+    // for older mobile browsers that do not expose PointerEvent.
+    if ('PointerEvent' in window) {
+      btn.addEventListener('pointerdown', start);
+      btn.addEventListener('pointerup', end);
+      btn.addEventListener('pointercancel', end);
+      btn.addEventListener('lostpointercapture', end);
+      window.addEventListener('pointerup', end);
+      window.addEventListener('pointercancel', end);
+      window.addEventListener('blur', end);
+    } else {
+      btn.addEventListener('touchstart', start, { passive: false });
+      btn.addEventListener('touchend', end, { passive: false });
+      btn.addEventListener('touchcancel', end, { passive: false });
+      btn.addEventListener('mousedown', start);
+      btn.addEventListener('mouseup', end);
+      btn.addEventListener('mouseleave', end);
+    }
 
-    btn.addEventListener('mousedown', start);
-    btn.addEventListener('mouseup', end);
-    btn.addEventListener('mouseleave', end);
+    // Keyboard activation is a held control too. This gives the visible HUD
+    // pedals a reliable accessible fallback without stealing race hotkeys.
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.stopPropagation();
+        start(e);
+      }
+    });
+    btn.addEventListener('keyup', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.stopPropagation();
+        end(e);
+      }
+    });
   };
 
+  bindButton('btn-touch-accel', s => s.setAccelerate(true), s => s.setAccelerate(false));
   bindButton('btn-touch-reverse', s => s.setBrake(true), s => s.setBrake(false));
   bindButton('btn-touch-left', s => s.setSteerLeft(true), s => s.setSteerLeft(false));
   bindButton('btn-touch-right', s => s.setSteerRight(true), s => s.setSteerRight(false));
@@ -620,120 +671,76 @@ function setupTouchControls() {
   bindButton('btn-touch-boost', s => s.setBoost(true), s => s.setBoost(false));
   bindButton('btn-touch-boost-left', s => s.setBoost(true), s => s.setBoost(false));
 
-  // Joystick control for mobile / touch devices (Steering)
+  // Touch steering is intentionally separate from throttle. A mobile racer
+  // gets an explicit GAS pedal rather than a hidden "push the stick forward"
+  // rule, so steering remains predictable while braking or boosting.
   const joystickBaseEl = document.getElementById('hud-joystick-base');
   const joystickHandleEl = document.getElementById('hud-joystick-handle');
 
   if (joystickBaseEl && joystickHandleEl) {
     let isDraggingJoystick = false;
     let recenterInterval = null;
-    let joystickTouchId = null; // multi-touch: track specific touch identifier
-    let joystickTouchActive = false; // guard against synthesized mouse events
+    let activePointerId = null;
     const deadzone = 0.08; // 8% center deadzone
 
-    const getJoystickTouch = (e) => {
-      if (!e.touches) return null;
-      if (joystickTouchId !== null) {
-        return Array.from(e.touches).find(t => t.identifier === joystickTouchId) || null;
-      }
-      return null;
-    };
-
-    const updateJoystick = (clientX, clientY) => {
+    const updateJoystick = (clientX) => {
       const rect = joystickBaseEl.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
       const maxRadius = rect.width / 2;
       const limit = maxRadius * 0.7; // Limit handle to 70% of base radius
 
-      let dx = clientX - cx;
-      let dy = clientY - cy;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+      const dx = Phaser.Math.Clamp(clientX - cx, -limit, limit);
 
-      if (distance > limit) {
-        dx = (dx / distance) * limit;
-        dy = (dy / distance) * limit;
-      }
+      joystickHandleEl.style.transform = `translate(${dx}px, 0px)`;
 
-      joystickHandleEl.style.transform = `translate(${dx}px, ${dy}px)`;
-
-      // Compute absolute heading angle from joystick direction (screen-space).
-      // The joystick also drives acceleration: push amount (magnitude) maps to
-      // progressive throttle so the car accelerates harder the further it is pushed,
-      // toward the direction it is pointing.
       const sc = raceScene();
-      const mag = Math.min(1, distance / limit);
       if (sc) {
-        if (mag > deadzone) {
-          const angle = Math.atan2(dy, dx);
-          sc.setJoystickHeading(angle, true);
-          // Progressive (eased) curve: small pushes = gentle, full push = full gas.
-          sc.setTouchGas(Math.pow(mag, 1.6));
-        } else {
-          sc.setJoystickHeading(0, false);
-          sc.setTouchGas(0);
-        }
+        const steering = Math.abs(dx / limit) > deadzone ? dx / limit : 0;
+        sc.setJoystickHeading(0, false);
+        sc.setSteeringValue(steering);
       }
     };
 
     const startDrag = (e) => {
-      // Guard: ignore synthesized mouse events that follow touch events
-      if (e.type === 'mousedown' && joystickTouchActive) return;
-      e.preventDefault();
+      if (typeof e?.button === 'number' && e.button !== 0) return;
+      if (typeof e?.pointerId === 'number') {
+        if (activePointerId !== null && activePointerId !== e.pointerId) return;
+        activePointerId = e.pointerId;
+        try { joystickBaseEl.setPointerCapture?.(e.pointerId); } catch (_) { /* best-effort */ }
+      }
+      if (e?.cancelable) e.preventDefault();
       isDraggingJoystick = true;
       if (recenterInterval) {
         cancelAnimationFrame(recenterInterval);
         recenterInterval = null;
       }
-      // Store the touch identifier for multi-touch tracking using changedTouches
-      if (e.touches && e.changedTouches && e.changedTouches[0]) {
-        joystickTouchId = e.changedTouches[0].identifier;
-        joystickTouchActive = true;
-      }
-      const touch = e.changedTouches ? e.changedTouches[0] : e;
-      updateJoystick(touch.clientX, touch.clientY);
+      updateJoystick(e.clientX);
     };
 
     const drag = (e) => {
       if (!isDraggingJoystick) return;
+      if (typeof e?.pointerId === 'number' && activePointerId !== null && e.pointerId !== activePointerId) return;
       if (e.cancelable) e.preventDefault();
-      let touch;
-      if (e.touches && (touch = getJoystickTouch(e))) {
-        updateJoystick(touch.clientX, touch.clientY);
-      } else if (!e.touches) {
-        // Mouse fallback (only for real mouse, not synthesized)
-        updateJoystick(e.clientX, e.clientY);
-      }
+      updateJoystick(e.clientX);
     };
 
     const endDrag = (e) => {
-      // Check if the released touch matches our tracked joystick touch
-      if (joystickTouchId !== null && e.changedTouches) {
-        const released = Array.from(e.changedTouches).find(t => t.identifier === joystickTouchId);
-        if (!released) return; // not our touch
-      }
       if (!isDraggingJoystick) return;
+      if (typeof e?.pointerId === 'number' && activePointerId !== null && e.pointerId !== activePointerId) return;
       isDraggingJoystick = false;
-      joystickTouchId = null;
-      joystickTouchActive = false;
+      activePointerId = null;
 
-      // Immediately clear ALL joystick state in the game scene
+      // Immediately clear steering state in the game scene.
       const scImmediate = raceScene();
       if (scImmediate) {
         scImmediate.setJoystickHeading(0, false);
         scImmediate.setSteeringValue(0);
-        scImmediate.setTouchGas(0);
       }
 
-      // Smoothly ease joystick handle back to center (VISUAL ONLY — no game input)
-      let rect = joystickBaseEl.getBoundingClientRect();
-      let maxRadius = rect.width / 2;
-      let limit = maxRadius * 0.7;
-
+      // Smoothly ease the visual handle back to centre.
       const style = window.getComputedStyle(joystickHandleEl);
       const matrix = new DOMMatrix(style.transform);
       let curDx = matrix.m41;
-      let curDy = matrix.m42;
 
       const step = () => {
         if (isDraggingJoystick) {
@@ -742,16 +749,14 @@ function setupTouchControls() {
         }
 
         curDx *= 0.8; // Easing decay rate
-        curDy *= 0.8;
 
-        if (Math.abs(curDx) < 0.1 && Math.abs(curDy) < 0.1) {
+        if (Math.abs(curDx) < 0.1) {
           curDx = 0;
-          curDy = 0;
         }
 
-        joystickHandleEl.style.transform = `translate(${curDx}px, ${curDy}px)`;
+        joystickHandleEl.style.transform = `translate(${curDx}px, 0px)`;
 
-        if (curDx !== 0 || curDy !== 0) {
+        if (curDx !== 0) {
           recenterInterval = requestAnimationFrame(step);
         } else {
           recenterInterval = null;
@@ -761,16 +766,33 @@ function setupTouchControls() {
       recenterInterval = requestAnimationFrame(step);
     };
 
-    joystickBaseEl.addEventListener('touchstart', startDrag, { passive: false });
-    window.addEventListener('touchmove', drag, { passive: false });
-    window.addEventListener('touchend', endDrag);
-    window.addEventListener('touchcancel', endDrag);
-
-    joystickBaseEl.addEventListener('mousedown', startDrag);
-    window.addEventListener('mousemove', drag);
-    window.addEventListener('mouseup', endDrag);
-    window.addEventListener('mouseleave', endDrag);
-    window.addEventListener('blur', endDrag);
+    if ('PointerEvent' in window) {
+      joystickBaseEl.addEventListener('pointerdown', startDrag);
+      joystickBaseEl.addEventListener('pointermove', drag);
+      joystickBaseEl.addEventListener('pointerup', endDrag);
+      joystickBaseEl.addEventListener('pointercancel', endDrag);
+      joystickBaseEl.addEventListener('lostpointercapture', endDrag);
+      window.addEventListener('pointerup', endDrag);
+      window.addEventListener('pointercancel', endDrag);
+      window.addEventListener('blur', endDrag);
+    } else {
+      const legacyPoint = (event) => {
+        const touch = event.changedTouches?.[0] || event.touches?.[0];
+        return touch ? {
+          clientX: touch.clientX,
+          cancelable: event.cancelable,
+          preventDefault: () => event.preventDefault()
+        } : event;
+      };
+      joystickBaseEl.addEventListener('touchstart', (event) => startDrag(legacyPoint(event)), { passive: false });
+      joystickBaseEl.addEventListener('touchmove', (event) => drag(legacyPoint(event)), { passive: false });
+      joystickBaseEl.addEventListener('touchend', (event) => endDrag(legacyPoint(event)));
+      joystickBaseEl.addEventListener('touchcancel', (event) => endDrag(legacyPoint(event)));
+      joystickBaseEl.addEventListener('mousedown', startDrag);
+      window.addEventListener('mousemove', drag);
+      window.addEventListener('mouseup', endDrag);
+      window.addEventListener('blur', endDrag);
+    }
   }
 
 }
@@ -1145,7 +1167,7 @@ function setupGameEventListeners() {
     skipScore?.classList.toggle('hidden', !leaderboardEligible);
 
     // Stop the race scene
-    if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
+    if (phaserGame && (phaserGame.scene.isActive('RaceScene') || phaserGame.scene.isPaused('RaceScene'))) {
       phaserGame.scene.stop('RaceScene');
     }
 
@@ -1536,8 +1558,17 @@ function bindClickOrTouch(idOrEl, handler) {
 // DOM EVENT LISTENERS ATTACHMENT
 // ----------------------------------------------------------------------------
 function initUI() {
+  const leaveLobbyForNavigation = () => {
+    // A create/join request opens its Realtime channel before the lobby is
+    // visible. Navigation must cancel that pending session too.
+    if (mpState.channel || mpState.isMultiplayer) {
+      leaveMultiplayerRoom();
+    }
+  };
+
   // Navigation Buttons
   const openRaceSelect = (mode = 'time-trial') => {
+    leaveLobbyForNavigation();
     setRaceSelectionMode(mode);
     updateCarSelection();
     updateTrackSelection();
@@ -1550,6 +1581,7 @@ function initUI() {
   bindClickOrTouch('btn-open-coop', () => openRaceSelect('coop'));
 
   const openLeaderboard = () => {
+    leaveLobbyForNavigation();
     const trackId = TRACKS[selectedTrackIndex].id;
     renderLeaderboardTabs(trackId);
     watchLeaderboard(trackId);
@@ -1557,7 +1589,10 @@ function initUI() {
     showScreen('screen-leaderboard');
   };
 
-  const openSettings = () => showScreen('screen-settings');
+  const openSettings = () => {
+    leaveLobbyForNavigation();
+    showScreen('screen-settings');
+  };
 
   bindClickOrTouch('btn-open-leaderboard', openLeaderboard);
 
@@ -1567,7 +1602,10 @@ function initUI() {
   // Bottom & Top nav tab wiring
   bindClickOrTouch('top-nav-leaderboard', openLeaderboard);
   bindClickOrTouch('top-nav-race', () => openRaceSelect('time-trial'));
-  bindClickOrTouch('top-nav-garage', () => showScreen('screen-menu'));
+  bindClickOrTouch('top-nav-garage', () => {
+    leaveLobbyForNavigation();
+    showScreen('screen-menu');
+  });
   bindClickOrTouch('top-nav-settings', openSettings);
 
   bindClickOrTouch('btn-close-settings', () => {
@@ -1580,22 +1618,46 @@ function initUI() {
   });
 
   bindClickOrTouch('btn-select-back', () => {
+    leaveLobbyForNavigation();
     showScreen('screen-menu');
   });
 
-  // Pause menu
-  bindClickOrTouch('btn-touch-pause', () => {
-    showScreen('screen-pause');
-  });
-
-  bindClickOrTouch('btn-hud-back', () => {
-    if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
+  // Pause menu and explicit race exit. Online races remain live for other
+  // drivers, so they do not present a misleading local "paused" state.
+  const exitActiveRace = ({ leaveOnline = true } = {}) => {
+    cancelCountdownLights();
+    if (phaserGame && (phaserGame.scene.isActive('RaceScene') || phaserGame.scene.isPaused('RaceScene'))) {
       phaserGame.scene.stop('RaceScene');
     }
+    if (leaveOnline && mpState.isMultiplayer) {
+      leaveMultiplayerRoom();
+      showStewardToast('LEFT ONLINE SESSION', 'amber');
+    }
+  };
+
+  const pauseSoloRace = () => {
+    if (mpState.isMultiplayer) {
+      showStewardToast('ONLINE RACES STAY LIVE — USE EXIT TO LEAVE', 'amber');
+      return false;
+    }
+    if (phaserGame?.scene?.isActive('RaceScene')) {
+      phaserGame.scene.pause('RaceScene');
+    }
+    showScreen('screen-pause');
+    return true;
+  };
+
+  bindClickOrTouch('btn-touch-pause', pauseSoloRace);
+
+  bindClickOrTouch('btn-hud-back', () => {
+    exitActiveRace();
     showScreen('screen-menu');
   });
 
   bindClickOrTouch('btn-resume-race', () => {
+    if (phaserGame?.scene?.isPaused('RaceScene')) {
+      phaserGame.scene.resume('RaceScene');
+    }
     showScreen('screen-hud');
   });
 
@@ -1604,9 +1666,7 @@ function initUI() {
   });
 
   bindClickOrTouch('btn-exit-to-menu', () => {
-    if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
-      phaserGame.scene.stop('RaceScene');
-    }
+    exitActiveRace();
     showScreen('screen-menu');
   });
 
@@ -1654,7 +1714,10 @@ function initUI() {
   });
 
   bindClickOrTouch('btn-launch-race', () => {
-    mpState.isMultiplayer = false;
+    // A lobby can be left through navigation before returning to this CTA.
+    // Tear down its Realtime channel before a solo race so a late room event
+    // cannot start a second scene over the local session.
+    if (mpState.channel || mpState.isMultiplayer) leaveMultiplayerRoom();
     launchSelectedRace();
   });
 
@@ -1676,12 +1739,14 @@ function initUI() {
       const tId = selectedTrackId();
 
       showStewardToast('CREATING ONLINE LOBBY…', 'amber');
-      const { roomCode } = await createMultiplayerRoom(tId, cId, pName);
+      const { roomCode, sessionEpoch } = await createMultiplayerRoom(tId, cId, pName);
+      if (mpState.sessionEpoch !== sessionEpoch || !mpState.isMultiplayer || !mpState.channel) return;
 
       document.getElementById('mp-room-code-val').innerText = roomCode;
       showScreen('screen-mp-lobby');
       showStewardToast(`ONLINE LOBBY ${roomCode} READY`, 'amber');
     } catch (err) {
+      if (err?.code === 'ROOM_SESSION_SUPERSEDED') return;
       console.error('Unable to create online lobby:', err);
       showStewardToast('UNABLE TO CREATE LOBBY — CHECK YOUR CONNECTION', 'red');
     }
@@ -1699,6 +1764,7 @@ function initUI() {
 
   // Cancel Join Modal
   bindClickOrTouch('btn-cancel-join', () => {
+    if (mpState.channel || mpState.isMultiplayer) leaveMultiplayerRoom();
     document.getElementById('modal-join-room')?.classList.add('hidden');
   });
 
@@ -1708,9 +1774,9 @@ function initUI() {
     const errorEl = document.getElementById('join-room-error');
     const code = (input ? input.value : '').trim().toUpperCase();
 
-    if (!code || code.length < 4) {
+    if (!/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/.test(code)) {
       if (errorEl) {
-        errorEl.innerText = 'PLEASE ENTER A VALID 4-CHAR ROOM CODE';
+        errorEl.innerText = 'PLEASE ENTER A VALID 6-CHAR ROOM CODE';
         errorEl.classList.remove('hidden');
       }
       return;
@@ -1721,7 +1787,13 @@ function initUI() {
       const cId = selectedCarId();
       const tId = selectedTrackId();
 
-      const { roomCode, assignedCarId, carChanged } = await joinMultiplayerRoom(code, tId, cId, pName);
+      const { roomCode, assignedCarId, carChanged, assignedTrackId, sessionEpoch } = await joinMultiplayerRoom(code, tId, cId, pName);
+      if (mpState.sessionEpoch !== sessionEpoch || !mpState.isMultiplayer || !mpState.channel) return;
+      const assignedTrackIndex = TRACKS.findIndex((track) => track.id === assignedTrackId);
+      if (assignedTrackIndex >= 0) {
+        selectedTrackIndex = assignedTrackIndex;
+        updateTrackSelection();
+      }
       if (carChanged && assignedCarId) {
         const assignedIndex = CARS.findIndex((car) => car.id === assignedCarId);
         if (assignedIndex >= 0) {
@@ -1735,6 +1807,7 @@ function initUI() {
       showScreen('screen-mp-lobby');
       showStewardToast(`JOINED ONLINE LOBBY ${roomCode}`, 'amber');
     } catch (err) {
+      if (err?.code === 'ROOM_SESSION_SUPERSEDED') return;
       if (errorEl) {
         errorEl.innerText = err.message || 'FAILED TO JOIN ONLINE RACE';
         errorEl.classList.remove('hidden');
@@ -1770,6 +1843,10 @@ function initUI() {
     document.getElementById('modal-mp-results')?.classList.add('hidden');
     document.getElementById('mp-results-rows')?.replaceChildren();
     resetMultiplayerRaceState();
+    if (mpState.channel) {
+      mpState.localPlayer = { ...mpState.localPlayer, racePhase: 'lobby', raceId: null };
+      mpState.channel.track(mpState.localPlayer).catch(() => {});
+    }
     if (phaserGame && phaserGame.scene.isActive('RaceScene')) {
       phaserGame.scene.stop('RaceScene');
     }
@@ -1873,47 +1950,74 @@ function initUI() {
     if (trackName) trackName.textContent = TRACKS[trackIndex].name.toUpperCase();
   });
 
+  window.addEventListener('pixel-prix:mp-room-locked', () => {
+    document.getElementById('modal-join-room')?.classList.add('hidden');
+    showScreen('screen-select');
+    showStewardToast('RACE ALREADY IN PROGRESS — JOIN A NEW LOBBY', 'amber');
+  });
+
   const changeLobbyTrack = (direction) => {
     if (!mpState.isHost) return;
     selectedTrackIndex = (selectedTrackIndex + direction + TRACKS.length) % TRACKS.length;
     updateTrackSelection();
-    broadcastLobbyTrackChange(TRACKS[selectedTrackIndex].id);
+    broadcastLobbyTrackChange(TRACKS[selectedTrackIndex].id).catch(() => {
+      showStewardToast('TRACK UPDATE LOST — TRY AGAIN', 'red');
+    });
   };
   bindClickOrTouch('btn-mp-track-prev', () => changeLobbyTrack(-1));
   bindClickOrTouch('btn-mp-track-next', () => changeLobbyTrack(1));
 
   // Handle Race Start Event
   window.addEventListener('pixel-prix:mp-race-start', (e) => {
+    // Ignore any delivery queued before a user deliberately left the room.
+    if (
+      !mpState.isMultiplayer ||
+      !mpState.channel ||
+      Number(e.detail?.sessionEpoch) !== mpState.sessionEpoch
+    ) return;
+
+    document.getElementById('modal-mp-results')?.classList.add('hidden');
+    setRaceMode(true);
     showScreen('screen-hud');
-    playCountdownLights();
+    const startTimestamp = Number(e.detail?.startTimestamp) || (Date.now() + 4000);
 
     if (phaserGame) {
       phaserGame.scale.refresh();
       const selectedCarId = mpState.localPlayer.carId || CARS[selectedCarIndex].id;
       const selectedTrackId = mpState.trackId || TRACKS[selectedTrackIndex].id;
 
-      if (phaserGame.scene.isActive('RaceScene')) {
+      if (phaserGame.scene.isActive('RaceScene') || phaserGame.scene.isPaused('RaceScene')) {
         phaserGame.scene.stop('RaceScene');
       }
 
       phaserGame.scene.start('RaceScene', {
         carId: selectedCarId,
-        trackId: selectedTrackId
+        trackId: selectedTrackId,
+        startTimestamp
       });
     }
+
+    // The green-light time is shared by every client; the presentation can
+    // join mid-sequence if the network packet arrived late without moving the
+    // actual start time.
+    queueCountdownLights(startTimestamp);
   });
 
   // Handle Finish Classification Event
   window.addEventListener('pixel-prix:mp-race-finish-update', (e) => {
-    const finishedPlayers = Array.isArray(e.detail?.finishedPlayers) ? e.detail.finishedPlayers : [];
+    const roster = (mpState.raceRoster.length > 0 ? mpState.raceRoster : mpState.players)
+      .filter((player) => !player.retired);
+    const rosterIds = new Set(roster.map((player) => player.id));
+    const finishedPlayers = (Array.isArray(e.detail?.finishedPlayers) ? e.detail.finishedPlayers : [])
+      .filter((player) => !rosterIds.size || rosterIds.has(player.id));
     const rowsEl = document.getElementById('mp-results-rows');
     const modal = document.getElementById('modal-mp-results');
     const localPlayerHasFinished = finishedPlayers.some((player) => player.id === mpState.localPlayer.id);
-    const expectedDrivers = mpState.players.length;
+    const expectedDrivers = roster.length;
     const raceComplete = expectedDrivers > 0 && finishedPlayers.length >= expectedDrivers;
 
-    // A finisher remains in spectator mode until every connected driver has
-    // crossed the line. Classification then opens for the whole session.
+    // A finisher remains in spectator mode until the frozen grid has crossed
+    // the line (or a departed driver was removed by presence sync).
     if (rowsEl && localPlayerHasFinished) {
       const leaderTime = finishedPlayers[0].timeMs;
       const fastestLapMs = Math.min(...finishedPlayers
@@ -2025,9 +2129,12 @@ function initUI() {
     const onPause = !pause.classList.contains('hidden');
     if (onHud && !onPause) {
       e.preventDefault();
-      showScreen('screen-pause');
+      pauseSoloRace();
     } else if (onPause && !onHud) {
       e.preventDefault();
+      if (phaserGame?.scene?.isPaused('RaceScene')) {
+        phaserGame.scene.resume('RaceScene');
+      }
       showScreen('screen-hud');
     }
   });
@@ -2276,40 +2383,84 @@ function stopAmbientParticles() {
 // ----------------------------------------------------------------------------
 // F1 COUNTDOWN LIGHTS ANIMATION
 // ----------------------------------------------------------------------------
-function playCountdownLights() {
+const COUNTDOWN_LIGHT_INTERVAL_MS = 550;
+const COUNTDOWN_HOLD_MS = 800;
+const COUNTDOWN_DURATION_MS = COUNTDOWN_LIGHT_INTERVAL_MS * 5 + COUNTDOWN_HOLD_MS;
+
+function cancelCountdownLights() {
+  countdownLightsGeneration += 1;
+  if (countdownLightsFrame !== null) {
+    window.cancelAnimationFrame(countdownLightsFrame);
+    countdownLightsFrame = null;
+  }
+  countdownLightsTimers.forEach((timer) => clearTimeout(timer));
+  countdownLightsTimers = [];
+  document.getElementById('countdown-overlay')?.classList.remove('visible');
+}
+
+function scheduleCountdown(delay, callback) {
+  const generation = countdownLightsGeneration;
+  const timer = window.setTimeout(() => {
+    if (generation === countdownLightsGeneration) callback();
+  }, Math.max(0, delay));
+  countdownLightsTimers.push(timer);
+  return timer;
+}
+
+function queueCountdownLights(sharedStartTimestamp = null) {
+  cancelCountdownLights();
+  const generation = countdownLightsGeneration;
+  countdownLightsFrame = window.requestAnimationFrame(() => {
+    countdownLightsFrame = null;
+    if (generation === countdownLightsGeneration) {
+      playCountdownLights(sharedStartTimestamp);
+    }
+  });
+}
+
+function playCountdownLights(sharedStartTimestamp = null) {
   const overlay = document.getElementById('countdown-overlay');
   const lights = [1, 2, 3, 4, 5].map(i => document.getElementById(`cl-${i}`));
   if (!overlay || lights.some(l => !l)) return;
 
-  if (countdownLightsTimer) {
-    clearTimeout(countdownLightsTimer);
-    countdownLightsTimer = null;
-  }
+  cancelCountdownLights();
 
-  // Reset
+  // `sharedStartTimestamp` is the exact lights-out time in multiplayer. The
+  // same schedule is used solo, where we create a target from this moment.
+  const now = Date.now();
+  const requestedStart = Number(sharedStartTimestamp);
+  const lightsOutAt = Number.isFinite(requestedStart) && requestedStart > 0
+    ? requestedStart
+    : now + COUNTDOWN_DURATION_MS;
+  const firstRedAt = lightsOutAt - COUNTDOWN_DURATION_MS;
+
   lights.forEach(l => l.className = 'countdown-light');
   overlay.classList.add('visible');
 
-  let i = 0;
-  const step = () => {
-    if (i < lights.length) {
-      lights[i].classList.add('red');
-      i++;
-      countdownLightsTimer = setTimeout(step, 550);
-    } else {
-      // All 5 red lights lit — pause then GO (green lights)
-      countdownLightsTimer = setTimeout(() => {
-        lights.forEach(l => { l.classList.remove('red'); l.classList.add('green'); });
-        window.dispatchEvent(new CustomEvent('pixel-prix:lights-green'));
+  lights.forEach((light, index) => {
+    const lightAt = firstRedAt + index * COUNTDOWN_LIGHT_INTERVAL_MS;
+    const illuminate = () => light.classList.add('red');
+    if (now >= lightAt) illuminate();
+    else scheduleCountdown(lightAt - now, illuminate);
+  });
 
-        countdownLightsTimer = setTimeout(() => {
-          lights.forEach(l => l.className = 'countdown-light');
-          overlay.classList.remove('visible');
-        }, 800);
-      }, 800);
-    }
+  const go = () => {
+    lights.forEach((light) => {
+      light.classList.remove('red');
+      light.classList.add('green');
+    });
+    window.dispatchEvent(new CustomEvent('pixel-prix:lights-green'));
+    scheduleCountdown(COUNTDOWN_HOLD_MS, () => {
+      lights.forEach(light => { light.className = 'countdown-light'; });
+      overlay.classList.remove('visible');
+    });
   };
-  step();
+
+  if (now >= lightsOutAt) {
+    go();
+  } else {
+    scheduleCountdown(lightsOutAt - now, go);
+  }
 }
 
 // ----------------------------------------------------------------------------

@@ -3032,8 +3032,10 @@ body {
   transform: translateX(-50%);
   z-index: 550;
   display: flex;
-  gap: 10px;
-  padding: 10px 20px;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px 9px;
   background: rgba(8, 8, 14, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-full);
@@ -3047,6 +3049,24 @@ body {
 #countdown-overlay.visible {
   opacity: 1;
 }
+
+.countdown-lights {
+  display: flex;
+  gap: 10px;
+}
+
+.countdown-control-hint {
+  color: rgba(255, 255, 255, 0.58);
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.countdown-touch-copy { display: none; }
+.touch-device .countdown-touch-copy { display: inline; }
+.touch-device .countdown-desktop-copy { display: none; }
 
 .countdown-light {
   width: 22px;
@@ -3216,7 +3236,7 @@ body {
   pointer-events: none;
 }
 
-/* Touch combined pedal styles */
+/* Touch race layout: steering left, clear gas/brake/ERS controls right. */
 #hud-drive-left-group {
   display: none !important;
   flex-direction: column;
@@ -3224,16 +3244,37 @@ body {
 }
 
 .touch-device #hud-drive-left-group {
-  display: flex !important;
+  display: none !important;
+}
+
+.touch-device #screen-hud #hud-drive-right-group {
   position: absolute;
-  bottom: max(24px, env(safe-area-inset-bottom));
-  left: max(24px, env(safe-area-inset-left));
+  display: flex !important;
+  right: max(18px, env(safe-area-inset-right)) !important;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  left: auto !important;
   z-index: 10;
   pointer-events: auto;
 }
 
-.touch-device #hud-drive-right-group {
-  display: none !important;
+.touch-device .hud-joystick-container {
+  right: auto;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  left: max(18px, env(safe-area-inset-left));
+}
+
+.touch-device .hud-joystick-base::before {
+  position: absolute;
+  bottom: 16%;
+  left: 50%;
+  content: 'STEER';
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.42);
+  font-family: var(--font-mono);
+  font-size: 0.48rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  pointer-events: none;
 }
 
 .hud-combined-pedals-row {
@@ -6105,15 +6146,14 @@ body {
   .hud-action-btns { top: 11px; left: 10px; }
 }
 
-/* --- Fixed viewport policy ---------------------------------------------- */
-/* Screens are task boards, not documents: every primary action must stay in
-   the viewport.  Small layouts compact the contents rather than introducing
-   nested or page scrolling. */
+/* --- Screen scrolling policy --------------------------------------------- */
+/* The race canvas owns its viewport, but menu and setup surfaces are real
+   documents on short phones. Keeping them scrollable is preferable to
+   silently clipping a car, a circuit, or the Grand Prix configuration. */
 .f1-red-accent-bar {
   display: none !important;
 }
 
-.ui-screen,
 .ui-screen:not(#screen-hud),
 #screen-menu,
 #screen-select,
@@ -6121,6 +6161,13 @@ body {
 #screen-leaderboard,
 #screen-settings,
 #screen-gameover {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
+}
+
+#screen-hud {
   overflow: hidden !important;
   overscroll-behavior: none !important;
   touch-action: none !important;
@@ -6128,14 +6175,15 @@ body {
 
 #screen-select {
   display: flex;
-  min-height: 100%;
+  min-height: 100dvh;
+  height: auto;
   flex-direction: column;
 }
 
 #screen-select .select-grid {
-  flex: 1 1 auto;
-  min-height: 0;
-  align-items: stretch;
+  flex: 0 0 auto;
+  min-height: auto;
+  align-items: start;
 }
 
 #screen-select .select-section,
@@ -6148,7 +6196,9 @@ body {
 }
 
 #screen-leaderboard .lb-rows {
-  overflow: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 @media (max-width: 670px) {
@@ -6575,17 +6625,16 @@ button[aria-disabled='true']:hover {
 }
 
 /* ========================================================================
-   RACE HUB — FINALISED TASK-BOARD LAYOUT
+   RACE HUB — RESPONSIVE SETUP LAYOUT
    ------------------------------------------------------------------------
-   The setup screen is a control surface, not a scrolling document.  Keep
-   the selected car, circuit and every route into a race in the viewport.
-   These rules intentionally live last: they resolve legacy visual passes
-   above without changing any game-state or input behaviour.
+   Cars, circuits, conditions, and the launch action remain reachable at
+   every viewport size. Small devices use a single naturally scrolling setup
+   surface instead of clipping configuration below a fixed viewport.
    ======================================================================== */
 #screen-select {
   box-sizing: border-box;
-  height: 100dvh;
-  min-height: 0;
+  height: auto;
+  min-height: 100dvh;
   padding: 104px 5.2vw 124px;
 }
 
@@ -6603,9 +6652,9 @@ button[aria-disabled='true']:hover {
 
 #screen-select .select-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: minmax(0, 1fr);
-  flex: 1 1 auto;
-  min-height: 0;
+  grid-template-rows: auto;
+  flex: 0 0 auto;
+  min-height: auto;
   margin: 0 auto;
   gap: clamp(14px, 1.35vw, 24px);
 }
@@ -6622,8 +6671,8 @@ button[aria-disabled='true']:hover {
 }
 
 #screen-select .glass-card {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: auto;
   height: auto;
   box-sizing: border-box;
   overflow: hidden;
@@ -7280,6 +7329,18 @@ button[aria-disabled='true']:hover {
 #screen-menu .tile-meta,
 #screen-menu .garage-kicker {
   color: var(--pp-muted);
+}
+
+#screen-menu .garage-heading,
+#screen-menu .garage-heading p {
+  min-width: 0;
+  max-width: 100%;
+}
+
+#screen-menu .garage-heading p {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
 }
 
 #screen-menu .garage-tile {
@@ -8245,12 +8306,13 @@ button[aria-disabled='true']:hover {
     min-height: 44px;
   }
 
-  /* Race setup is a compact two-step board rather than a scrollable page. */
+  /* Race setup stays compact, but remains vertically reachable when Grand
+     Prix conditions or a short viewport require more room. */
   #screen-select {
-    height: 100dvh;
+    height: auto;
     min-height: 100svh;
     padding: calc(66px + env(safe-area-inset-top)) 10px
-      calc(70px + env(safe-area-inset-bottom));
+      calc(84px + env(safe-area-inset-bottom));
   }
 
   #screen-select .screen-header {
@@ -8259,16 +8321,16 @@ button[aria-disabled='true']:hover {
   }
 
   #screen-select .select-grid {
-    grid-template-rows: repeat(2, minmax(0, 1fr));
-    gap: 7px;
+    grid-template-rows: auto;
+    flex: 0 0 auto;
+    gap: 12px;
   }
 
   #screen-select .select-section,
   #screen-select .glass-card,
   #screen-select .car-select-card,
   #screen-select .track-select-card {
-    min-height: 0;
-    overflow: hidden;
+    min-height: auto;
   }
 
   #screen-select .section-header-row {
@@ -8308,25 +8370,25 @@ button[aria-disabled='true']:hover {
     width: auto;
   }
 
-  /* Modal screens remain bounded in the visual viewport. Their content is
-     condensed before it can sit behind Android's system gesture area. */
+  /* Modal surfaces scroll as one page rather than clipping their final
+     controls below browser and system gesture chrome. */
   #screen-mp-lobby,
   #screen-leaderboard,
   #screen-settings,
   #screen-gameover {
     box-sizing: border-box;
-    height: 100dvh;
+    height: auto;
     min-height: 100svh;
     padding: calc(64px + env(safe-area-inset-top)) 10px
-      calc(12px + env(safe-area-inset-bottom));
+      calc(28px + env(safe-area-inset-bottom));
   }
 
   #screen-mp-lobby .mp-lobby-container,
   #screen-settings .modal-card,
   #screen-gameover .modal-card,
   #screen-leaderboard .modal-card {
-    max-height: calc(100dvh - 82px);
-    overflow: hidden !important;
+    max-height: none;
+    overflow: visible !important;
     transform: none;
   }
 
@@ -8360,9 +8422,10 @@ button[aria-disabled='true']:hover {
     min-height: 44px;
   }
 
-  .touch-device #screen-hud .hud-drive-group {
+  .touch-device #screen-hud #hud-drive-right-group {
     bottom: max(18px, calc(env(safe-area-inset-bottom) + 6px));
-    left: max(18px, env(safe-area-inset-left)) !important;
+    right: max(18px, env(safe-area-inset-right)) !important;
+    left: auto !important;
   }
 
   .hud-steering-wheel-container {
@@ -8431,6 +8494,21 @@ button[aria-disabled='true']:hover {
   .hud-steering-wheel {
     width: 108px;
     height: 108px;
+  }
+
+  /* Keep the two-thumb race layout separated even on 360 px devices. */
+  .touch-device .hud-joystick-base {
+    width: 138px;
+    height: 138px;
+  }
+
+  .touch-device .hud-joystick-handle {
+    width: 48px;
+    height: 48px;
+  }
+
+  .touch-device .hud-drive-triangular {
+    gap: 9px;
   }
 }
 
@@ -9212,9 +9290,9 @@ button[aria-disabled='true']:hover {
   }
 
   .mp-room-code-panel .btn {
-    min-width: 32px;
-    min-height: 30px;
-    padding: 4px !important;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 6px !important;
   }
 
   .mp-session-strip {
@@ -9231,17 +9309,17 @@ button[aria-disabled='true']:hover {
   }
 
   .mp-track-picker {
-    grid-template-columns: 16px minmax(0, 1fr) 16px;
-    gap: 2px;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 5px;
   }
 
   .mp-track-nav {
-    width: 16px;
-    height: 16px;
+    width: 44px;
+    height: 44px;
   }
 
   .mp-track-nav .material-symbols-outlined {
-    font-size: 0.68rem;
+    font-size: 1rem;
   }
 
   #screen-mp-lobby .mp-section-sub {
@@ -9249,13 +9327,13 @@ button[aria-disabled='true']:hover {
   }
 
   #screen-mp-lobby .mp-drivers-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 5px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   #screen-mp-lobby .mp-driver-card {
-    min-height: 56px;
-    padding: 6px;
+    min-height: 66px;
+    padding: 9px;
   }
 
   #screen-mp-lobby .mp-driver-left {
@@ -9263,19 +9341,19 @@ button[aria-disabled='true']:hover {
   }
 
   #screen-mp-lobby .mp-grid-pos {
-    width: 19px;
-    height: 19px;
-    flex-basis: 19px;
-    font-size: 0.4rem;
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+    font-size: 0.5rem;
   }
 
   #screen-mp-lobby .mp-driver-info .mp-driver-name {
-    font-size: 0.48rem;
+    font-size: 0.58rem;
   }
 
   #screen-mp-lobby .mp-driver-info .mp-car-name,
   #screen-mp-lobby .mp-badge-host {
-    font-size: 0.39rem;
+    font-size: 0.46rem;
   }
 
   #screen-mp-lobby .mp-lobby-footer {

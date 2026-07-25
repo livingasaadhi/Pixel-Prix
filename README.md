@@ -134,8 +134,8 @@ Open [`src/data/tracks.js`](file:///c:/Users/adith/Downloads/Work/Projects/G3%20
 
 | Action | Mobile Touch Controls | Desktop Keyboard |
 | :--- | :--- | :--- |
-| **Steer Left** | ◀ Button (Left Thumb) | `A` or `Left Arrow` |
-| **Steer Right** | ▶ Button (Left Thumb) | `D` or `Right Arrow` |
+| **Steer** | Left-thumb `STEER` control | `A` / `D` or Arrow Keys |
+| **Accelerate** | Hold `GAS` (Right Thumb) | `W` or `Up Arrow` |
 | **Brake / Slow Down** | `BRAKE` Button (Right Thumb) | `S` or `Down Arrow` |
 | **Boost Speed** | `BOOST ⚡` Button (Right Thumb) | `Spacebar` or `Shift` |
 
@@ -148,6 +148,10 @@ Pixel Prix supports three distinct session types while preserving the existing t
 - **Time Trial:** choose the circuit's default weather or a custom condition, select a setup, and race your personal local ghost. Ghosts are stored separately for each car, weather condition, and setup.
 - **Grand Prix:** race 4, 6, or 8 deterministic offline AI rivals. The result screen shows a live classification and awards championship points, podiums, and wins to the local driver profile.
 - **Co-op:** remains the existing Supabase-backed live multiplayer mode and does not mix AI cars into online sessions.
+
+Co-op lobbies use the room code as the room identity, so a guest can join regardless of the circuit they had selected beforehand; the host circuit is adopted automatically. The green-light countdown also uses a shared start timestamp across connected clients. This is casual, client-authoritative multiplayer—do not treat it as a ranked anti-cheat service without server-side validation.
+
+The vehicle, track, and interface visuals are original procedural/Phaser assets maintained in this repository. External racing games may inform feature research, but their bundled sprites, audio, branding, and source are not imported.
 
 To keep timing fair, only a standard, balanced time trial in the circuit's default weather can be submitted to the global timing tower. Custom-condition and Grand Prix results remain in your local driver profile.
 

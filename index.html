@@ -79,7 +79,7 @@
           <div class="garage-heading">
             <span class="garage-kicker">PIXEL PRIX / SEASON 04</span>
             <h1>RACE CONTROL</h1>
-            <p>Choose a solo time trial, race an AI grid, join a co-op race, or review live timing.</p>
+            <p>Choose solo, AI Grand Prix, co-op, or live timing.</p>
             <span class="daily-featured-chip" id="daily-featured-chip">DAILY FEATURE: LOADING…</span>
           </div>
 
@@ -443,7 +443,7 @@
           </div>
           <div class="modal-body">
             <label class="sr-only" for="input-room-code">Online lobby code</label>
-            <input type="text" id="input-room-code" class="f1-input" maxlength="6" placeholder="LOBBY CODE (e.g. R7K2)" autocomplete="off" spellcheck="false" />
+            <input type="text" id="input-room-code" class="f1-input" maxlength="6" placeholder="LOBBY CODE (e.g. R7K2M9)" autocomplete="off" spellcheck="false" />
             <p id="join-room-error" class="error-msg hidden"></p>
           </div>
           <div class="modal-footer">
@@ -498,11 +498,14 @@
       <!-- ============================================================== -->
       <!-- F1 Countdown Start Lights -->
       <div id="countdown-overlay" aria-hidden="true">
-        <div class="countdown-light" id="cl-1"></div>
-        <div class="countdown-light" id="cl-2"></div>
-        <div class="countdown-light" id="cl-3"></div>
-        <div class="countdown-light" id="cl-4"></div>
-        <div class="countdown-light" id="cl-5"></div>
+        <div class="countdown-lights" aria-hidden="true">
+          <div class="countdown-light" id="cl-1"></div>
+          <div class="countdown-light" id="cl-2"></div>
+          <div class="countdown-light" id="cl-3"></div>
+          <div class="countdown-light" id="cl-4"></div>
+          <div class="countdown-light" id="cl-5"></div>
+        </div>
+        <span class="countdown-control-hint"><span class="countdown-touch-copy">GO ON GREEN · GAS TO LAUNCH</span><span class="countdown-desktop-copy">GO ON GREEN · W / ↑ TO LAUNCH</span></span>
       </div>
 
       <div id="screen-hud" class="ui-screen hidden pointer-through">

@@ -83,6 +83,9 @@ export class RaceScene extends Phaser.Scene {
     this.raceFinished = false;
     this.lightsGreen = false;
     this.hasFalseStartPenalty = false;
+    this.scheduledStartAt = Number.isFinite(Number(data?.startTimestamp))
+      ? Number(data.startTimestamp)
+      : null;
 
     // Penalty state
     this.stewardState = createStewardState();
@@ -224,8 +227,9 @@ export class RaceScene extends Phaser.Scene {
     // 3. Create player car sprite (with deterministic grid slot placement for multiplayer)
     const startPos = this.trackData.startPos;
     let gridSlot = 0;
-    if (mpState.isMultiplayer && mpState.players.length > 0) {
-      const pMatch = mpState.players.find(p => p.id === mpState.localPlayer.id);
+    const multiplayerGrid = mpState.raceRoster.length > 0 ? mpState.raceRoster : mpState.players;
+    if (mpState.isMultiplayer && multiplayerGrid.length > 0) {
+      const pMatch = multiplayerGrid.find(p => p.id === mpState.localPlayer.id);
       if (pMatch && typeof pMatch.gridPos === 'number') {
         gridSlot = pMatch.gridPos;
       }
@@ -386,8 +390,13 @@ export class RaceScene extends Phaser.Scene {
     };
     window.addEventListener('pixel-prix:lights-green', this._lightsGreenHandler);
 
-    // Guaranteed fallback when a browser animation/event is interrupted.
-    this.time.delayedCall(4500, () => this.beginRace());
+    // Guaranteed fallback when a browser animation/event is interrupted. In
+    // multiplayer it honours the shared lights-out timestamp rather than
+    // creating a second local countdown.
+    const fallbackDelay = this.scheduledStartAt
+      ? Math.max(0, this.scheduledStartAt - Date.now() + 250)
+      : 4500;
+    this.time.delayedCall(fallbackDelay, () => this.beginRace());
 
     // 7. Register shutdown handler
     this.events.once('shutdown', this.cleanup, this);
@@ -1379,17 +1388,23 @@ export class RaceScene extends Phaser.Scene {
   }
 
   // Touch control setters (called from main.js)
-  setAccelerate(v) { this.isAccelerating = v; }
-  setSteerLeft(v) { this.isSteeringLeft = v; }
-  setSteerRight(v) { this.isSteeringRight = v; }
-  setBrake(v) { this.isBraking = v; }
-  setBoost(v) { this.isBoosting = v; }
-  setSteeringValue(v) { this.touchSteerValue = v; }
-  setTouchGas(v) { this.touchGas = v; }
-  setTouchBrake(v) { this.touchBrake = v; }
+  setAccelerate(v) { this.isAccelerating = Boolean(v); }
+  setSteerLeft(v) { this.isSteeringLeft = Boolean(v); }
+  setSteerRight(v) { this.isSteeringRight = Boolean(v); }
+  setBrake(v) { this.isBraking = Boolean(v); }
+  setBoost(v) { this.isBoosting = Boolean(v); }
+  setSteeringValue(v) {
+    this.touchSteerValue = Phaser.Math.Clamp(Number(v) || 0, -1, 1);
+  }
+  setTouchGas(v) {
+    this.touchGas = Phaser.Math.Clamp(Number(v) || 0, 0, 1);
+  }
+  setTouchBrake(v) {
+    this.touchBrake = Phaser.Math.Clamp(Number(v) || 0, 0, 1);
+  }
   setJoystickHeading(heading, active) {
-    this.joystickHeading = heading;
-    this.joystickActive = active;
+    this.joystickHeading = Number.isFinite(Number(heading)) ? Number(heading) : 0;
+    this.joystickActive = Boolean(active);
     // When joystick is released, stop the car's angular rotation immediately.
     // If the joystick becomes active but heading hasn't changed, treat as release.
     if (!active) {
@@ -1398,6 +1413,7 @@ export class RaceScene extends Phaser.Scene {
   }
 
   cleanup() {
+    stopPositionBroadcast();
     stopEngineSound();
     this.aiRivals.forEach((rival) => {
       rival.sprite?.destroy();
