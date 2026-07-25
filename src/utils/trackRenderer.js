@@ -354,11 +354,11 @@ export function drawTrackMinimap(canvas, track) {
 
   // A neutral track line keeps the route legible without turning the map into
   // a multi-colour legend. Sector labels remain available beside the map.
-  const routeColor = '#F4F5F6';
-  const routeGlow = 'rgba(244, 245, 246, 0.18)';
-  drawSegment(0, s1End, routeColor, routeGlow, 2.5);
-  drawSegment(s1End, s2End, routeColor, routeGlow, 2.5);
-  drawSegment(s2End, rawPoints.length, routeColor, routeGlow, 2.5);
+  const routeColor = '#FFFFFF';
+  const routeGlow = 'rgba(73, 216, 255, 0.45)';
+  drawSegment(0, s1End, routeColor, routeGlow, 4.0);
+  drawSegment(s1End, s2End, routeColor, routeGlow, 4.0);
+  drawSegment(s2End, rawPoints.length, routeColor, routeGlow, 4.0);
 
   // Sector split dots
   const drawSplitMarker = (idx, label) => {
