@@ -189,6 +189,18 @@
                 <button id="car-next" class="nav-arrow" aria-label="Next car">&#8250;</button>
               </div>
 
+              <section id="car-setup-panel" class="car-setup-panel" aria-label="Car setup">
+                <div class="car-setup-heading">
+                  <span class="section-label">CAR SETUP</span>
+                  <span class="car-setup-copy">SELECT A RACE BALANCE</span>
+                </div>
+                <div class="session-choice-buttons car-setup-buttons" role="group" aria-label="Car setup">
+                  <button id="btn-setup-attack" class="session-choice" data-setup-choice="attack" type="button">ATTACK</button>
+                  <button id="btn-setup-balanced" class="session-choice active" data-setup-choice="balanced" type="button">BALANCED</button>
+                  <button id="btn-setup-rain" class="session-choice" data-setup-choice="rain" type="button">RAIN</button>
+                </div>
+              </section>
+
               <!-- Stat power meters: 2x2 grid with numeric readouts & benchmarks -->
               <div class="stat-bars">
                 <div class="stat-row">
@@ -225,17 +237,6 @@
                 </div>
               </div>
 
-              <section id="car-setup-panel" class="car-setup-panel" aria-label="Car setup">
-                <div class="car-setup-heading">
-                  <span class="section-label">CAR SETUP</span>
-                  <span class="car-setup-copy">SELECT A RACE BALANCE</span>
-                </div>
-                <div class="session-choice-buttons car-setup-buttons" role="group" aria-label="Car setup">
-                  <button id="btn-setup-attack" class="session-choice" data-setup-choice="attack" type="button">ATTACK</button>
-                  <button id="btn-setup-balanced" class="session-choice active" data-setup-choice="balanced" type="button">BALANCED</button>
-                  <button id="btn-setup-rain" class="session-choice" data-setup-choice="rain" type="button">RAIN</button>
-                </div>
-              </section>
             </div>
           </div>
 

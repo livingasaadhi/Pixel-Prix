@@ -12,6 +12,7 @@ assert.match(css, /1440px/, 'desktop content must cap at 1440px');
 assert.match(css, /#screen-select\s*\{[^}]*display:\s*grid !important;[^}]*grid-template-columns:\s*repeat\(12, minmax\(0, 1fr\)\) !important;/s, 'race setup must keep the 12-column shell instead of inheriting a viewport-locked flex layout');
 assert.match(css, /\.select-section\s*\{[^}]*grid-column:\s*span 6/, 'vehicle and circuit must each span six columns');
 assert.match(html, /id="car-setup-panel"/, 'car setup must live beneath the vehicle selection');
+assert.ok(html.indexOf('id="car-setup-panel"') < html.indexOf('class="stat-bars"'), 'car setup must be visible before the supporting vehicle telemetry');
 assert.doesNotMatch(html, /SESSION CONTROL|data-weather-choice|data-grid-choice/, 'retired session controls must not remain in the selection UI');
 assert.match(css, /\.car-select-card,\s*#screen-select \.track-select-card\s*\{[\s\S]*?min-height:\s*clamp\(480px, 58vh, 620px\)/, 'vehicle and circuit cards must share an equal desktop presentation height');
 assert.match(css, /#screen-select \.car-preview-area\s*\{[\s\S]*?height:\s*clamp\(142px, 18vh, 178px\) !important;/, 'the selected car must retain a deliberate hero presentation');

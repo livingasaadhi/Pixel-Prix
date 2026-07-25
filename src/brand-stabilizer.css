@@ -75,7 +75,7 @@
 #screen-select .selection-footer .btn { min-height: 52px; width: 100%; }
 #screen-select .circuit-telemetry-widget { overflow: hidden; }
 #screen-select .ct-cell { min-width: 0; }
-#screen-select .car-setup-panel { border-top: 1px solid var(--pp-line); margin-top: auto; padding-top: 16px; }
+#screen-select .car-setup-panel { border-top: 1px solid var(--pp-line); margin-top: 14px; padding-top: 12px; }
 #screen-select .car-setup-heading { align-items: baseline; display: flex; gap: 12px; justify-content: space-between; margin-bottom: 10px; }
 #screen-select .car-setup-copy { color: var(--pp-muted); font: 700 10px var(--pp-mono); letter-spacing: .08em; text-align: right; }
 #screen-select .car-setup-buttons { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
