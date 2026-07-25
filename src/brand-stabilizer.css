@@ -85,8 +85,8 @@
 
 /* New race-control alert channel: text is always the meaning, colour is support. */
 #screen-hud { display: block !important; height: 100dvh !important; overflow: hidden !important; padding: 0 !important; background: transparent !important; }
-#hud-alert-region { display: flex; justify-content: center; left: 0; pointer-events: none; position: fixed; right: 0; top: clamp(156px, 32vh, 300px); z-index: 66; }
-#hud-alert-region .hud-warning-bar { align-items: center; background: linear-gradient(135deg, rgba(15, 21, 30, .97), rgba(8, 12, 18, .97)); border: 1px solid var(--pp-line-strong); border-left: 4px solid var(--pp-cyan); border-radius: 8px; box-shadow: 0 18px 42px rgba(0, 0, 0, .42); color: var(--pp-text); display: flex; gap: 20px; justify-content: space-between; max-width: calc(100vw - 32px); min-height: 48px; padding: 10px 16px; width: max-content; }
+#hud-alert-region { display: flex; justify-content: center; left: 0; pointer-events: none; position: fixed; right: 0; top: clamp(124px, 17vh, 156px); z-index: 66; }
+#hud-alert-region .hud-warning-bar { align-items: center; backdrop-filter: blur(18px) saturate(1.25); background: linear-gradient(135deg, rgba(22, 31, 43, .78), rgba(6, 10, 16, .86)); border: 1px solid rgba(230, 239, 248, .28); border-left: 4px solid var(--pp-cyan); border-radius: 10px; box-shadow: 0 18px 42px rgba(0, 0, 0, .42), inset 0 1px rgba(255, 255, 255, .12); color: var(--pp-text); display: flex; gap: 20px; justify-content: space-between; max-width: calc(100vw - 32px); min-height: 48px; padding: 10px 16px; width: max-content; }
 #hud-alert-region .hud-warning-bar.hidden { display: none !important; }
 #hud-alert-region .hud-warning-left { align-items: center; display: flex; font: 800 12px var(--pp-display); gap: 8px; }
 #hud-alert-region .hud-warning-right { font: 700 13px var(--pp-mono); text-align: right; }
@@ -134,7 +134,7 @@
 }
 @media (max-width: 860px) and (orientation: landscape) {
   #screen-hud { padding: 0 !important; }
-  #hud-alert-region { top: 38%; }
+  #hud-alert-region { max-width: calc(100vw - 44px); top: 98px; }
   .touch-device #screen-hud #hud-joystick-container { display: block !important; }
   .touch-device #screen-hud #hud-drive-right-group { display: flex !important; }
 }

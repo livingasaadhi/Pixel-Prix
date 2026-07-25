@@ -93,7 +93,18 @@ export class RaceScene extends Phaser.Scene {
     this.penaltyMs = 0;
     this.advantageAlertActive = false;
     this.offRoadWarningIssued = false;
-    this.stewardProfile = this.trackData.stewards || {};
+    const baseStewardProfile = this.trackData.stewards || {};
+    // Race control is deliberately strict: a brief departure is reviewed,
+    // a sustained breach is logged quickly, and the second infringement adds time.
+    this.stewardProfile = {
+      ...baseStewardProfile,
+      reviewMs: Math.min(baseStewardProfile.reviewMs ?? 1500, 700),
+      breachMs: Math.min(baseStewardProfile.breachMs ?? 3500, 1200),
+      recoveryMs: Math.max(baseStewardProfile.recoveryMs ?? 1000, 1200),
+      warningLimit: 1,
+      trackLimitPenaltyMs: Math.max(baseStewardProfile.trackLimitPenaltyMs ?? 5000, 5000),
+      shortcutPenaltyMs: Math.max(baseStewardProfile.shortcutPenaltyMs ?? 10000, 10000)
+    };
 
     // Timer state
     this.startTime = 0;
@@ -136,18 +147,20 @@ export class RaceScene extends Phaser.Scene {
     // Keep this as one shared value so HUD, braking, and physics agree.
     // Conditions and the selected setup alter the same native force model,
     // rather than bolting on a separate arcade path for weather.
-    // World-space race motion is intentionally 2× the telemetry conversion.
+    // World-space race motion is intentionally 2× the already enhanced
+    // telemetry conversion. The displayed KM/H stays authentic because it is
+    // always derived by dividing currentSpeed by this same value.
     // KM/H remains derived by dividing by this same scale, so the HUD continues
     // to report the car's authentic setup speed while the track feels faster.
-    this.velocityScale = 7.2;
+    this.velocityScale = 14.4;
     const VEL_MULT = this.velocityScale;
     const weatherPhysics = this.weatherCondition.physics;
     const baseTopSpeed = this.carData.maxSpeed || this.carData.topSpeed || 275;
     const baseBoostTopSpeed = this.carData.boostMaxSpeed || (baseTopSpeed * (this.carData.boostPower || 1.45));
     this.referenceTopSpeedKph = baseTopSpeed * weatherPhysics.topSpeedMultiplier * this.setupProfile.topSpeedMultiplier;
     this.referenceBoostTopSpeedKph = baseBoostTopSpeed * weatherPhysics.topSpeedMultiplier * this.setupProfile.topSpeedMultiplier;
-    this.accelerationStat = (this.carData.acceleration || 180) * weatherPhysics.accelerationMultiplier * this.setupProfile.accelerationMultiplier;
-    this.boostAccelerationStat = (this.carData.boostAcceleration || 380) * weatherPhysics.accelerationMultiplier * this.setupProfile.accelerationMultiplier;
+    this.accelerationStat = (this.carData.acceleration || 180) * 1.35 * weatherPhysics.accelerationMultiplier * this.setupProfile.accelerationMultiplier;
+    this.boostAccelerationStat = (this.carData.boostAcceleration || 380) * 1.22 * weatherPhysics.accelerationMultiplier * this.setupProfile.accelerationMultiplier;
     this.brakeForceStat = (this.carData.brakeForce || 450) * weatherPhysics.brakingMultiplier * this.setupProfile.brakingMultiplier;
     this.maxSpeed = this.referenceTopSpeedKph * VEL_MULT;
     this.boostMaxSpeed = this.referenceBoostTopSpeedKph * VEL_MULT;
@@ -661,9 +674,9 @@ export class RaceScene extends Phaser.Scene {
     this.weatherOverlay?.setSize(vw, vh);
 
     // One tactical camera profile for every viewport. The aspect-aware base is
-    // deliberately very wide: more of the next braking zone stays visible as
-    // world-space motion increases, keeping the car near 4–7% of screen height.
-    this.baseZoom = Phaser.Math.Clamp(Math.min(vw / 1750, vh / 1120), 0.46, 0.62);
+    // Ultra-wide tactical framing: fast world motion needs enough road ahead
+    // for braking and line choice, keeping the car near 3–6% of screen height.
+    this.baseZoom = Phaser.Math.Clamp(Math.min(vw / 1950, vh / 1240), 0.38, 0.54);
     cam.setZoom(this.baseZoom);
 
     cam.setRotation(0);

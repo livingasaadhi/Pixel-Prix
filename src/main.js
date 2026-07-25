@@ -964,7 +964,9 @@ function setupGameEventListeners() {
       } else if (speed === 0) {
         gearEl.innerText = 'N';
       } else {
-        const gear = Math.min(6, Math.max(1, Math.ceil(speed / 45)));
+        // Shorter shift intervals keep the digital gearbox responsive as the
+        // car reaches its speed bands sooner.
+        const gear = Math.min(6, Math.max(1, Math.ceil(speed / 34)));
         gearEl.innerText = `${gear}`;
       }
     }
