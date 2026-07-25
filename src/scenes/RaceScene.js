@@ -676,9 +676,8 @@ export class RaceScene extends Phaser.Scene {
     // One tactical camera profile for every viewport. The aspect-aware base is
     // Ultra-wide tactical framing: fast world motion needs enough road ahead
     // for braking and line choice, keeping the car near 3–6% of screen height.
-    // Two-times wider than the original tactical framing: enough track context
-    // for fast motion without reducing the car to an unreadable marker.
-    this.baseZoom = Phaser.Math.Clamp(Math.min(vw / 2600, vh / 1660), 0.20, 0.28);
+    // Apply the requested additional 0.5× camera scale for a broad tactical view.
+    this.baseZoom = Phaser.Math.Clamp(Math.min(vw / 3400, vh / 2160), 0.10, 0.14);
     cam.setZoom(this.baseZoom);
 
     cam.setRotation(0);
