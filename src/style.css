@@ -10384,108 +10384,6 @@ input:focus-visible,
   margin: 0 auto !important;
 }
 
-/* Desktop Zero-Scroll Viewport Layout for Car/Track Selection */
-@media (min-width: 861px) {
-  #screen-select {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
-    padding: 78px 32px 14px !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-  }
-
-  #screen-select .screen-header {
-    min-height: 38px !important;
-    margin-bottom: 8px !important;
-    padding-bottom: 6px !important;
-  }
-
-  #screen-select .select-grid {
-    gap: 12px !important;
-    flex: 1 !important;
-    min-height: 0 !important;
-  }
-
-  #screen-select .car-select-card,
-  #screen-select .track-select-card {
-    min-height: 0 !important;
-    height: 100% !important;
-    padding: 14px 18px !important;
-    justify-content: space-between !important;
-  }
-
-  #screen-select .car-preview-area {
-    height: 95px !important;
-    min-height: 95px !important;
-    margin-bottom: 2px !important;
-  }
-
-  #screen-select .carousel-content h3,
-  #screen-select .track-info-col h3 {
-    font-size: 1.15rem !important;
-  }
-
-  #screen-select .carousel-content p,
-  #screen-select .track-info-col p {
-    font-size: 0.72rem !important;
-  }
-
-  #screen-select .stat-bars {
-    gap: 6px 14px !important;
-    margin-top: 6px !important;
-  }
-
-  #screen-select .stat-benchmark {
-    font-size: 0.52rem !important;
-    opacity: 0.8 !important;
-  }
-
-  #screen-select .track-preview-row {
-    grid-template-columns: 110px minmax(0, 1fr) !important;
-    gap: 12px !important;
-  }
-
-  #screen-select .track-minimap-box {
-    width: 110px !important;
-    height: 85px !important;
-  }
-
-  #screen-select .circuit-telemetry-widget {
-    margin-top: 8px !important;
-  }
-
-  #screen-select .ct-cell {
-    padding: 6px 8px !important;
-  }
-
-  #screen-select .session-config {
-    margin: 8px auto !important;
-    padding: 10px 16px !important;
-  }
-
-  #screen-select .session-config-heading {
-    margin-bottom: 6px !important;
-    padding-bottom: 4px !important;
-  }
-
-  #screen-select .session-choice {
-    min-height: 30px !important;
-    padding: 4px 8px !important;
-    font-size: 0.52rem !important;
-  }
-
-  #screen-select .selection-footer {
-    margin-top: 6px !important;
-  }
-
-  #screen-select .selection-footer .btn {
-    min-height: 44px !important;
-  }
-}
-
 /* --- MULTIPLAYER LOBBY SCREEN -------------------------------------------- */
 .mp-lobby-container,
 #screen-settings .modal-card,
@@ -10933,6 +10831,108 @@ input:focus-visible,
     right: 11px !important;
     bottom: 11px !important;
     width: 126px !important;
+  }
+}
+
+/* ========================================================================
+   DESKTOP ZERO-SCROLL VIEWPORT LOCK FOR SELECTION SCREEN (#screen-select)
+   ======================================================================== */
+@media (min-width: 861px) {
+  #screen-select {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    padding: 78px 32px 14px !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  #screen-select .screen-header {
+    min-height: 38px !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 6px !important;
+  }
+
+  #screen-select .select-grid {
+    gap: 12px !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
+
+  #screen-select .select-section {
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  #screen-select .car-select-card,
+  #screen-select .track-select-card {
+    min-height: 0 !important;
+    height: 100% !important;
+    padding: 14px 18px !important;
+    justify-content: space-between !important;
+  }
+
+  #screen-select .car-preview-area {
+    height: 95px !important;
+    min-height: 95px !important;
+    margin-bottom: 2px !important;
+  }
+
+  #screen-select .carousel-content h3,
+  #screen-select .track-info-col h3 {
+    font-size: 1.15rem !important;
+  }
+
+  #screen-select .carousel-content p,
+  #screen-select .track-info-col p {
+    font-size: 0.72rem !important;
+  }
+
+  #screen-select .stat-bars {
+    gap: 6px 14px !important;
+    margin-top: 6px !important;
+  }
+
+  #screen-select .track-preview-row {
+    grid-template-columns: 110px minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  #screen-select .track-minimap-box {
+    width: 110px !important;
+    height: 85px !important;
+  }
+
+  #screen-select .circuit-telemetry-widget {
+    margin-top: 8px !important;
+  }
+
+  #screen-select .ct-cell {
+    padding: 6px 8px !important;
+  }
+
+  #screen-select .session-config {
+    margin: 8px auto !important;
+    padding: 10px 16px !important;
+  }
+
+  #screen-select .session-choice {
+    min-height: 30px !important;
+    padding: 4px 8px !important;
+    font-size: 0.52rem !important;
+  }
+
+  #screen-select .selection-footer {
+    margin-top: 6px !important;
+  }
+
+  #screen-select .selection-footer .btn,
+  #screen-select .f1-start-button,
+  #screen-select .mp-btn-create,
+  #screen-select .mp-btn-join {
+    min-height: 46px !important;
   }
 }
 
