@@ -101,6 +101,16 @@
 #screen-select .stat-benchmark { display: none; }
 #screen-select .meter-track { margin: 8px 0 0 !important; }
 
+/* A wide desktop uses the car card as a compact briefing board: the selected
+   chassis remains visible beside its complete setup and performance readout. */
+@media (min-width: 1280px) {
+  #screen-select .car-select-card { align-content: start !important; column-gap: 18px; display: grid !important; grid-template-areas: "vehicle setup" "vehicle details-heading" "vehicle details" !important; grid-template-columns: minmax(0, 1.12fr) minmax(250px, .88fr) !important; grid-template-rows: auto auto 1fr !important; }
+  #screen-select .car-select-card .carousel-header { align-self: center; grid-area: vehicle; }
+  #screen-select .car-select-card .car-setup-panel { grid-area: setup; margin-top: 0; }
+  #screen-select .car-select-card .car-performance-heading { grid-area: details-heading; margin-top: 12px; }
+  #screen-select .car-select-card .stat-bars { grid-area: details; grid-template-columns: 1fr; margin-top: 8px !important; }
+}
+
 /* Non-race components keep their brand surfaces but never clip their content. */
 #screen-mp-lobby .mp-lobby-container,
 #screen-leaderboard .lb-container,
