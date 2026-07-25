@@ -687,11 +687,8 @@ export class RaceScene extends Phaser.Scene {
     cam.setViewport(0, 0, vw, vh);
     this.weatherOverlay?.setSize(vw, vh);
 
-    // One tactical camera profile for every viewport. The aspect-aware base is
-    // Ultra-wide tactical framing: fast world motion needs enough road ahead
-    // for braking and line choice, keeping the car near 3–6% of screen height.
-    // Apply the requested additional 0.5× camera scale for a broad tactical view.
-    this.baseZoom = Phaser.Math.Clamp(Math.min(vw / 3400, vh / 2160), 0.10, 0.14);
+    // Doubled camera zoom scale (2x gameplay zoom level) for close-up action.
+    this.baseZoom = Phaser.Math.Clamp(Math.min(vw / 1700, vh / 1080), 0.20, 0.28);
     cam.setZoom(this.baseZoom);
 
     cam.setRotation(0);
@@ -723,13 +720,12 @@ export class RaceScene extends Phaser.Scene {
     const speedRatio = Phaser.Math.Clamp(
       Math.abs(this.currentSpeed) / Math.max(1, this.maxSpeed || 275 * this.velocityScale), 0, 1
     );
-    const targetZoom = (this.baseZoom || 0.68) * (1 - speedRatio * 0.06);
+    const targetZoom = (this.baseZoom || 0.28) * (1 - speedRatio * 0.06);
     const interpolation = Phaser.Math.Clamp(deltaSeconds * 7, 0, 1);
     cam.zoom = Phaser.Math.Linear(cam.zoom || targetZoom, targetZoom, interpolation);
 
-    // A proportional forward lead exposes the next corner without making the
-    // car feel glued to the lower edge of the display.
-    const leadDist = 28 + speedRatio * 88;
+    // Proportional forward lead framed for 2x zoom gameplay
+    const leadDist = 14 + speedRatio * 44;
     const leadX = Math.cos(this.player.rotation) * leadDist;
     const leadY = Math.sin(this.player.rotation) * leadDist;
 
