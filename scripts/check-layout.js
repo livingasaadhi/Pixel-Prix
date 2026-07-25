@@ -14,6 +14,7 @@ assert.match(css, /#session-config\s*\{[^}]*grid-column:\s*span 8/, 'session con
 assert.match(css, /#screen-select \.selection-footer,[\s\S]*?grid-column:\s*span 4 !important;[\s\S]*?position:\s*static !important;/, 'CTA region must occupy four columns in normal flow');
 assert.match(css, /#screen-mp-lobby \.mp-lobby-container\s*\{[^}]*grid-column:\s*1\s*\/\s*-1 !important;[^}]*grid-template-columns:\s*repeat\(12, minmax\(0, 1fr\)\)/s, 'co-op lobby must use the full 12-column command surface');
 assert.match(css, /#screen-leaderboard \.lb-body\s*\{[^}]*grid-column:\s*1\s*\/\s*-1 !important;[^}]*grid-template-columns:\s*repeat\(12, minmax\(0, 1fr\)\)/s, 'leaderboard must use the full 12-column timing surface');
+assert.match(css, /#screen-leaderboard \.lb-table-wrap[\s\S]*?width:\s*calc\(100vw - 52px\) !important;/, 'desktop leaderboard table must fill the available width');
 assert.match(html, /id="hud-alert-region"/, 'alerts must be structurally independent from telemetry');
 assert.doesNotMatch(main, /_sectorTickerActive/, 'legacy shared ticker state must not return');
 assert.match(main, /label: 'TRACK LIMITS', message: 'UNDER REVIEW'/, 'review alerts must include plain-language meaning');

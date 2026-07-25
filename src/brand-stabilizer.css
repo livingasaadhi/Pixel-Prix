@@ -153,6 +153,18 @@
   #screen-leaderboard .lb-table-wrap { border-radius: 8px; }
   #screen-leaderboard .lb-fab { bottom: max(16px, env(safe-area-inset-bottom)); right: max(16px, env(safe-area-inset-right)); }
 }
+
+/* Timing data earns the full desktop width; only this screen leaves the
+   standard 1440px presentation rail. */
+@media (min-width: 1200px) {
+  #screen-leaderboard { padding-left: 26px !important; padding-right: 26px !important; }
+  #screen-leaderboard .lb-header,
+  #screen-leaderboard .lb-body,
+  #screen-leaderboard .lb-tabs,
+  #screen-leaderboard .lb-table-wrap { max-width: none !important; width: calc(100vw - 52px) !important; }
+  #screen-leaderboard .lb-table-header,
+  #screen-leaderboard .lb-rows { min-width: 0; width: 100% !important; }
+}
 @media (max-width: 860px) and (orientation: landscape) {
   #screen-hud { padding: 0 !important; }
   #screen-hud .hud-steering-wheel-display #hud-alert-region { max-width: none; }
