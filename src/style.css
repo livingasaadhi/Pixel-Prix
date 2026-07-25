@@ -10352,19 +10352,36 @@ input:focus-visible,
   background: rgba(73, 216, 255, 0.12) !important;
 }
 
+/* Mode-Aware Action Footer Bar */
 .selection-footer {
   display: flex !important;
-  gap: 14px !important;
-  margin-top: 22px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 16px !important;
+  width: var(--pp-content) !important;
+  margin: 20px auto 0 !important;
+  box-sizing: border-box !important;
 }
 
-.selection-footer .btn-start-race {
-  flex: 2 !important;
+#screen-select[data-mode='coop'] .selection-footer {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 16px !important;
 }
 
-.selection-footer .mp-btn-create,
-.selection-footer .mp-btn-join {
+#screen-select[data-mode='coop'] .mp-btn-create,
+#screen-select[data-mode='coop'] .mp-btn-join {
   flex: 1 !important;
+  max-width: 380px !important;
+  min-width: 0 !important;
+  min-height: 52px !important;
+}
+
+#screen-select:not([data-mode='coop']) .f1-start-button {
+  width: min(440px, 100%) !important;
+  max-width: 440px !important;
+  min-height: 54px !important;
+  margin: 0 auto !important;
 }
 
 /* --- MULTIPLAYER LOBBY SCREEN -------------------------------------------- */
@@ -10501,17 +10518,37 @@ input:focus-visible,
 }
 
 .hud-steering-wheel-display {
+  position: fixed !important;
   top: 16px !important;
-  width: min(550px, calc(100vw - 130px)) !important;
-  border-color: var(--pp-line-strong) !important;
-  border-radius: 10px !important;
-  background: rgba(5, 8, 12, 0.88) !important;
-  box-shadow: var(--pp-shadow) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 1050 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(560px, calc(100vw - 32px)) !important;
+  min-height: 0 !important;
+  border: 1px solid var(--pp-line-strong) !important;
+  border-radius: 12px !important;
+  background: rgba(5, 8, 12, 0.92) !important;
+  box-shadow: var(--pp-shadow), inset 0 1px rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(18px) !important;
+  overflow: hidden !important;
+  pointer-events: auto !important;
+  box-sizing: border-box !important;
 }
 
 .f1-rpm-bar {
+  display: flex !important;
+  width: 100% !important;
   height: 8px !important;
+  padding: 0 !important;
   background: rgba(255, 255, 255, 0.06) !important;
+  box-sizing: border-box !important;
+}
+
+.f1-rpm-bar .rpm-led {
+  flex: 1 !important;
+  height: 100% !important;
 }
 
 .rpm-led.active {
@@ -10520,28 +10557,75 @@ input:focus-visible,
 }
 
 .f1-wheel-core {
+  position: relative !important;
+  display: grid !important;
   grid-template-columns: 78px 1fr minmax(210px, 1.3fr) !important;
-  min-height: 78px !important;
-}
-
-.f1-gear-box,
-.f1-speed-box,
-.f1-telemetry-box {
-  border-color: var(--pp-line) !important;
+  align-items: center !important;
+  min-height: 72px !important;
+  width: 100% !important;
+  padding: 6px 12px !important;
   background: transparent !important;
+  box-sizing: border-box !important;
 }
 
-.f1-speed-val { color: var(--pp-cyan) !important; }
-.f1-tel-val, .f1-gear-val { color: #ffffff !important; }
+.f1-gear-box {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-right: 1px solid var(--pp-line) !important;
+  padding-right: 10px !important;
+}
 
+.f1-speed-box {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-right: 1px solid var(--pp-line) !important;
+  padding: 0 12px !important;
+}
+
+.f1-telemetry-box {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-around !important;
+  padding-left: 10px !important;
+  background: transparent !important;
+  border-color: var(--pp-line) !important;
+}
+
+.f1-speed-val { color: var(--pp-cyan) !important; font-family: var(--font-mono) !important; font-size: 2.1rem !important; font-weight: 900 !important; line-height: 1 !important; }
+.f1-gear-val { color: #ffffff !important; font-family: var(--font-display) !important; font-size: 1.7rem !important; font-weight: 900 !important; line-height: 1 !important; }
+.f1-tel-val { color: #ffffff !important; font-family: var(--font-mono) !important; font-size: 0.92rem !important; font-weight: 800 !important; }
+.f1-gear-label, .f1-speed-unit, .f1-tel-label { color: var(--pp-muted) !important; font-family: var(--font-mono) !important; font-size: 0.52rem !important; letter-spacing: 0.1em !important; }
+
+/* Dynamic Broadcast Telemetry & Steward Ticker Strip */
 .hud-warning-bar {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 32px !important;
+  padding: 6px 14px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid var(--pp-line) !important;
+  border-radius: 0 !important;
+  box-sizing: border-box !important;
   color: #dce8f2 !important;
-  border-top-color: var(--pp-line) !important;
   background: rgba(255, 255, 255, 0.05) !important;
 }
 
-.hud-warning-bar.clean { color: var(--pp-green) !important; }
-.hud-warning-bar.penalty { color: #ffffff !important; background: rgba(238, 43, 50, 0.74) !important; }
+.hud-warning-bar.clean { color: var(--pp-green) !important; background: rgba(92, 224, 161, 0.1) !important; }
+.hud-warning-bar.penalty { color: #ffffff !important; background: rgba(238, 43, 50, 0.85) !important; }
 .hud-warning-bar.investigating { color: #17130a !important; background: var(--pp-amber) !important; }
 
 .hud-kers-container {
