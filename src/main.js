@@ -544,9 +544,26 @@ function updateSelectionDots(containerId, itemCount, activeIndex) {
   }));
 }
 
-function launchSelectedRace(restartConfig = null) {
+async function launchSelectedRace(restartConfig = null) {
   const selectedTrack = TRACKS[selectedTrackIndex] || TRACKS[0];
   const selectedCar = CARS[selectedCarIndex] || CARS[0];
+
+  let leaderboardGhost = null;
+  let leaderboardDriverName = null;
+
+  if (!restartConfig) {
+    try {
+      const topScores = await fetchTopScores(selectedTrack.id);
+      const topRecord = (topScores && topScores.length > 0) ? topScores[0] : null;
+      if (topRecord && topRecord.metadata && topRecord.metadata.ghost) {
+        leaderboardGhost = topRecord.metadata.ghost;
+        leaderboardDriverName = topRecord.player_name;
+      }
+    } catch (err) {
+      console.warn('⚠️ Could not fetch top leaderboard ghost:', err);
+    }
+  }
+
   const sessionConfig = restartConfig || {
     carId: selectedCar.id,
     trackId: selectedTrack.id,
@@ -554,7 +571,9 @@ function launchSelectedRace(restartConfig = null) {
     weatherId: selectedWeatherId,
     setupId: selectedSetupId,
     gridSize: selectedGridSize,
-    driverName: getDriverName()
+    driverName: getDriverName(),
+    leaderboardGhost,
+    leaderboardDriverName
   };
   lastSessionConfig = { ...sessionConfig };
 
@@ -571,9 +590,6 @@ function launchSelectedRace(restartConfig = null) {
     phaserGame.scene.start('RaceScene', sessionConfig);
   }
 
-  // Wait until RaceScene has attached its lights-out listener before starting
-  // the presentation countdown. The scene also owns a safe fallback if a
-  // renderer cannot schedule this frame.
   queueCountdownLights();
 }
 
@@ -1357,7 +1373,8 @@ function submitScoreFromDialog() {
     s3_ms: bestLapSectors[2],
     fastest_s1_ms: lastRaceResult.bestSectors ? lastRaceResult.bestSectors[0] : null,
     fastest_s2_ms: lastRaceResult.bestSectors ? lastRaceResult.bestSectors[1] : null,
-    fastest_s3_ms: lastRaceResult.bestSectors ? lastRaceResult.bestSectors[2] : null
+    fastest_s3_ms: lastRaceResult.bestSectors ? lastRaceResult.bestSectors[2] : null,
+    ghost: lastRaceResult.ghostData || null
   };
 
   submitScore({

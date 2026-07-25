@@ -9,7 +9,7 @@ import { advanceVehicleDynamics, buildTrackProfile, sampleTrackContext } from '.
 import { startEngineSound, updateEnginePitch, stopEngineSound, setEngineActive, playBoostSound, playCheckpointSound, playFinishSound } from '../utils/audio.js';
 import { mpState, startPositionBroadcast, stopPositionBroadcast, broadcastRaceFinish, calculateLiveRank } from '../utils/multiplayer.js';
 import { createAiGrid, getGrandPrixClassification, resolveWeatherCondition, updateAiProgress } from '../utils/grandPrix.js';
-import { captureGhostSample, createGhostRecorder, loadGhostReplay, sampleGhostReplay, saveGhostReplay } from '../utils/ghostReplay.js';
+import { captureGhostSample, createGhostRecorder, loadGhostReplay, loadBestTrackGhost, sampleGhostReplay, saveGhostReplay } from '../utils/ghostReplay.js';
 
 const SETUP_PRESETS = Object.freeze({
   attack: Object.freeze({
@@ -207,8 +207,9 @@ export class RaceScene extends Phaser.Scene {
       weatherId: this.weatherCondition.id,
       setupId: this.setupProfile.id
     };
+    this.ghostDriverName = data ? data.leaderboardDriverName || null : null;
     this.ghostReplay = !this.isGrandPrix && !mpState.isMultiplayer
-      ? loadGhostReplay(this.ghostSession)
+      ? (data && data.leaderboardGhost) || loadGhostReplay(this.ghostSession) || loadBestTrackGhost(this.trackData.id)
       : null;
     this.ghostRecorder = !this.isGrandPrix && !mpState.isMultiplayer
       ? createGhostRecorder({ carId: this.carData.id })
@@ -591,19 +592,28 @@ export class RaceScene extends Phaser.Scene {
     if (!this.ghostReplay || !this.player) return;
     const initial = sampleGhostReplay(this.ghostReplay, 0);
     if (!initial) return;
-    const textureKey = `car_${this.ghostReplay.carId || this.carData.id}_straight`;
-    this.ghostSprite = this.add.sprite(initial.x, initial.y, textureKey);
+    const ghostCarId = this.ghostReplay.carId || this.carData.id;
+    const textureKey = `car_${ghostCarId}_straight`;
+    const validTexture = this.textures.exists(textureKey) ? textureKey : `car_${this.carData.id}_straight`;
+    this.ghostSprite = this.add.sprite(initial.x, initial.y, validTexture);
     this.ghostSprite.setOrigin(0.5, 0.5);
-    this.ghostSprite.setAlpha(0.38);
+    this.ghostSprite.setAlpha(0.42);
     this.ghostSprite.setTint(0x78dcff);
     this.ghostSprite.setDepth(10);
-    this.ghostLabel = this.add.text(initial.x, initial.y - 29, 'PERSONAL GHOST', {
+
+    const carObj = CARS.find((c) => c.id === ghostCarId) || getCarById(ghostCarId) || this.carData;
+    const carName = (carObj.name || ghostCarId).toUpperCase();
+    const labelText = this.ghostDriverName
+      ? `🏆 LEADER: ${this.ghostDriverName.toUpperCase()} [${carName}]`
+      : `GHOST [${carName}]`;
+
+    this.ghostLabel = this.add.text(initial.x, initial.y - 29, labelText, {
       fontFamily: 'monospace',
       fontSize: '9px',
       fontStyle: 'bold',
-      color: '#a9edff',
-      backgroundColor: 'rgba(8, 35, 52, 0.62)',
-      padding: { x: 4, y: 2 }
+      color: '#78dcff',
+      backgroundColor: 'rgba(8, 35, 52, 0.78)',
+      padding: { x: 5, y: 3 }
     });
     this.ghostLabel.setOrigin(0.5, 0.5);
     this.ghostLabel.setDepth(10);
@@ -1377,7 +1387,13 @@ export class RaceScene extends Phaser.Scene {
         position: this.isGrandPrix ? this.grandPrixPosition : null,
         fieldSize: this.isGrandPrix ? this.grandPrixClassification.length : 1,
         classification: this.isGrandPrix ? this.grandPrixClassification : null,
-        leaderboardEligible: this.leaderboardEligible
+        leaderboardEligible: this.leaderboardEligible,
+        ghostData: this.ghostRecorder && Array.isArray(this.ghostRecorder.samples) && this.ghostRecorder.samples.length >= 2 ? {
+          version: 1,
+          finalTimeMs: finalTime,
+          carId: this.carData.id,
+          samples: this.ghostRecorder.samples
+        } : null
       }
     }));
   }

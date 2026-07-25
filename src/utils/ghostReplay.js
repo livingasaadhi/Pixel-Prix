@@ -55,6 +55,28 @@ export function loadGhostReplay(session) {
   }
 }
 
+/**
+ * Searches local storage for the fastest ghost replay recorded on a specific track.
+ */
+export function loadBestTrackGhost(trackId) {
+  let bestReplay = null;
+  const prefix = `${STORAGE_PREFIX}:${sanitisePart(trackId, 'track')}:`;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(prefix)) {
+        const candidate = normaliseReplay(JSON.parse(localStorage.getItem(key)));
+        if (candidate && (!bestReplay || candidate.finalTimeMs < bestReplay.finalTimeMs)) {
+          bestReplay = candidate;
+        }
+      }
+    }
+  } catch {
+    // Storage error fallback
+  }
+  return bestReplay;
+}
+
 /** Creates a lightweight recorder; samples are appended from the live scene. */
 export function createGhostRecorder({ carId }) {
   return {
