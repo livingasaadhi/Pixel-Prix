@@ -16,7 +16,7 @@ export class RaceScene extends Phaser.Scene {
     const trackId = (data && data.trackId) ? data.trackId : 'monaco-oval';
     this.carData = getCarById(carId);
     this.trackData = getTrackById(trackId);
-    this.totalLaps = this.trackData.laps || 2;
+    this.totalLaps = this.trackData.laps ?? 3;
 
     // Racing state
     this.currentLap = 1;

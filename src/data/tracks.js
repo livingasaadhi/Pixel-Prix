@@ -344,10 +344,11 @@ export const TRACKS = [
 // The original circuits were intentionally compact while the core handling
 // was being tuned.  Scale the complete geometry as one unit so a lap is
 // meaningfully longer without changing a circuit's identity or breaking its
-// checkpoint order.  Road width grows a little more than the route itself,
-// giving drivers room to choose lines and recover from small mistakes.
-const CIRCUIT_LENGTH_SCALE = 3;
-const CIRCUIT_WIDTH_SCALE = 2.4;
+// checkpoint order. Road width is kept proportional to the longer route so
+// drivers retain sensible racing lines and recovery room.
+const CIRCUIT_LENGTH_SCALE = 10;
+const CIRCUIT_WIDTH_SCALE = 8;
+const STANDARD_RACE_LAPS = 3;
 
 TRACKS.forEach((track) => {
   const scalePoint = ({ x, y, ...rest }) => ({
@@ -359,6 +360,7 @@ TRACKS.forEach((track) => {
   track.worldWidth = Math.round(track.worldWidth * CIRCUIT_LENGTH_SCALE);
   track.worldHeight = Math.round(track.worldHeight * CIRCUIT_LENGTH_SCALE);
   track.roadWidth = Math.round(track.roadWidth * CIRCUIT_WIDTH_SCALE);
+  track.laps = STANDARD_RACE_LAPS;
   track.startPos = scalePoint(track.startPos);
   track.points = track.points.map(scalePoint);
   track.checkpoints = track.checkpoints.map(scalePoint);
