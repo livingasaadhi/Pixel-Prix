@@ -1,8 +1,8 @@
 export const CARS = [
   {
     id: 'scuderia-furiosa',
-    name: 'Scuderia Furiosa',
-    description: 'Iconic red racer designed for high cornering precision and acceleration.',
+    name: 'Crimson Apex',
+    description: 'Original red attack chassis with immediate response and confident corner exits.',
     color: '#ff1801',
     accentColor: '#ffeb00',
     topSpeed: 275,
@@ -20,8 +20,8 @@ export const CARS = [
   },
   {
     id: 'blue-bull',
-    name: 'Blue Bull Racing',
-    description: 'Overclocked powertrain delivering extreme straight-line speeds and boost.',
+    name: 'Indigo Surge',
+    description: 'Low-drag prototype built for decisive boosts and long-straight pressure.',
     color: '#0f1c3f',
     accentColor: '#ff1801',
     topSpeed: 306,
@@ -39,8 +39,8 @@ export const CARS = [
   },
   {
     id: 'silver-arrows',
-    name: 'Silver Arrows',
-    description: 'Lightweight aerodynamic chassis with unmatched handling and stability.',
+    name: 'Argent Vector',
+    description: 'Lightweight precision chassis with stable turn-in and exceptional recovery.',
     color: '#c0c0c0',
     accentColor: '#00ffc4',
     topSpeed: 262,
@@ -58,8 +58,8 @@ export const CARS = [
   },
   {
     id: 'papaya-express',
-    name: 'Papaya Express',
-    description: 'High-rev motor tuned for quick recovery and excellent balance.',
+    name: 'Solar Comet',
+    description: 'High-rev all-rounder tuned for clean recovery and balanced race pace.',
     color: '#ff8700',
     accentColor: '#005aff',
     topSpeed: 288,
@@ -77,8 +77,8 @@ export const CARS = [
   },
   {
     id: 'green-emerald',
-    name: 'Green Emerald',
-    description: 'High-capacity engine that dominates long straightaways.',
+    name: 'Verdant Flux',
+    description: 'High-capacity straight-line machine that rewards disciplined braking.',
     color: '#004b49',
     accentColor: '#ccff00',
     topSpeed: 331,
@@ -96,8 +96,8 @@ export const CARS = [
   },
   {
     id: 'alpen-glow',
-    name: 'Alpen Glow',
-    description: 'Agile prototype racer engineered for fast line adjustments.',
+    name: 'Aurora Shift',
+    description: 'Agile prototype engineered for fast line changes and precise correction.',
     color: '#ff4ba4',
     accentColor: '#00a2ff',
     topSpeed: 281,

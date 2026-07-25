@@ -7,7 +7,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    // Generate open-wheel F1 car textures at 2x resolution with three steering states
+    // Generate original open-wheel car textures at 2x resolution with three steering states.
     CARS.forEach(car => {
       this.generateCarTexture(car, 'straight', 0);
       this.generateCarTexture(car, 'left', -0.32);
@@ -21,7 +21,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   /**
-   * Generates a detailed 2x-resolution open-wheel F1 car texture.
+   * Generates a detailed 2x-resolution open-wheel car texture.
    * Each car has a unique livery paint scheme with glossy highlights.
    */
   generateCarTexture(car, steeringState, wheelAngle) {
@@ -309,6 +309,11 @@ export class BootScene extends Phaser.Scene {
     ctx.fillRect(38, 6.5, 5, 0.7);
     ctx.fillRect(38, 20.8, 5, 0.7);
 
+    // Each original chassis gets a distinct aero package silhouette. This is
+    // intentionally data-driven from its racing role rather than borrowed
+    // team imagery, so a car's garage identity also reads on track.
+    this.drawAeroPackage(ctx, { highDownforce, lowDrag, boostPower: car.boostPower, accentColor });
+
     // ── 11. SAFETY RAIN LIGHT ───────────────────────────────────────
     // Animated-style tri-LED
     ctx.fillStyle = '#ff0000';
@@ -332,7 +337,7 @@ export class BootScene extends Phaser.Scene {
     const accent = car.accentColor;
 
     if (id === 'scuderia-furiosa') {
-      // Scuderia — yellow chevrons on red
+      // Crimson Apex — yellow chevrons on red
       ctx.fillStyle = accent;
       ctx.beginPath();
       ctx.moveTo(x, y + h * 0.3);
@@ -342,16 +347,16 @@ export class BootScene extends Phaser.Scene {
       ctx.closePath();
       ctx.fill();
     } else if (id === 'blue-bull') {
-      // Blue Bull — red diagonal bars
+      // Indigo Surge — red diagonal bars
       ctx.fillStyle = accent;
       ctx.fillRect(x + w * 0.5, y, w * 0.08, h);
       ctx.fillRect(x + w * 0.7, y, w * 0.08, h);
     } else if (id === 'silver-arrows') {
-      // Silver Arrows — cyan teal stripe
+      // Argent Vector — cyan teal stripe
       ctx.fillStyle = accent;
       ctx.fillRect(x, y + h * 0.4, w, h * 0.18);
     } else if (id === 'papaya-express') {
-      // Papaya — blue diagonal corner
+      // Solar Comet — blue diagonal corner
       ctx.fillStyle = accent;
       ctx.beginPath();
       ctx.moveTo(x + w * 0.6, y);
@@ -360,12 +365,12 @@ export class BootScene extends Phaser.Scene {
       ctx.closePath();
       ctx.fill();
     } else if (id === 'green-emerald') {
-      // Green Emerald — neon lime edge stripe
+      // Verdant Flux — neon lime edge stripe
       ctx.fillStyle = accent;
       ctx.fillRect(x, y, w, h * 0.12);
       ctx.fillRect(x, y + h * 0.88, w, h * 0.12);
     } else if (id === 'alpen-glow') {
-      // Alpen Glow — cyan split diagonal
+      // Aurora Shift — cyan split diagonal
       ctx.fillStyle = accent;
       ctx.beginPath();
       ctx.moveTo(x, y);
@@ -414,6 +419,41 @@ export class BootScene extends Phaser.Scene {
       ctx.fillRect(x, y + h * 0.42, w, h * 0.16);
       ctx.fillRect(x + w * 0.48, y, w * 0.12, h);
     }
+  }
+
+  drawAeroPackage(ctx, { highDownforce, lowDrag, boostPower, accentColor }) {
+    ctx.save();
+    if (highDownforce) {
+      // Wider winglets and diffuser flicks signal the technical grip cars.
+      ctx.fillStyle = accentColor;
+      ctx.fillRect(15, 6.2, 4.2, 0.8);
+      ctx.fillRect(15, 21, 4.2, 0.8);
+      ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      ctx.fillRect(39.5, 8.2, 2.8, 0.7);
+      ctx.fillRect(39.5, 19.1, 2.8, 0.7);
+    } else if (lowDrag) {
+      // Slim cars carry a continuous centreline and smaller drag-reducing
+      // wing tips, making their long-straight role visible at sprite scale.
+      ctx.fillStyle = accentColor;
+      ctx.fillRect(17, 13.35, 19, 1.3);
+      ctx.fillStyle = 'rgba(255,255,255,0.24)';
+      ctx.fillRect(4.5, 5, 1.3, 5);
+      ctx.fillRect(4.5, 18, 1.3, 5);
+    } else if (boostPower >= 1.55) {
+      // Hybrid sprint cars get a luminous engine-cover pulse rather than a
+      // real-world livery cue.
+      ctx.fillStyle = accentColor;
+      ctx.fillRect(33.5, 11.6, 3.6, 0.8);
+      ctx.fillRect(33.5, 15.6, 3.6, 0.8);
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.fillRect(34, 12.5, 2.6, 2.8);
+    } else {
+      // Balanced cars use compact turning vanes for a cleaner central form.
+      ctx.fillStyle = accentColor;
+      ctx.fillRect(17.2, 7.4, 1.1, 3.4);
+      ctx.fillRect(17.2, 17.2, 1.1, 3.4);
+    }
+    ctx.restore();
   }
 
   getRaceNumber(id) {

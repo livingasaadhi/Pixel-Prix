@@ -112,7 +112,7 @@ export function advanceVehicleDynamics({
   // game. Raise available drive force and scale the matching aero term below
   // so cars reach their calibrated terminal speed sooner without turning each
   // class into an uncontrollable top-speed increase.
-  const baseDriveAccel = 34 + (accelerationStat - 150) * 0.18;
+  const baseDriveAccel = 42 + (accelerationStat - 150) * 0.20;
   const powerBand = 1 / (1 + 1.35 * Math.pow(Math.max(0, speedRatio), 1.4));
   const boostPower = boostActive
     ? clamp(

@@ -86,6 +86,313 @@
   --shadow-gold: 0 0 24px var(--accent-gold-glow);
 }
 
+/* ========================================================================
+   PIXEL PRIX / RACE CONTROL DESIGN SYSTEM
+   Final production surface layer. Existing IDs remain stable for the game,
+   but every player-facing screen shares one original motorsport language.
+   ======================================================================== */
+:root {
+  --pp-ink: #06080c;
+  --pp-panel: rgba(13, 17, 24, 0.94);
+  --pp-panel-raised: rgba(24, 30, 40, 0.96);
+  --pp-line: rgba(230, 239, 248, 0.16);
+  --pp-line-strong: rgba(230, 239, 248, 0.38);
+  --pp-text: #f4f7fb;
+  --pp-muted: #9aa8b9;
+  --pp-red: #ee2b32;
+  --pp-red-dark: #9e111d;
+  --pp-cyan: #49d8ff;
+  --pp-green: #5ce0a1;
+  --pp-amber: #ffd166;
+  --pp-purple: #c7a4ff;
+  --pp-radius: 12px;
+  --pp-content: min(1440px, calc(100% - 64px));
+  --pp-shadow: 0 22px 60px rgba(0, 0, 0, 0.38);
+}
+
+body {
+  background: var(--pp-ink);
+  color: var(--pp-text);
+}
+
+.ui-screen:not(#screen-hud) {
+  background:
+    linear-gradient(122deg, rgba(238, 43, 50, 0.09), transparent 27%),
+    radial-gradient(circle at 85% 8%, rgba(73, 216, 255, 0.08), transparent 29%),
+    linear-gradient(180deg, #0c1119 0%, #070a10 100%) !important;
+}
+
+.ui-screen:not(#screen-hud)::before {
+  opacity: 0.55;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* App chrome ------------------------------------------------------------ */
+.top-app-bar {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  z-index: 1100;
+  display: flex;
+  width: var(--pp-content);
+  min-height: 58px;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 10px 8px 18px;
+  transform: translateX(-50%);
+  border: 1px solid var(--pp-line);
+  border-radius: var(--pp-radius);
+  background: rgba(7, 10, 15, 0.88);
+  box-shadow: var(--pp-shadow), inset 0 1px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.top-app-bar-left { display: flex; align-items: center; gap: 12px; min-width: max-content; }
+.top-app-bar-brand { color: #fff; font-family: var(--font-display); font-size: 0.86rem; font-weight: 900; letter-spacing: 0.08em; }
+.top-live-tag, .telemetry-live-badge, .daily-featured-chip {
+  display: inline-flex; align-items: center; gap: 6px; color: var(--pp-cyan);
+  font-family: var(--font-mono); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em;
+}
+.pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pp-green); box-shadow: 0 0 0 4px rgba(92,224,161,.12); }
+.top-glass-nav { display: flex; min-width: 0; align-items: center; gap: 3px; }
+.top-nav-link {
+  min-width: 40px; min-height: 38px; padding: 0 13px; color: var(--pp-muted) !important;
+  border: 0 !important; border-radius: 7px; background: transparent !important;
+  font-family: var(--font-display); font-size: 0.64rem; font-weight: 800; letter-spacing: .055em;
+}
+.top-nav-link:hover, .top-nav-link.active { color: #fff !important; background: rgba(255,255,255,.1) !important; }
+.top-nav-link.active { box-shadow: inset 0 -2px var(--pp-red); }
+.top-app-bar-actions { margin-left: auto; }
+.f1-driver-profile-chip {
+  display: flex; min-height: 40px; align-items: center; gap: 7px; padding: 4px 6px 4px 10px;
+  border: 1px solid var(--pp-line); border-radius: 8px; background: rgba(255,255,255,.045);
+}
+.f1-chip-rank, .f1-chip-badge { color: var(--pp-muted); font: 700 .55rem var(--font-mono); }
+.f1-chip-name { color: #fff; font: 800 .64rem var(--font-display); letter-spacing: .055em; }
+.f1-chip-avatar { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 6px; color: #fff; background: linear-gradient(135deg, var(--pp-red), var(--pp-red-dark)); }
+.f1-red-accent-bar { display: none !important; }
+
+/* Shared surfaces and controls ----------------------------------------- */
+.glass-card, .glass-modal, .modal-card, .mp-lobby-container, .pause-card {
+  border: 1px solid var(--pp-line) !important;
+  border-radius: var(--pp-radius) !important;
+  background: linear-gradient(145deg, rgba(29,35,46,.96), rgba(10,14,20,.98)) !important;
+  box-shadow: var(--pp-shadow), inset 0 1px rgba(255,255,255,.07) !important;
+  backdrop-filter: blur(18px);
+}
+.section-label, .session-choice-label, .mp-panel-label, .ct-label, .stat-label, .f1-tel-label, .f1-gear-label {
+  color: var(--pp-muted); font: 800 .62rem var(--font-mono); letter-spacing: .1em;
+}
+.screen-header, .lb-header {
+  display: flex; width: var(--pp-content); min-height: 52px; align-items: center; gap: 14px;
+  margin: 0 auto 22px; padding-bottom: 13px; border-bottom: 1px solid var(--pp-line);
+}
+.screen-header h2, .lb-header-context, .modal-header h2, .modal-header h3, .pause-title {
+  color: #fff; font-family: var(--font-display); font-weight: 900; letter-spacing: .045em;
+}
+.icon-btn, .icon-btn-circle, .nav-arrow, .track-carousel-nav, .mp-track-nav {
+  display: inline-grid; width: 42px; min-width: 42px; height: 42px; place-items: center; color: #fff;
+  border: 1px solid var(--pp-line-strong) !important; border-radius: 8px; background: rgba(3,6,10,.56) !important;
+}
+.icon-btn:hover, .icon-btn-circle:hover, .nav-arrow:hover, .track-carousel-nav:hover, .mp-track-nav:hover { border-color: var(--pp-cyan) !important; color: var(--pp-cyan); }
+.btn {
+  min-height: 46px; padding: 10px 17px; border: 1px solid var(--pp-line-strong) !important; border-radius: 8px;
+  color: #fff !important; background: rgba(255,255,255,.055) !important; font: 800 .66rem var(--font-display); letter-spacing: .065em;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+.btn:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--pp-cyan) !important; background: rgba(73,216,255,.12) !important; box-shadow: 0 10px 24px rgba(0,0,0,.24); }
+.btn:active:not(:disabled), .garage-tile:active { transform: translateY(0) scale(.985); }
+.btn-primary, .f1-start-button { border-color: transparent !important; color: #fff !important; background: linear-gradient(135deg, var(--pp-red), #bf1423) !important; box-shadow: 0 12px 25px rgba(238,43,50,.22); }
+.btn-primary:hover:not(:disabled), .f1-start-button:hover:not(:disabled) { border-color: transparent !important; background: linear-gradient(135deg, #ff4b51, var(--pp-red)) !important; }
+.btn:disabled { opacity: .42; filter: grayscale(.7); }
+button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--pp-amber) !important; outline-offset: 3px; }
+
+/* Home / race control ---------------------------------------------------- */
+#screen-menu { padding: 104px 32px 34px !important; }
+.garage-shell { width: var(--pp-content); margin: 0 auto; }
+.garage-heading { display: grid; grid-template-columns: auto 1fr auto; align-items: end; gap: 10px 18px; margin-bottom: 18px; }
+.garage-kicker { color: var(--pp-red); font: 800 .62rem var(--font-mono); letter-spacing: .13em; }
+.garage-heading h1 { color: #fff; font: 900 clamp(1.8rem,3.1vw,3.35rem)/.95 var(--font-display); letter-spacing: -.03em; }
+.garage-heading p { grid-column: 2; color: var(--pp-muted); font: 600 .82rem var(--font-sans); }
+.daily-featured-chip { justify-self: end; padding: 8px 10px; border: 1px solid rgba(73,216,255,.3); border-radius: 999px; background: rgba(73,216,255,.08); }
+.garage-grid { display: grid; grid-template-columns: 1.12fr 1fr 1fr; gap: 14px; }
+.garage-tile {
+  min-height: clamp(330px, 53vh, 510px); padding: 22px; border: 1px solid var(--pp-line); border-radius: var(--pp-radius);
+  background: linear-gradient(160deg, rgba(39,47,61,.96), rgba(8,12,18,.98)); box-shadow: var(--pp-shadow); isolation: isolate;
+}
+.garage-tile::after { position: absolute; inset: auto 0 0; height: 42%; z-index: -1; content: ''; background: linear-gradient(transparent, rgba(0,0,0,.66)); }
+.garage-tile:hover, .garage-tile:focus-visible { transform: translateY(-4px); border-color: var(--pp-cyan); box-shadow: 0 24px 60px rgba(0,0,0,.45), 0 0 0 1px rgba(73,216,255,.16); }
+.garage-car-tile { border-color: rgba(238,43,50,.62); background: linear-gradient(145deg, #a61122, #30101a 52%, #0a0e15); }
+.garage-coop-tile { background: linear-gradient(145deg, #122a3d, #111924 55%, #090d14); }
+.garage-badge-tile { background: linear-gradient(145deg, #2d253d, #181322 58%, #090c12); }
+.tile-eyebrow { color: rgba(255,255,255,.67); font: 800 .6rem var(--font-mono); letter-spacing: .12em; }
+.tile-title { margin-top: 12px; color: #fff !important; font: 900 clamp(2rem,3.6vw,4.1rem)/.88 var(--font-display); letter-spacing: -.045em; }
+.tile-meta { color: rgba(255,255,255,.78); font: 700 .61rem var(--font-mono); letter-spacing: .07em; }
+.garage-node { width: 13px; height: 13px; top: 16px; right: 16px; border: 0; background: var(--pp-amber); box-shadow: 0 0 0 4px rgba(255,209,102,.13); }
+.garage-grand-prix-strip { display: flex; width: 100%; min-height: 72px; align-items: center; gap: 14px; margin-top: 14px; padding: 14px 20px; color: #fff; border: 1px solid var(--pp-line); border-radius: var(--pp-radius); background: rgba(255,255,255,.045); text-align: left; }
+.garage-grand-prix-strip:hover, .garage-grand-prix-strip:focus-visible { border-color: var(--pp-amber); background: rgba(255,209,102,.09); }
+.garage-grand-prix-strip strong { display: block; font: 900 .82rem var(--font-display); letter-spacing: .055em; }
+.garage-grand-prix-strip small { color: var(--pp-muted); font: 700 .62rem var(--font-mono); }
+.garage-grand-prix-arrow { margin-left: auto; color: var(--pp-amber); }
+.garage-shortcuts { color: var(--pp-muted); font: 700 .62rem var(--font-mono); }
+.garage-shortcuts kbd, .tile-key { border-color: var(--pp-line); background: rgba(0,0,0,.32); }
+
+/* Race setup ------------------------------------------------------------- */
+#screen-select, #screen-mp-lobby, #screen-leaderboard, #screen-settings, #screen-gameover { padding: 104px 32px 50px !important; }
+.select-grid { display: grid; width: var(--pp-content); grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 18px; margin: 0 auto; }
+.section-header-row { display: flex; min-height: 30px; align-items: center; justify-content: space-between; }
+.telemetry-live-badge, .circuit-avail-tag { padding: 5px 8px; border: 1px solid var(--pp-line); border-radius: 999px; }
+.car-select-card, .track-select-card { min-height: 418px; padding: 18px !important; }
+.carousel-header, .track-carousel-row { display: flex; align-items: center; gap: 12px; }
+.carousel-content, .track-content { min-width: 0; flex: 1; }
+.car-preview-area { display: grid; min-height: 155px; place-items: center; border: 1px solid rgba(73,216,255,.13); border-radius: 8px; background: radial-gradient(circle, rgba(73,216,255,.11), transparent 68%); }
+.carousel-content h3, .track-info-col h3 { margin-top: 9px; color: #fff; font: 900 1.1rem var(--font-display); letter-spacing: .025em; }
+.carousel-content p, .track-info-col p { color: var(--pp-muted); font-size: .78rem; line-height: 1.42; }
+.car-drive-profile, .track-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.car-drive-label, .track-tag { padding: 5px 7px; color: var(--pp-muted); border: 1px solid var(--pp-line); border-radius: 4px; font: 800 .55rem var(--font-mono); letter-spacing: .07em; }
+.car-drive-value { color: var(--pp-cyan); font: 800 .61rem var(--font-mono); }
+.stat-bars { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px 18px; margin-top: 18px; }
+.stat-row { min-width: 0; }
+.stat-row-header { display: flex; justify-content: space-between; gap: 8px; }
+.stat-val-mono, .ct-val { color: #fff; font: 800 .66rem var(--font-mono); white-space: nowrap; }
+.meter-track { height: 5px; margin: 7px 0 5px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.1); }
+.meter-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--pp-cyan), #d9f7ff); box-shadow: 0 0 12px rgba(73,216,255,.5); }
+.stat-benchmark { color: var(--pp-muted); font: 600 .56rem var(--font-mono); }
+.track-preview-row { display: flex; gap: 14px; align-items: center; }
+.track-minimap-box { display: grid; width: 150px; height: 130px; flex: 0 0 150px; place-items: center; border: 1px solid var(--pp-line); border-radius: 8px; background: #0a0f17; }
+.track-minimap-box canvas { max-width: 100%; max-height: 100%; }
+.circuit-telemetry-widget { display: grid; grid-template-columns: repeat(4,1fr); margin-top: 15px; border: 1px solid var(--pp-line); border-radius: 8px; overflow: hidden; }
+.ct-cell { min-width: 0; padding: 9px; border-right: 1px solid var(--pp-line); }
+.ct-cell:last-child { border-right: 0; }
+.ct-label { display: block; margin-bottom: 5px; font-size: .5rem; }
+.session-config { width: var(--pp-content); margin: 18px auto 0; padding: 15px 18px; border: 1px solid var(--pp-line); border-radius: var(--pp-radius); background: rgba(5,9,14,.52); }
+.session-config-heading { display: flex; gap: 12px; align-items: center; justify-content: space-between; color: var(--pp-muted); font: 700 .61rem var(--font-mono); }
+.session-config-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 12px; }
+.session-choice-buttons { display: flex; gap: 6px; margin-top: 7px; }
+.session-choice { min-height: 34px; padding: 6px 9px; flex: 1; color: var(--pp-muted); border: 1px solid var(--pp-line); border-radius: 5px; background: rgba(255,255,255,.035); font: 800 .53rem var(--font-mono); }
+.session-choice:hover, .session-choice.active { color: #fff; border-color: var(--pp-cyan); background: rgba(73,216,255,.12); }
+.selection-footer { display: flex; width: var(--pp-content); gap: 10px; margin: 18px auto 0; }
+.selection-footer .btn { flex: 1; }
+
+/* Lobby, modals, results, help ----------------------------------------- */
+.mp-lobby-container, #screen-settings .modal-card, #screen-gameover .modal-card { width: min(940px,100%); margin: auto; padding: 24px !important; }
+.mp-lobby-header, .mp-lobby-footer, .modal-header-row { display: flex; gap: 16px; align-items: center; justify-content: space-between; }
+.mp-room-title h2 { margin-top: 5px; font: 900 1.5rem var(--font-display); }
+.mp-room-title p, .modal-header p { margin-top: 5px; color: var(--pp-muted); font-size: .8rem; }
+.mp-room-code-panel { min-width: 180px; padding: 12px; border: 1px solid var(--pp-line); border-radius: 8px; background: rgba(0,0,0,.22); text-align: right; }
+.mp-room-code-panel strong { display: block; margin: 4px 0 8px; color: var(--pp-cyan); font: 900 1.35rem var(--font-mono); letter-spacing: .12em; }
+.mp-session-strip, .mp-drivers-section { margin-top: 18px; border: 1px solid var(--pp-line); border-radius: 8px; overflow: hidden; }
+.mp-session-strip { display: grid; grid-template-columns: repeat(3,1fr); }
+.mp-session-cell { min-height: 74px; padding: 13px; border-right: 1px solid var(--pp-line); }
+.mp-session-cell:last-child { border: 0; }
+.mp-session-cell strong { display: block; margin-top: 7px; font: 800 .75rem var(--font-display); }
+.mp-track-picker { display: flex; align-items: center; gap: 7px; }
+.mp-track-nav { width: 28px; min-width: 28px; height: 28px; }
+.mp-section-sub { display: flex; justify-content: space-between; padding: 12px; color: var(--pp-muted); border-bottom: 1px solid var(--pp-line); font: 800 .62rem var(--font-mono); }
+.mp-drivers-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 8px; padding: 12px; }
+.mp-lobby-footer { margin-top: 18px; }
+.modal-overlay { position: fixed; inset: 0; z-index: 1300; display: grid; place-items: center; padding: 20px; background: rgba(2,4,8,.76); backdrop-filter: blur(9px); }
+.modal-overlay .modal-card { width: min(620px,100%); padding: 24px !important; }
+.modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.modal-body { margin-top: 18px; }
+.modal-footer, .gameover-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 18px; }
+.f1-input, #player-name-input { width: 100%; min-height: 48px; padding: 0 13px; color: #fff; border: 1px solid var(--pp-line-strong); border-radius: 7px; background: rgba(0,0,0,.3); font: 800 .78rem var(--font-mono); }
+.input-group { display: flex; gap: 8px; }
+.pause-card { width: min(420px,calc(100% - 32px)); margin: auto; padding: 26px !important; }
+.pause-title { font-size: 1.35rem; }
+.pause-actions { display: grid; gap: 9px; margin-top: 22px; }
+.pause-btn-danger { border-color: rgba(238,43,50,.62) !important; color: #ff9aa0 !important; }
+.finish-banner { padding: 12px 14px; color: #fff; border-left: 4px solid var(--pp-red); border-radius: 6px; background: linear-gradient(90deg,rgba(238,43,50,.22),transparent); font: 900 1rem var(--font-display); letter-spacing: .07em; }
+.time-display-box { margin-top: 16px; padding: 16px; border: 1px solid var(--pp-line); border-radius: 8px; background: rgba(0,0,0,.2); }
+.time-row { display: flex; justify-content: space-between; color: var(--pp-muted); font: 700 .72rem var(--font-mono); }
+.final-time-label { margin-top: 16px; color: var(--pp-muted); font: 800 .59rem var(--font-mono); letter-spacing: .1em; }
+.final-time-value { margin-top: 4px; color: var(--pp-cyan); font: 900 clamp(1.9rem,6vw,3.1rem) var(--font-mono); }
+.best-lap-sub, .go-session-note, .status-hint { color: var(--pp-muted); font: 600 .7rem var(--font-mono); }
+.control-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.control-box, .rules-box { padding: 14px; border: 1px solid var(--pp-line); border-radius: 8px; background: rgba(255,255,255,.035); }
+.control-box h4, .rules-box h4 { color: #fff; font: 800 .72rem var(--font-display); }
+.control-box ul, .rules-box p { margin-top: 8px; color: var(--pp-muted); font-size: .76rem; line-height: 1.55; }
+
+/* Timing tower ----------------------------------------------------------- */
+.lb-body { width: var(--pp-content); margin: 0 auto; }
+.lb-header { justify-content: space-between; }
+.lb-header-left { display: flex; gap: 12px; align-items: center; }
+.lb-header-season { display: block; margin-top: 4px; color: var(--pp-muted); font: 700 .59rem var(--font-mono); }
+.lb-tabs { display: flex; gap: 5px; padding-bottom: 11px; overflow-x: auto; border-bottom: 1px solid var(--pp-line); }
+.lb-tab-btn { min-height: 38px; padding: 0 12px; color: var(--pp-muted); border: 1px solid transparent; border-radius: 6px; background: transparent; font: 800 .61rem var(--font-mono); white-space: nowrap; }
+.lb-tab-btn.active, .lb-tab-btn:hover { color: #fff; border-color: var(--pp-line); background: rgba(255,255,255,.07); }
+.lb-table-wrap { margin-top: 14px; overflow: auto; border: 1px solid var(--pp-line); border-radius: var(--pp-radius); background: rgba(3,6,10,.46); }
+.f1-timing-header, .lb-row { min-width: 760px; }
+.f1-timing-header { color: var(--pp-muted); border-bottom: 1px solid var(--pp-line); background: rgba(255,255,255,.045); font: 800 .55rem var(--font-mono); }
+.lb-row { color: #eaf0f7; border-bottom: 1px solid rgba(255,255,255,.07); }
+.lb-row:hover { background: rgba(73,216,255,.06); }
+.lb-row-first { background: linear-gradient(90deg,rgba(255,209,102,.15),transparent) !important; }
+.lb-fab { position: fixed; right: max(22px,calc((100vw - 1440px)/2)); bottom: 24px; }
+.lb-fab-btn { display: grid; width: 48px; height: 48px; place-items: center; color: #071018; border: 0; border-radius: 50%; background: var(--pp-cyan); box-shadow: 0 12px 30px rgba(73,216,255,.27); }
+
+/* Race HUD --------------------------------------------------------------- */
+#screen-hud { overflow: hidden !important; touch-action: none !important; }
+#screen-hud::before { z-index: -1; opacity: 1; background: linear-gradient(90deg,rgba(0,0,0,.48),transparent 23%,transparent 77%,rgba(0,0,0,.48)),linear-gradient(180deg,rgba(0,0,0,.36),transparent 25%,transparent 70%,rgba(0,0,0,.55)); }
+.hud-action-btns { position: fixed; top: 18px; left: 18px; z-index: 40; display: flex; gap: 8px; }
+.hud-circle-btn { display: grid; width: 42px; height: 42px; place-items: center; color: #fff; border: 1px solid var(--pp-line-strong); border-radius: 8px; background: rgba(4,7,11,.78); backdrop-filter: blur(10px); }
+.hud-circle-btn:hover { border-color: var(--pp-cyan); color: var(--pp-cyan); }
+.hud-steering-wheel-display { position: fixed; top: 16px; left: 50%; z-index: 35; width: min(550px,calc(100vw - 130px)); transform: translateX(-50%); border: 1px solid var(--pp-line-strong); border-radius: 10px; background: rgba(5,8,12,.88); box-shadow: var(--pp-shadow); overflow: hidden; backdrop-filter: blur(14px); }
+.f1-rpm-bar { display: flex; height: 8px; gap: 4px; padding: 2px 10px; background: rgba(255,255,255,.06); }
+.rpm-led { flex: 1; border-radius: 2px; background: rgba(255,255,255,.12); }
+.rpm-led.active { background: var(--pp-amber); box-shadow: 0 0 8px rgba(255,209,102,.7); }
+.f1-wheel-core { display: grid; grid-template-columns: 78px 1fr minmax(210px,1.3fr); min-height: 78px; }
+.f1-gear-box, .f1-speed-box, .f1-telemetry-box { display: flex; min-width: 0; align-items: center; justify-content: center; border-right: 1px solid var(--pp-line); }
+.f1-gear-box, .f1-speed-box { flex-direction: column; }
+.f1-telemetry-box { display: grid; grid-template-columns: repeat(2,1fr); }
+.f1-tel-cell { min-width: 0; padding: 9px 11px; border-right: 1px solid rgba(255,255,255,.08); }
+.f1-tel-cell:last-child { border-right: 0; }
+.f1-gear-val { color: #fff; font: 900 2rem/1 var(--font-display); }
+.f1-speed-val { color: var(--pp-cyan); font: 900 2.45rem/.9 var(--font-mono); letter-spacing: -.08em; }
+.f1-speed-unit { margin-top: 4px; color: var(--pp-muted); font: 800 .51rem var(--font-mono); }
+.f1-tel-val { display: block; margin-top: 4px; color: #fff; overflow: hidden; font: 800 .73rem var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
+.hud-warning-bar { display: flex; min-height: 30px; align-items: center; justify-content: space-between; padding: 6px 12px; color: #dce8f2; border-top: 1px solid var(--pp-line); background: rgba(255,255,255,.05); font: 800 .61rem var(--font-mono); }
+.hud-warning-bar.clean { color: var(--pp-green); }.hud-warning-bar.penalty { color: #fff; background: rgba(238,43,50,.74); }.hud-warning-bar.investigating { color: #17130a; background: var(--pp-amber); }.hud-warning-bar.sector-purple { color: var(--pp-purple); }.hud-warning-bar.sector-green { color: var(--pp-green); }
+.hud-bottom { position: fixed; inset: auto 0 18px; z-index: 42; pointer-events: none; }
+.hud-kers-container { position: fixed; right: 18px; bottom: 18px; z-index: 41; width: 150px; padding: 9px; border: 1px solid var(--pp-line); border-radius: 8px; background: rgba(5,8,12,.8); backdrop-filter: blur(10px); }
+.kers-label { color: var(--pp-muted); font: 800 .52rem var(--font-mono); }.kers-bar-bg { height: 6px; margin-top: 6px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.13); }.kers-bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg,var(--pp-cyan),#d6f7ff); }
+.hud-joystick-container, #hud-drive-left-group, #hud-drive-right-group, #hud-steer-left-group { pointer-events: auto; }
+.hud-ctrl-btn { color: #fff; border: 1px solid var(--pp-line-strong); background: rgba(5,8,12,.85); box-shadow: 0 12px 24px rgba(0,0,0,.28); backdrop-filter: blur(10px); }.hud-ctrl-btn.active, .hud-ctrl-btn:active { border-color: var(--pp-cyan); background: rgba(73,216,255,.22); }.hud-ctrl-tri-gas { border-color: rgba(92,224,161,.62); }.hud-ctrl-tri-brake { border-color: rgba(238,43,50,.62); }.hud-ctrl-tri-boost { border-color: rgba(255,209,102,.7); }
+.countdown-lights { border: 1px solid var(--pp-line-strong); background: rgba(4,7,11,.9); box-shadow: var(--pp-shadow); }.countdown-light { border-color: rgba(255,255,255,.17); }.countdown-control-hint { color: #fff; font: 800 .65rem var(--font-mono); letter-spacing: .08em; }
+
+/* Responsive and touch-specific rules ---------------------------------- */
+@media (min-width: 861px) {
+  .hud-joystick-container, #hud-drive-left-group, #hud-drive-right-group { display: none !important; }
+}
+@media (max-width: 980px) {
+  :root { --pp-content: min(100% - 36px, 900px); }
+  .garage-grid { grid-template-columns: 1fr 1fr; }.garage-badge-tile { grid-column: span 2; }
+  .select-grid { grid-template-columns: 1fr; }.car-select-card, .track-select-card { min-height: 0; }
+  .session-config-grid { grid-template-columns: 1fr 1fr; }.gp-grid-config { grid-column: span 2; }
+}
+@media (max-width: 670px) {
+  :root { --pp-content: calc(100% - 24px); }
+  .top-app-bar { top: max(7px,env(safe-area-inset-top)); width: var(--pp-content); min-height: 52px; padding: 6px 6px 6px 10px; gap: 6px; }
+  .top-app-bar-left { min-width: 0; }.top-app-bar-brand, .top-live-tag { display: none; }.top-glass-nav { width: 100%; justify-content: space-between; }.top-nav-link { min-width: 0; flex: 1; padding: 0 4px; font-size: .5rem; }.top-app-bar-actions { margin-left: 0; }.f1-chip-rank, .f1-chip-badge, .f1-chip-name { display: none; }.f1-driver-profile-chip { padding: 3px; }.f1-chip-avatar { width: 30px; height: 30px; }
+  #screen-menu, #screen-select, #screen-mp-lobby, #screen-leaderboard, #screen-settings, #screen-gameover { padding: calc(76px + env(safe-area-inset-top)) 12px calc(28px + env(safe-area-inset-bottom)) !important; }
+  #screen-menu { padding-bottom: 26px !important; }.garage-heading { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; }.garage-heading h1 { width: 100%; font-size: 1.8rem; }.garage-heading p { width: 100%; font-size: .72rem; }.daily-featured-chip { justify-self: start; font-size: .52rem; }
+  .garage-grid { grid-template-columns: 1fr; }.garage-badge-tile { grid-column: auto; }.garage-tile { min-height: 220px; padding: 17px; }.tile-title { font-size: 2.35rem; }.garage-grand-prix-strip { min-height: 68px; padding: 12px; }.garage-shortcuts { justify-content: center; gap: 12px; font-size: .53rem; }
+  .screen-header, .lb-header { min-height: 36px; margin-bottom: 13px; }.screen-header h2 { font-size: .78rem; }.icon-btn, .icon-btn-circle, .nav-arrow, .track-carousel-nav { width: 42px; min-width: 42px; height: 42px; }
+  .car-select-card, .track-select-card { padding: 13px !important; }.car-preview-area { min-height: 105px; }.stat-bars { gap: 11px; }.track-minimap-box { width: 92px; height: 92px; flex-basis: 92px; }.track-info-col h3, .carousel-content h3 { font-size: .9rem; }.carousel-content p, .track-info-col p { font-size: .67rem; }.circuit-telemetry-widget { grid-template-columns: repeat(2,1fr); }.ct-cell:nth-child(2) { border-right: 0; }.ct-cell:nth-child(-n+2) { border-bottom: 1px solid var(--pp-line); }
+  .session-config { padding: 13px; }.session-config-heading { display: block; }.session-config-heading span:last-child { display: block; margin-top: 6px; font-size: .54rem; }.session-config-grid { grid-template-columns: 1fr; gap: 12px; }.gp-grid-config { grid-column: auto; }.session-choice { min-height: 42px; font-size: .52rem; }.selection-footer { flex-wrap: wrap; }.selection-footer .btn { min-height: 50px; flex-basis: 100%; }
+  .mp-lobby-container, #screen-settings .modal-card, #screen-gameover .modal-card { padding: 16px !important; }.mp-lobby-header, .mp-lobby-footer { align-items: stretch; flex-direction: column; }.mp-room-code-panel { min-width: 0; text-align: left; }.mp-session-strip { grid-template-columns: 1fr; }.mp-session-cell { border-right: 0; border-bottom: 1px solid var(--pp-line); }.mp-session-cell:last-child { border-bottom: 0; }.control-grid { grid-template-columns: 1fr; }.modal-overlay { align-items: end; padding: 12px; }.modal-overlay .modal-card { max-height: calc(100dvh - 24px); overflow-y: auto; padding: 17px !important; }.input-group { flex-direction: column; }
+  .lb-fab { right: 14px; bottom: 14px; }.lb-col-rank, .lb-col-tire { display: none; }
+}
+@media (max-width: 860px) and (orientation: landscape) {
+  .touch-device #hud-steer-left-group, .touch-device #hud-drive-left-group { display: none !important; }
+  .touch-device .hud-joystick-container { position: fixed; bottom: max(18px,env(safe-area-inset-bottom)); left: max(18px,env(safe-area-inset-left)); z-index: 44; display: block !important; }
+  .touch-device #hud-drive-right-group { position: fixed; right: max(18px,env(safe-area-inset-right)); bottom: max(16px,env(safe-area-inset-bottom)); z-index: 44; display: block !important; }
+  .hud-steering-wheel-display { top: 8px; width: min(440px,calc(100vw - 108px)); }.hud-action-btns { top: 10px; left: 10px; }.hud-kers-container { right: 11px; bottom: 11px; width: 126px; }.f1-wheel-core { min-height: 62px; grid-template-columns: 62px 1fr minmax(172px,1.2fr); }.f1-speed-val { font-size: 1.9rem; }.f1-gear-val { font-size: 1.55rem; }.f1-tel-cell { padding: 6px 8px; }.f1-tel-val { font-size: .61rem; }.hud-warning-bar { min-height: 25px; font-size: .52rem; }
+}
+@media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
 /* --- RESET --------------------------------------------------------------- */
 *,
 *::before,
@@ -9392,3 +9699,84 @@ button[aria-disabled='true']:hover {
     font-size: 0.43rem;
   }
 }
+
+/* ========================================================================
+   PRODUCTION CASCADE LOCK
+   This final layer deliberately owns presentation after legacy screen rules.
+   It protects the single Pixel Prix race-control visual language across every
+   flow without changing the stable DOM and control interface.
+   ======================================================================== */
+:root { --pp-content: min(1440px, calc(100% - 64px)); }
+
+body { background: #06080c !important; color: var(--pp-text) !important; }
+.ui-screen:not(#screen-hud) {
+  background:
+    linear-gradient(122deg, rgba(238,43,50,.09), transparent 27%),
+    radial-gradient(circle at 85% 8%, rgba(73,216,255,.08), transparent 29%),
+    linear-gradient(180deg, #0c1119, #070a10) !important;
+}
+
+.top-app-bar {
+  position: fixed !important; top: 14px !important; left: 50% !important; z-index: 1100 !important;
+  display: flex !important; width: var(--pp-content) !important; min-height: 58px !important;
+  align-items: center; gap: 18px; padding: 8px 10px 8px 18px !important; transform: translateX(-50%) !important;
+  border: 1px solid var(--pp-line) !important; border-radius: 12px !important; background: rgba(7,10,15,.9) !important;
+  box-shadow: var(--pp-shadow) !important; backdrop-filter: blur(18px);
+}
+.top-app-bar-left { display: flex !important; align-items: center; gap: 12px; min-width: max-content; }
+.top-app-bar-brand { color: #fff !important; font: 900 .86rem var(--font-display) !important; letter-spacing: .08em; }
+.top-live-tag { color: var(--pp-cyan) !important; font: 800 .62rem var(--font-mono) !important; letter-spacing: .08em; }
+.top-glass-nav { display: flex !important; min-width: 0; align-items: center; gap: 3px; }
+.top-nav-link { min-height: 38px !important; padding: 0 13px !important; color: var(--pp-muted) !important; border: 0 !important; border-radius: 7px !important; background: transparent !important; font-size: .64rem !important; }
+.top-nav-link:hover, .top-nav-link.active { color: #fff !important; background: rgba(255,255,255,.1) !important; }
+.top-nav-link.active { box-shadow: inset 0 -2px var(--pp-red) !important; }
+.f1-driver-profile-chip { min-height: 40px !important; padding: 4px 6px 4px 10px !important; border: 1px solid var(--pp-line) !important; border-radius: 8px !important; background: rgba(255,255,255,.045) !important; }
+.f1-chip-avatar { width: 32px !important; height: 32px !important; border-radius: 6px !important; background: linear-gradient(135deg,var(--pp-red),var(--pp-red-dark)) !important; }
+.f1-red-accent-bar { display: none !important; }
+
+.glass-card, .glass-modal, .modal-card, .mp-lobby-container, .pause-card {
+  border: 1px solid var(--pp-line) !important; border-radius: 12px !important;
+  background: linear-gradient(145deg,rgba(29,35,46,.96),rgba(10,14,20,.98)) !important;
+  box-shadow: var(--pp-shadow), inset 0 1px rgba(255,255,255,.07) !important;
+}
+.section-label, .session-choice-label, .mp-panel-label, .ct-label, .stat-label, .f1-tel-label, .f1-gear-label { color: var(--pp-muted) !important; font-family: var(--font-mono) !important; letter-spacing: .1em; }
+.btn { min-height: 46px !important; border: 1px solid var(--pp-line-strong) !important; border-radius: 8px !important; color: #fff !important; background: rgba(255,255,255,.055) !important; box-shadow: none !important; }
+.btn:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--pp-cyan) !important; background: rgba(73,216,255,.12) !important; box-shadow: 0 10px 24px rgba(0,0,0,.24) !important; }
+.btn-primary, .f1-start-button { border-color: transparent !important; color: #fff !important; background: linear-gradient(135deg,var(--pp-red),#bf1423) !important; box-shadow: 0 12px 25px rgba(238,43,50,.22) !important; }
+button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--pp-amber) !important; outline-offset: 3px !important; }
+
+#screen-menu { padding: 104px 32px 34px !important; }
+.garage-shell { width: var(--pp-content) !important; margin: 0 auto !important; }
+.garage-heading { display: grid !important; grid-template-columns: auto 1fr auto; align-items: end; gap: 10px 18px; margin-bottom: 18px !important; }
+.garage-kicker { color: var(--pp-red) !important; font-family: var(--font-mono) !important; letter-spacing: .13em; }
+.garage-heading h1 { color: #fff !important; font-size: clamp(1.8rem,3.1vw,3.35rem) !important; }
+.garage-heading p { grid-column: 2; color: var(--pp-muted) !important; font-family: var(--font-sans) !important; }
+.daily-featured-chip { padding: 8px 10px !important; color: var(--pp-cyan) !important; border: 1px solid rgba(73,216,255,.3) !important; border-radius: 999px !important; background: rgba(73,216,255,.08) !important; }
+.garage-grid { grid-template-columns: 1.12fr 1fr 1fr !important; gap: 14px !important; }
+.garage-tile { min-height: clamp(330px,53vh,510px) !important; padding: 22px !important; border: 1px solid var(--pp-line) !important; border-radius: 12px !important; background: linear-gradient(160deg,rgba(39,47,61,.96),rgba(8,12,18,.98)) !important; box-shadow: var(--pp-shadow) !important; }
+.garage-tile:hover, .garage-tile:focus-visible { transform: translateY(-4px) !important; border-color: var(--pp-cyan) !important; box-shadow: 0 24px 60px rgba(0,0,0,.45),0 0 0 1px rgba(73,216,255,.16) !important; }
+.garage-car-tile { border-color: rgba(238,43,50,.62) !important; background: linear-gradient(145deg,#a61122,#30101a 52%,#0a0e15) !important; }.garage-coop-tile { background: linear-gradient(145deg,#122a3d,#111924 55%,#090d14) !important; }.garage-badge-tile { background: linear-gradient(145deg,#2d253d,#181322 58%,#090c12) !important; }
+.tile-title { color: #fff !important; font-size: clamp(2rem,3.6vw,4.1rem) !important; }.tile-meta { color: rgba(255,255,255,.78) !important; }.garage-node { width: 13px !important; height: 13px !important; top: 16px !important; right: 16px !important; border: 0 !important; background: var(--pp-amber) !important; }.garage-grand-prix-strip { border: 1px solid var(--pp-line) !important; border-radius: 12px !important; background: rgba(255,255,255,.045) !important; }.garage-grand-prix-strip:hover { border-color: var(--pp-amber) !important; background: rgba(255,209,102,.09) !important; }
+
+#screen-select, #screen-mp-lobby, #screen-leaderboard, #screen-settings, #screen-gameover { padding: 104px 32px 50px !important; }
+.screen-header, .lb-header { width: var(--pp-content) !important; min-height: 52px !important; margin: 0 auto 22px !important; padding-bottom: 13px !important; border-bottom: 1px solid var(--pp-line) !important; }.screen-header h2, .lb-header-context, .modal-header h2, .modal-header h3, .pause-title { color: #fff !important; }
+.select-grid { width: var(--pp-content) !important; grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; gap: 18px !important; margin: 0 auto !important; }.car-select-card, .track-select-card { min-height: 418px !important; padding: 18px !important; }.car-preview-area { min-height: 155px !important; border: 1px solid rgba(73,216,255,.13) !important; border-radius: 8px !important; background: radial-gradient(circle,rgba(73,216,255,.11),transparent 68%) !important; }.carousel-content h3, .track-info-col h3 { color: #fff !important; }.carousel-content p, .track-info-col p { color: var(--pp-muted) !important; }
+.stat-bars { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 13px 18px !important; }.stat-val-mono, .ct-val { color: #fff !important; }.meter-track { height: 5px !important; border-radius: 999px !important; background: rgba(255,255,255,.1) !important; }.meter-fill { background: linear-gradient(90deg,var(--pp-cyan),#d9f7ff) !important; }.track-minimap-box { border: 1px solid var(--pp-line) !important; border-radius: 8px !important; background: #0a0f17 !important; }.circuit-telemetry-widget, .session-config { border: 1px solid var(--pp-line) !important; border-radius: 8px !important; background: rgba(5,9,14,.52) !important; }.ct-cell { border-color: var(--pp-line) !important; }
+.session-config, .selection-footer { width: var(--pp-content) !important; }.session-config-grid { grid-template-columns: repeat(3,1fr) !important; }.session-choice { color: var(--pp-muted) !important; border: 1px solid var(--pp-line) !important; border-radius: 5px !important; background: rgba(255,255,255,.035) !important; }.session-choice:hover, .session-choice.active { color: #fff !important; border-color: var(--pp-cyan) !important; background: rgba(73,216,255,.12) !important; }
+
+.mp-lobby-container, #screen-settings .modal-card, #screen-gameover .modal-card { width: min(940px,100%) !important; padding: 24px !important; }.mp-room-code-panel, .mp-session-strip, .mp-drivers-section, .control-box, .rules-box, .time-display-box { border-color: var(--pp-line) !important; background: rgba(0,0,0,.2) !important; }.mp-room-code-panel strong, .final-time-value { color: var(--pp-cyan) !important; }.modal-overlay { background: rgba(2,4,8,.76) !important; backdrop-filter: blur(9px); }.modal-overlay .modal-card { width: min(620px,100%) !important; padding: 24px !important; }.f1-input, #player-name-input { color: #fff !important; border-color: var(--pp-line-strong) !important; background: rgba(0,0,0,.3) !important; }.finish-banner { border-left-color: var(--pp-red) !important; background: linear-gradient(90deg,rgba(238,43,50,.22),transparent) !important; }.control-box h4, .rules-box h4 { color: #fff !important; }.control-box ul, .rules-box p { color: var(--pp-muted) !important; }
+
+.lb-body { width: var(--pp-content) !important; }.lb-tabs { border-bottom-color: var(--pp-line) !important; }.lb-tab-btn { color: var(--pp-muted) !important; }.lb-tab-btn.active, .lb-tab-btn:hover { color: #fff !important; border-color: var(--pp-line) !important; background: rgba(255,255,255,.07) !important; }.lb-table-wrap { border-color: var(--pp-line) !important; border-radius: 12px !important; background: rgba(3,6,10,.46) !important; }.f1-timing-header { color: var(--pp-muted) !important; border-color: var(--pp-line) !important; background: rgba(255,255,255,.045) !important; }.lb-row { color: #eaf0f7 !important; border-bottom-color: rgba(255,255,255,.07) !important; }.lb-row:hover { background: rgba(73,216,255,.06) !important; }.lb-row-first { background: linear-gradient(90deg,rgba(255,209,102,.15),transparent) !important; }
+
+#screen-hud { overflow: hidden !important; touch-action: none !important; }.hud-action-btns { top: 18px !important; left: 18px !important; }.hud-circle-btn { border-color: var(--pp-line-strong) !important; border-radius: 8px !important; background: rgba(4,7,11,.78) !important; }.hud-steering-wheel-display { top: 16px !important; width: min(550px,calc(100vw - 130px)) !important; border-color: var(--pp-line-strong) !important; border-radius: 10px !important; background: rgba(5,8,12,.88) !important; box-shadow: var(--pp-shadow) !important; }.f1-rpm-bar { height: 8px !important; background: rgba(255,255,255,.06) !important; }.rpm-led.active { background: var(--pp-amber) !important; box-shadow: 0 0 8px rgba(255,209,102,.7) !important; }.f1-wheel-core { grid-template-columns: 78px 1fr minmax(210px,1.3fr) !important; min-height: 78px !important; }.f1-gear-box, .f1-speed-box, .f1-telemetry-box { border-color: var(--pp-line) !important; background: transparent !important; }.f1-speed-val { color: var(--pp-cyan) !important; }.f1-tel-val, .f1-gear-val { color: #fff !important; }.hud-warning-bar { color: #dce8f2 !important; border-top-color: var(--pp-line) !important; background: rgba(255,255,255,.05) !important; }.hud-warning-bar.clean { color: var(--pp-green) !important; }.hud-warning-bar.penalty { color: #fff !important; background: rgba(238,43,50,.74) !important; }.hud-warning-bar.investigating { color: #17130a !important; background: var(--pp-amber) !important; }.hud-kers-container { border-color: var(--pp-line) !important; border-radius: 8px !important; background: rgba(5,8,12,.8) !important; }.kers-bar-fill { background: linear-gradient(90deg,var(--pp-cyan),#d6f7ff) !important; }.hud-ctrl-btn { border-color: var(--pp-line-strong) !important; background: rgba(5,8,12,.85) !important; }.hud-ctrl-btn.active, .hud-ctrl-btn:active { border-color: var(--pp-cyan) !important; background: rgba(73,216,255,.22) !important; }.hud-ctrl-tri-gas { border-color: rgba(92,224,161,.62) !important; }.hud-ctrl-tri-brake { border-color: rgba(238,43,50,.62) !important; }.hud-ctrl-tri-boost { border-color: rgba(255,209,102,.7) !important; }
+
+@media (min-width: 861px) { .hud-joystick-container, #hud-drive-left-group, #hud-drive-right-group { display: none !important; } }
+@media (max-width: 980px) { :root { --pp-content: min(100% - 36px,900px); }.garage-grid { grid-template-columns: 1fr 1fr !important; }.garage-badge-tile { grid-column: span 2 !important; }.select-grid { grid-template-columns: 1fr !important; }.car-select-card, .track-select-card { min-height: 0 !important; }.session-config-grid { grid-template-columns: 1fr 1fr !important; }.gp-grid-config { grid-column: span 2; } }
+@media (max-width: 670px) {
+  :root { --pp-content: calc(100% - 24px); }.top-app-bar { top: max(7px,env(safe-area-inset-top)) !important; width: var(--pp-content) !important; min-height: 52px !important; padding: 6px !important; gap: 6px !important; }.top-app-bar-left, .top-live-tag, .top-app-bar-brand, .f1-chip-rank, .f1-chip-badge, .f1-chip-name { display: none !important; }.top-glass-nav { width: 100% !important; justify-content: space-between; }.top-nav-link { min-width: 0 !important; padding: 0 4px !important; flex: 1 !important; font-size: .5rem !important; }.f1-driver-profile-chip { padding: 3px !important; }.f1-chip-avatar { width: 30px !important; height: 30px !important; }
+  #screen-menu, #screen-select, #screen-mp-lobby, #screen-leaderboard, #screen-settings, #screen-gameover { padding: calc(76px + env(safe-area-inset-top)) 12px calc(28px + env(safe-area-inset-bottom)) !important; }.garage-heading { display: flex !important; flex-wrap: wrap; gap: 6px !important; }.garage-heading h1, .garage-heading p { width: 100%; grid-column: auto; }.garage-heading h1 { font-size: 1.8rem !important; }.garage-heading p { font-size: .72rem !important; }.garage-grid { grid-template-columns: 1fr !important; }.garage-badge-tile { grid-column: auto !important; }.garage-tile { min-height: 220px !important; padding: 17px !important; }.tile-title { font-size: 2.35rem !important; }
+  .screen-header, .lb-header { min-height: 36px !important; margin-bottom: 13px !important; }.select-grid { gap: 12px !important; }.car-select-card, .track-select-card { padding: 13px !important; }.car-preview-area { min-height: 105px !important; }.track-minimap-box { width: 92px !important; height: 92px !important; flex-basis: 92px !important; }.circuit-telemetry-widget { grid-template-columns: repeat(2,1fr) !important; }.session-config-grid { grid-template-columns: 1fr !important; }.gp-grid-config { grid-column: auto; }.session-choice { min-height: 42px !important; }.selection-footer { flex-wrap: wrap; }.selection-footer .btn { min-height: 50px !important; flex-basis: 100%; }
+  .mp-lobby-container, #screen-settings .modal-card, #screen-gameover .modal-card { padding: 16px !important; }.mp-lobby-header, .mp-lobby-footer, .input-group { flex-direction: column !important; }.mp-session-strip { grid-template-columns: 1fr !important; }.control-grid { grid-template-columns: 1fr !important; }.modal-overlay { align-items: end !important; padding: 12px !important; }.modal-overlay .modal-card { max-height: calc(100dvh - 24px); overflow-y: auto; padding: 17px !important; }
+}
+@media (max-width: 860px) and (orientation: landscape) { .touch-device #hud-steer-left-group, .touch-device #hud-drive-left-group { display: none !important; }.touch-device .hud-joystick-container { display: block !important; }.touch-device #hud-drive-right-group { display: block !important; }.hud-steering-wheel-display { top: 8px !important; width: min(440px,calc(100vw - 108px)) !important; }.hud-action-btns { top: 10px !important; left: 10px !important; }.f1-wheel-core { grid-template-columns: 62px 1fr minmax(172px,1.2fr) !important; min-height: 62px !important; }.f1-speed-val { font-size: 1.9rem !important; }.f1-gear-val { font-size: 1.55rem !important; }.f1-tel-cell { padding: 6px 8px !important; }.hud-kers-container { right: 11px !important; bottom: 11px !important; width: 126px !important; } }
+@media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
