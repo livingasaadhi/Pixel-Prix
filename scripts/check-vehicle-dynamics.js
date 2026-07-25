@@ -5,20 +5,23 @@ const base = {
   throttle: 1, brake: 0, boostActive: false, onGrass: false, offRoadFactor: 0.55,
   accelerationStat: 180, brakeForceStat: 450, referenceTopSpeedKph: 275,
   boostAccelerationStat: 380, boostReferenceTopSpeedKph: 398,
-  accelerationFactor: 1, steerInput: 1, deltaSeconds: 1 / 60
+  accelerationFactor: 1, launchGrip: 1, steerInput: 1, deltaSeconds: 1 / 60
 };
 const straight = { cornerSpeedKph: Infinity, edgeRatio: 0 };
 const tightCorner = { cornerSpeedKph: 95, edgeRatio: 0 };
-const simulate = (context, deltaSeconds, onGrass = false) => {
+const simulate = (context, deltaSeconds, onGrass = false, durationSeconds = 20, overrides = {}) => {
   let speed = 0;
-  for (let time = 0; time < 20; time += deltaSeconds) {
-    speed = advanceVehicleDynamics({ ...base, speedKph: speed, trackContext: context, onGrass, deltaSeconds }).speedKph;
+  for (let time = 0; time < durationSeconds; time += deltaSeconds) {
+    speed = advanceVehicleDynamics({ ...base, ...overrides, speedKph: speed, trackContext: context, onGrass, deltaSeconds }).speedKph;
   }
   return speed;
 };
 
 const terminal60 = simulate(straight, 1 / 60);
 const terminal120 = simulate(straight, 1 / 120);
+const launchSpeed = simulate(straight, 1 / 60, false, 5);
+const launchSpecialistSpeed = simulate(straight, 1 / 60, false, 2, { launchGrip: 1.14 });
+const standardLaunchSpeed = simulate(straight, 1 / 60, false, 2);
 const cornerSpeed = simulate(tightCorner, 1 / 60);
 const noSteerCornerSpeed = (() => {
   let speed = 0;
@@ -37,6 +40,8 @@ const boostSpeed = (() => {
 })();
 assert.ok(terminal60 > 220 && terminal60 < 320, 'straight speed must settle through force balance');
 assert.ok(Math.abs(terminal60 - terminal120) / terminal60 < 0.03, 'speed must be stable across frame rates');
+assert.ok(launchSpeed > 135 && launchSpeed < 170, 'cars must have a responsive five-second launch without becoming uncontrollable');
+assert.ok(launchSpecialistSpeed > standardLaunchSpeed * 1.07, 'launch-focused cars must receive a meaningful low-speed traction benefit');
 assert.ok(cornerSpeed < terminal60 * 0.7, 'tight upcoming corners must scrub excess speed');
 assert.ok(noSteerCornerSpeed > cornerSpeed * 1.35, 'corner geometry must not secretly brake a car that is not turning');
 assert.ok(grassSpeed < terminal60 * 0.6, 'grass must substantially reduce achievable speed');

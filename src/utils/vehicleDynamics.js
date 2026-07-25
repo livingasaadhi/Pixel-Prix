@@ -99,6 +99,7 @@ export function advanceVehicleDynamics({
   boostAccelerationStat = accelerationStat,
   boostReferenceTopSpeedKph = referenceTopSpeedKph,
   accelerationFactor,
+  launchGrip = 1,
   steerInput = 0,
   trackContext,
   deltaSeconds
@@ -106,7 +107,12 @@ export function advanceVehicleDynamics({
   const speed = Math.max(0, speedKph);
   const referenceSpeed = Math.max(120, referenceTopSpeedKph);
   const speedRatio = speed / referenceSpeed;
-  const baseDriveAccel = 27 + (accelerationStat - 150) * 0.14;
+  // The first version of the force curve made the headline top-speed figures
+  // achievable, but its launch and mid-range pull were too soft for a racing
+  // game. Raise available drive force and scale the matching aero term below
+  // so cars reach their calibrated terminal speed sooner without turning each
+  // class into an uncontrollable top-speed increase.
+  const baseDriveAccel = 34 + (accelerationStat - 150) * 0.18;
   const powerBand = 1 / (1 + 1.35 * Math.pow(Math.max(0, speedRatio), 1.4));
   const boostPower = boostActive
     ? clamp(
@@ -116,9 +122,13 @@ export function advanceVehicleDynamics({
       1.24
     )
     : 1;
-  const driveAccel = baseDriveAccel * clamp(throttle, 0, 1) * powerBand * boostPower * accelerationFactor;
+  // Launch-oriented cars receive their advertised traction advantage only at
+  // low speed. It fades out before the car reaches high-speed cornering, where
+  // the normal handling and drag model should remain in control.
+  const launchTraction = 1 + (clamp(launchGrip, 0.72, 1.22) - 1) * Math.pow(clamp(1 - speed / 120, 0, 1), 1.15);
+  const driveAccel = baseDriveAccel * clamp(throttle, 0, 1) * powerBand * boostPower * accelerationFactor * launchTraction;
   const aeroFactor = clamp(dragStat / 25, 0.8, 1.2);
-  const aeroDrag = baseDriveAccel * 0.38 * aeroFactor * Math.pow(Math.max(0, speedRatio), 2);
+  const aeroDrag = baseDriveAccel * 0.40 * aeroFactor * Math.pow(Math.max(0, speedRatio), 2);
   const surfaceResistance = onGrass
     ? 18 + speed * (0.035 + (1 - clamp(offRoadFactor, 0.35, 0.85)) * 0.025)
     : 1.1 + Math.max(0, trackContext.edgeRatio - 0.72) * 3.5;

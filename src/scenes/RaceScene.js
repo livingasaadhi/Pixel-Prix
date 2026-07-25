@@ -952,6 +952,7 @@ export class RaceScene extends Phaser.Scene {
         boostAccelerationStat: this.boostAccelerationStat,
         boostReferenceTopSpeedKph: this.referenceBoostTopSpeedKph,
         accelerationFactor: handling.accelerationFactor * (1 / (1 + cornerOverspeed * 0.65)),
+        launchGrip: this.launchGrip,
         steerInput: steerDir,
         trackContext,
         deltaSeconds: dt
